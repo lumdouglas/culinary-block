@@ -11,18 +11,37 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 
+// Helper to format Date objects for the datetime-local input
+const formatDateForInput = (date: Date) => {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+};
+
 export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
+  // Use the type directly from the schema to ensure 100% alignment
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
-  })
+    defaultValues: {
+      kitchen_id: "",
+      start_time: new Date(),
+      end_time: new Date(Date.now() + 3600000),
+    },
+    // Adding this mode ensures validation triggers correctly on change
+    mode: "onChange", 
+  });
 
   async function onSubmit(values: BookingFormValues) {
-    const result = await createBooking(values)
-    if (result.error) {
-      toast.error(result.error)
-    } else {
-      toast.success("Kitchen reserved!")
-      form.reset()
+    try {
+      const result = await createBooking(values);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Booking created successfully!");
+        // Optional: close modal or refresh
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
     }
   }
 
@@ -61,8 +80,18 @@ export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
-                <Input type="datetime-local" {...field} 
-                  onChange={(e) => field.onChange(e.target.value)} />
+                <FormControl>
+                  <Input 
+                    type="datetime-local" 
+                    // Convert Date -> String for HTML Input
+                    value={field.value instanceof Date ? formatDateForInput(field.value) : field.value}
+                    // Convert String -> Date for Form State
+                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -73,15 +102,25 @@ export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>End Time</FormLabel>
-                <Input type="datetime-local" {...field} 
-                  onChange={(e) => field.onChange(e.target.value)} />
+                <FormControl>
+                  <Input 
+                    type="datetime-local" 
+                    value={field.value instanceof Date ? formatDateForInput(field.value) : field.value}
+                    onChange={(e) => field.onChange(new Date(e.target.value))}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    ref={field.ref}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <Button type="submit" className="w-full">Confirm Booking</Button>
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Creating..." : "Confirm Booking"}
+        </Button>
       </form>
     </Form>
   )
