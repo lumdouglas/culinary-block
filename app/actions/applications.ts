@@ -13,12 +13,17 @@ export async function approveApplication(applicationId: string, email: string) {
 
   if (authError) return { error: authError.message };
 
-  // 2. Update Application Status
+  // 2. Get current admin user
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) return { error: "Unauthorized" };
+
+  // 3. Update Application Status
   const { error: appError } = await supabase
     .from('applications')
-    .update({ 
+    .update({
       status: 'approved',
-      user_id: authData.user.id 
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString()
     })
     .eq('id', applicationId);
 

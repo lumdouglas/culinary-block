@@ -1,0 +1,7 @@
+Project Rules:
+- We use Next.js 16 (App Router) and Turbopack.
+- Validations are in @/lib/validations.
+- Database logic is in @/app/actions.
+- Always export inferred Zod types as 'XFormValues'.
+- When handling HTML datetime-local inputs, always use a helper to convert between JS Date and ISO String.
+- UI components use Shadcn; if a variant like 'success' is missing, add it to the component's CVA definition.

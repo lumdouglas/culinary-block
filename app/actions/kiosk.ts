@@ -14,6 +14,23 @@ export async function getActiveSession(userId: string) {
   return data;
 }
 
+export async function verifyKioskPin(pin: string, userId: string) {
+  const supabase = await createClient();
+
+  // Verify PIN using the RPC we set up
+  const { data: isValid } = await supabase.rpc('verify_kiosk_pin', {
+    input_user_id: userId,
+    input_pin: pin
+  });
+
+  if (!isValid) {
+    throw new Error("Invalid PIN");
+  }
+
+  return { success: true };
+}
+
+
 export async function clockIn(userId: string, pin: string) {
   const supabase = await createClient();
 
@@ -32,7 +49,7 @@ export async function clockIn(userId: string, pin: string) {
     .single();
 
   if (error) return { error: "Database error. Could not clock in." };
-  
+
   revalidatePath('/kiosk');
   return { data };
 }
@@ -45,7 +62,7 @@ export async function clockOut(sessionId: string) {
     .eq('id', sessionId);
 
   if (error) return { error: "Could not clock out." };
-  
+
   revalidatePath('/kiosk');
   return { success: true };
 }
