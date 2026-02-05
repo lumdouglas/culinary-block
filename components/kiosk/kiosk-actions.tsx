@@ -1,10 +1,51 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { clockIn, clockOut, getActiveSession } from "@/app/actions/kiosk";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Play, Square, Timer } from "lucide-react";
+
+// Local API wrappers to avoid circular import with kiosk-actions module
+async function clockIn(userId: string) {
+  try {
+    const res = await fetch("/api/kiosk/clock-in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+    const payload = await res.json();
+    if (!res.ok) return { error: payload?.error || "Failed to clock in" };
+    return { data: payload };
+  } catch (err) {
+    return { error: (err as Error).message || "Network error" };
+  }
+}
+
+async function clockOut(sessionId: string) {
+  try {
+    const res = await fetch("/api/kiosk/clock-out", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    });
+    const payload = await res.json();
+    if (!res.ok) return { error: payload?.error || "Failed to clock out" };
+    return { data: payload };
+  } catch (err) {
+    return { error: (err as Error).message || "Network error" };
+  }
+}
+
+async function getActiveSession(userId: string) {
+  try {
+    const res = await fetch(`/api/kiosk/active-session?userId=${encodeURIComponent(userId)}`);
+    if (!res.ok) return null;
+    const payload = await res.json();
+    return payload?.session ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function KioskActions({ userId, companyName }: { userId: string, companyName: string }) {
   const [activeSession, setActiveSession] = useState<any>(null);

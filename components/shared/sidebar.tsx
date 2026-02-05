@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Calendar, Receipt, Monitor, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button"; // Ensure this path is correct
 
 const navItems = [
   { name: "Schedule", href: "/calendar", icon: Calendar },
