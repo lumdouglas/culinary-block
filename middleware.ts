@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Note: Function name is now "middleware"
 export async function middleware(request: NextRequest) {
+  return NextResponse.next()
+
+  /* 
+  // Commented out to debug 500 error
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -63,6 +67,7 @@ export async function middleware(request: NextRequest) {
   }
 
   return response
+  */
 }
 
 // Keep your matcher as is
