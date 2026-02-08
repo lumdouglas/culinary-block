@@ -1,9 +1,6 @@
 import { createAdminClient } from '@/utils/supabase/admin';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-
-export const runtime = 'nodejs'; // Enforce Node.js runtime due to bcryptjs dependency
-
+import { compare } from 'bcrypt-ts';
 
 export async function POST(req: Request) {
   try {
@@ -41,7 +38,7 @@ export async function POST(req: Request) {
 
     if (profile.kiosk_pin_hash.startsWith('$2')) {
       // bcrypt hash format - use secure comparison
-      isValidPin = await bcrypt.compare(pin, profile.kiosk_pin_hash);
+      isValidPin = await compare(pin, profile.kiosk_pin_hash);
     } else {
       // Plaintext PIN - direct comparison (legacy format)
       isValidPin = pin === profile.kiosk_pin_hash;
