@@ -3,14 +3,17 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { UserMenu } from "@/components/user-menu"
 import { createClient } from "@/utils/supabase/client"
-import { MessageSquare } from "lucide-react"
+import { Menu, X } from "lucide-react"
 
 export function SiteNav() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const supabase = createClient()
+    const pathname = usePathname()
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -26,18 +29,23 @@ export function SiteNav() {
         return () => subscription.unsubscribe()
     }, [supabase])
 
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false)
+    }, [pathname])
+
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-sm">
             <div className="container mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
-                    {/* Logo */}
+                    {/* Logo - Reduced size by ~50% */}
                     <Link href="/" className="flex items-center">
                         <Image
                             src="/logo.png"
                             alt="Culinary Block - Kitchen Rental Facilities"
-                            width={800}
-                            height={200}
-                            className="h-16 w-auto object-contain sm:h-20 md:h-24 lg:h-32"
+                            width={400} // Reduced width
+                            height={100} // Reduced height
+                            className="h-8 w-auto object-contain sm:h-10 md:h-12" // Smaller height classes
                             priority
                         />
                     </Link>
@@ -62,17 +70,44 @@ export function SiteNav() {
                         </div>
                     </nav>
 
-                    {/* Mobile Navigation */}
-                    <div className="lg:hidden flex items-center gap-3">
+                    {/* Mobile Menu Toggle */}
+                    <div className="lg:hidden flex items-center gap-2">
                         <UserMenu />
-                        <Link href="/apply">
-                            <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-semibold">
-                                APPLY
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="p-2 text-slate-600 hover:text-slate-900 focus:outline-none"
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? (
+                                <X className="h-6 w-6" />
+                            ) : (
+                                <Menu className="h-6 w-6" />
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Mobile Navigation Overlay */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 top-[60px] z-40 bg-white lg:hidden overflow-y-auto pb-20">
+                    <div className="flex flex-col p-4 space-y-4">
+                        <MobileNavLink href="/">HOME</MobileNavLink>
+                        {isLoggedIn && (
+                            <>
+                                <MobileNavLink href="/kiosk">TIMESHEET</MobileNavLink>
+                                <MobileNavLink href="/calendar">SCHEDULING</MobileNavLink>
+                                <MobileNavLink href="/contact">CONTACT</MobileNavLink>
+                            </>
+                        )}
+                        <Link href="/apply" className="w-full">
+                            <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-6 text-lg shadow-md">
+                                APPLY NOW
                             </Button>
                         </Link>
                     </div>
                 </div>
-            </div>
+            )}
         </header>
     );
 }
@@ -85,6 +120,17 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
         >
             {children}
             <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-slate-900 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+        </Link>
+    );
+}
+
+function MobileNavLink({ href, children }: { href: string; children: React.ReactNode }) {
+    return (
+        <Link
+            href={href}
+            className="block w-full px-4 py-3 text-lg font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 rounded-lg transition-colors border-b border-slate-100 last:border-0"
+        >
+            {children}
         </Link>
     );
 }
