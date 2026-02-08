@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { SiteNav } from "@/components/site-nav";
+
 
 const applySchema = z.object({
   // Company Information
@@ -70,7 +70,7 @@ export default function ApplicationPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <SiteNav />
+
       <div className="max-w-4xl mx-auto py-12 px-6">
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold">Book a Tour / Apply for Kitchen Space</h1>

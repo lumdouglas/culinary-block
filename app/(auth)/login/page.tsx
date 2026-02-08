@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { SiteNav } from "@/components/site-nav";
+
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <SiteNav />
+
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
         <div className="w-full max-w-md space-y-8 rounded-xl border bg-white p-8 shadow-sm">
           <div>
