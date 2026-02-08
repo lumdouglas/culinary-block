@@ -10,7 +10,7 @@ import { useState } from "react";
 const navItems = [
   { name: "Schedule", href: "/calendar", icon: Calendar },
   { name: "My Billing", href: "/billing", icon: Receipt },
-  { name: "Kiosk Info", href: "/kiosk-info", icon: Monitor },
+  { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -21,10 +21,19 @@ export function Sidebar() {
   return (
     <div
       className={cn(
-        "flex h-full flex-col border-r bg-slate-50 p-4 transition-all duration-300 ease-in-out relative",
-        isCollapsed ? "w-20" : "w-64"
+        "flex h-full flex-col border-r bg-slate-50 p-4 transition-all duration-300 ease-in-out z-50",
+        // Mobile: Fixed drawer
+        "fixed inset-y-0 left-0 h-full md:relative",
+        isCollapsed ? "-translate-x-full w-0 md:translate-x-0 md:w-20" : "translate-x-0 w-64 shadow-2xl md:shadow-none"
       )}
     >
+      {/* Mobile Backdrop */}
+      {!isCollapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[-1] md:hidden"
+          onClick={() => setIsCollapsed(true)}
+        />
+      )}
       {/* Toggle Button */}
       <Button
         variant="ghost"

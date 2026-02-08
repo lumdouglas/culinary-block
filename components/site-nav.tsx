@@ -74,7 +74,9 @@ export function SiteNav() {
 
                     {/* Mobile Menu Toggle */}
                     <div className="lg:hidden flex items-center gap-2">
-                        <UserMenu />
+                        <div className="hidden">
+                            <UserMenu />
+                        </div>
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                             className="p-2 text-slate-600 hover:text-slate-900 focus:outline-none"
@@ -100,6 +102,19 @@ export function SiteNav() {
                                 <MobileNavLink href="/kiosk">TIMESHEET</MobileNavLink>
                                 <MobileNavLink href="/calendar">SCHEDULING</MobileNavLink>
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
+                                <div className="py-2 border-t border-slate-100 my-2">
+                                    <p className="px-3 text-xs font-semibold text-slate-500 mb-1">ACCOUNT</p>
+                                    <MobileNavLink href="/calendar">My Bookings</MobileNavLink>
+                                    <MobileNavLink href="/settings">Settings</MobileNavLink>
+                                    <MobileNavLink href="/admin/requests">Maintenance Requests</MobileNavLink>
+                                    <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
+                                    <button
+                                        onClick={() => supabase.auth.signOut().then(() => { window.location.href = '/' })}
+                                        className="block w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-slate-50 transition-colors"
+                                    >
+                                        Sign Out
+                                    </button>
+                                </div>
                             </>
                         )}
                         {!isLoggedIn && (
