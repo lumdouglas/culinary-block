@@ -1,48 +1,133 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { bookingSchema, BookingFormValues } from "@/lib/validations/booking"
-import { createBooking } from "@/app/actions/bookings"
-import { Kitchen } from "@/types/database"
+import { z } from "zod"
+import { createBooking, Station } from "@/app/actions/bookings"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { DialogClose } from "@/components/ui/dialog"
 
-// Helper to format Date objects for the datetime-local input
-const formatDateForInput = (date: Date) => {
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-};
+// Duration options in hours
+const durationOptions = [
+  { label: "30 minutes", value: 0.5 },
+  { label: "1 hour", value: 1 },
+  { label: "1.5 hours", value: 1.5 },
+  { label: "2 hours", value: 2 },
+  { label: "2.5 hours", value: 2.5 },
+  { label: "3 hours", value: 3 },
+  { label: "4 hours", value: 4 },
+  { label: "5 hours", value: 5 },
+  { label: "6 hours", value: 6 },
+  { label: "8 hours", value: 8 },
+  { label: "10 hours", value: 10 },
+  { label: "12 hours", value: 12 },
+]
 
-export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
-  // Use the type directly from the schema to ensure 100% alignment
+const bookingFormSchema = z.object({
+  station_id: z.string().min(1, "Please select a station"),
+  date: z.string().min(1, "Please select a date"),
+  start_time: z.string().min(1, "Please select a start time"),
+  duration: z.string().min(1, "Please select a duration"),
+  notes: z.string().optional(),
+})
+
+type BookingFormValues = z.infer<typeof bookingFormSchema>
+
+interface BookingModalProps {
+  stations: Station[]
+  preselectedStation?: number
+  preselectedDate?: Date
+  preselectedStartTime?: string
+  onSuccess?: () => void
+}
+
+export function BookingForm({
+  stations,
+  preselectedStation,
+  preselectedDate,
+  preselectedStartTime,
+  onSuccess
+}: BookingModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Format date for input
+  const formatDate = (date: Date) => {
+    return date.toISOString().split('T')[0]
+  }
+
+  // Generate time slots (30-minute increments)
+  const timeSlots = Array.from({ length: 48 }, (_, i) => {
+    const hours = Math.floor(i / 2)
+    const minutes = (i % 2) * 30
+    const time = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+    const displayTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+    return { value: time, label: displayTime }
+  })
+
   const form = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      kitchen_id: "",
-      start_time: new Date(),
-      end_time: new Date(Date.now() + 3600000),
+      station_id: preselectedStation?.toString() || "",
+      date: preselectedDate ? formatDate(preselectedDate) : formatDate(new Date()),
+      start_time: preselectedStartTime || "09:00",
+      duration: "1",
+      notes: "",
     },
-    // Adding this mode ensures validation triggers correctly on change
-    mode: "onChange", 
-  });
+  })
 
   async function onSubmit(values: BookingFormValues) {
+    setIsSubmitting(true)
     try {
-      const result = await createBooking(values);
+      // Calculate start and end times
+      const startDateTime = new Date(`${values.date}T${values.start_time}:00`)
+      const durationHours = parseFloat(values.duration)
+      const endDateTime = new Date(startDateTime.getTime() + durationHours * 60 * 60 * 1000)
+
+      const result = await createBooking(
+        parseInt(values.station_id),
+        startDateTime.toISOString(),
+        endDateTime.toISOString(),
+        values.notes
+      )
+
       if (result.error) {
-        toast.error(result.error);
+        toast.error(result.error)
       } else {
-        toast.success("Booking created successfully!");
-        // Optional: close modal or refresh
+        toast.success("Booking created successfully!")
+        form.reset()
+        onSuccess?.()
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
     }
+  }
+
+  // Calculate end time for display
+  const watchedValues = form.watch()
+  const calculateEndTime = () => {
+    if (watchedValues.date && watchedValues.start_time && watchedValues.duration) {
+      const startDateTime = new Date(`${watchedValues.date}T${watchedValues.start_time}:00`)
+      const durationHours = parseFloat(watchedValues.duration)
+      const endDateTime = new Date(startDateTime.getTime() + durationHours * 60 * 60 * 1000)
+      return endDateTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+    }
+    return '--'
   }
 
   return (
@@ -50,20 +135,20 @@ export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="kitchen_id"
+          name="station_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Select Kitchen</FormLabel>
+              <FormLabel>Select Station</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a kitchen" />
+                    <SelectValue placeholder="Choose a station" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {kitchens.map((kitchen) => (
-                    <SelectItem key={kitchen.id} value={kitchen.id}>
-                      {kitchen.name} (${kitchen.hourly_rate}/hr)
+                  {stations.map((station) => (
+                    <SelectItem key={station.id} value={station.id.toString()}>
+                      {station.name} ({station.category})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -72,7 +157,21 @@ export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
             </FormItem>
           )}
         />
-        
+
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -80,47 +179,83 @@ export function BookingForm({ kitchens }: { kitchens: Kitchen[] }) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="datetime-local" 
-                    // Convert Date -> String for HTML Input
-                    value={field.value instanceof Date ? formatDateForInput(field.value) : field.value}
-                    // Convert String -> Date for Form State
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                  />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-60">
+                    {timeSlots.map((slot) => (
+                      <SelectItem key={slot.value} value={slot.value}>
+                        {slot.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
-            name="end_time"
+            name="duration"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>End Time</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="datetime-local" 
-                    value={field.value instanceof Date ? formatDateForInput(field.value) : field.value}
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                    ref={field.ref}
-                  />
-                </FormControl>
+                <FormLabel>Duration</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select duration" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {durationOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value.toString()}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Creating..." : "Confirm Booking"}
-        </Button>
+        <div className="bg-slate-100 rounded-lg p-3 text-sm">
+          <span className="text-slate-500">End Time: </span>
+          <span className="font-medium">{calculateEndTime()}</span>
+        </div>
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes (optional)</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Any special requirements or notes..."
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex gap-2 pt-2">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" className="flex-1">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button type="submit" className="flex-1 bg-teal-600 hover:bg-teal-700" disabled={isSubmitting}>
+            {isSubmitting ? "Booking..." : "Confirm Booking"}
+          </Button>
+        </div>
       </form>
     </Form>
   )

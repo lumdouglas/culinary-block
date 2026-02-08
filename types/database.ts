@@ -2,6 +2,7 @@ export interface Profile {
   id: string
   email: string
   company_name: string
+  phone?: string
   kiosk_pin_hash?: string
   role: 'tenant' | 'admin'
   created_at: string
@@ -23,7 +24,16 @@ export interface Application {
   email: string
   company_name: string
   phone?: string
-  business_type?: string
+  address?: string
+  contact_first_name?: string
+  contact_last_name?: string
+  website?: string
+  years_in_operation?: string
+  social_media?: string
+  cuisine_type?: string
+  kitchen_use_description?: string
+  usage_hours?: string
+  equipment_needed?: string
   status: 'pending' | 'approved' | 'rejected'
   notes?: string
   submitted_at: string
