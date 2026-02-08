@@ -2,6 +2,9 @@ import { createAdminClient } from '@/utils/supabase/admin';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 
+export const runtime = 'nodejs'; // Enforce Node.js runtime due to bcryptjs dependency
+
+
 export async function POST(req: Request) {
   try {
     const { sessionId, userId, pin } = await req.json();
