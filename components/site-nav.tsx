@@ -60,11 +60,13 @@ export function SiteNav() {
                                 <NavLink href="/contact">CONTACT</NavLink>
                             </>
                         )}
-                        <Link href="/apply" className="ml-2">
-                            <Button className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-5 shadow-md hover:shadow-lg transition-all">
-                                APPLY NOW
-                            </Button>
-                        </Link>
+                        {!isLoggedIn && (
+                            <Link href="/apply" className="ml-2">
+                                <Button className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-5 shadow-md hover:shadow-lg transition-all">
+                                    APPLY NOW
+                                </Button>
+                            </Link>
+                        )}
                         <div className="ml-3 pl-3 border-l border-slate-200">
                             <UserMenu />
                         </div>
@@ -100,13 +102,15 @@ export function SiteNav() {
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
                             </>
                         )}
-                        <div className="pt-2 mt-2 border-t border-slate-100">
-                            <Link href="/apply" className="w-full">
-                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 text-sm shadow-sm">
-                                    APPLY NOW
-                                </Button>
-                            </Link>
-                        </div>
+                        {!isLoggedIn && (
+                            <div className="pt-2 mt-2 border-t border-slate-100">
+                                <Link href="/apply" className="w-full">
+                                    <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 text-sm shadow-sm">
+                                        APPLY NOW
+                                    </Button>
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

@@ -127,13 +127,13 @@ export function UserMenu() {
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
                             <Link href="/admin/requests" className="flex items-center">
                                 <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
-                                <span className="text-teal-900 font-medium">Tenant Requests</span>
+                                <span className="text-teal-900 font-medium">Maintenance Requests</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
                             <Link href="/admin/applications" className="flex items-center">
                                 <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
-                                <span className="text-teal-900 font-medium">Tenant Applications</span>
+                                <span className="text-teal-900 font-medium">Applications</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
