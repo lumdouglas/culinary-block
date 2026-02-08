@@ -86,7 +86,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="company_name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company/DBA Name *</FormLabel>
+                  <FormLabel className="text-slate-900">Company/DBA Name *</FormLabel>
                   <FormControl><Input placeholder="Boulangerie Co." {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="address" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address *</FormLabel>
+                  <FormLabel className="text-slate-900">Address *</FormLabel>
                   <FormControl><Input placeholder="123 Main St, San Jose, CA 95133" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -108,7 +108,7 @@ export default function ApplicationPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="contact_first_name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name *</FormLabel>
+                    <FormLabel className="text-slate-900">First Name *</FormLabel>
                     <FormControl><Input placeholder="Jane" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -116,7 +116,7 @@ export default function ApplicationPage() {
 
                 <FormField control={form.control} name="contact_last_name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name *</FormLabel>
+                    <FormLabel className="text-slate-900">Last Name *</FormLabel>
                     <FormControl><Input placeholder="Doe" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,7 +125,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email *</FormLabel>
+                  <FormLabel className="text-slate-900">Email *</FormLabel>
                   <FormControl><Input type="email" placeholder="jane@boulangerie.com" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -133,7 +133,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="phone" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone *</FormLabel>
+                  <FormLabel className="text-slate-900">Phone *</FormLabel>
                   <FormControl><Input placeholder="(555) 123-4567" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -146,7 +146,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="website" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Website</FormLabel>
+                  <FormLabel className="text-slate-900">Website</FormLabel>
                   <FormControl><Input placeholder="https://boulangerie.com" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -155,7 +155,7 @@ export default function ApplicationPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="years_in_operation" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Years in Operation</FormLabel>
+                    <FormLabel className="text-slate-900">Years in Operation</FormLabel>
                     <FormControl><Input placeholder="3 years" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -163,7 +163,7 @@ export default function ApplicationPage() {
 
                 <FormField control={form.control} name="social_media" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Social Media (Facebook/Instagram)</FormLabel>
+                    <FormLabel className="text-slate-900">Social Media (Facebook/Instagram)</FormLabel>
                     <FormControl><Input placeholder="@boulangerie" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -172,7 +172,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="cuisine_type" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>What type of cuisine will you be making? *</FormLabel>
+                  <FormLabel className="text-slate-900">What type of cuisine will you be making? *</FormLabel>
                   <FormControl><Input placeholder="French pastries and breads" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -185,7 +185,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="kitchen_use_description" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Describe your general kitchen use *</FormLabel>
+                  <FormLabel className="text-slate-900">Describe your general kitchen use *</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="We prepare fresh croissants and baguettes daily. Need space for dough preparation, proofing, and baking..."
@@ -199,7 +199,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="usage_hours" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Approximate hours and day/time usage *</FormLabel>
+                  <FormLabel className="text-slate-900">Approximate hours and day/time usage *</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Monday-Friday, 3am-10am. Weekends as needed for special orders..."
@@ -213,7 +213,7 @@ export default function ApplicationPage() {
 
               <FormField control={form.control} name="equipment_needed" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Equipment used for your food operation *</FormLabel>
+                  <FormLabel className="text-slate-900">Equipment used for your food operation *</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Rack oven, commercial mixer, proofing cabinet, prep tables, walk-in cooler..."

@@ -88,10 +88,10 @@ export function SiteNav() {
                 </div>
             </div>
 
-            {/* Mobile Navigation Overlay */}
+            {/* Mobile Navigation Dropdown */}
             {isMobileMenuOpen && (
-                <div className="fixed inset-0 top-[60px] z-40 bg-white lg:hidden overflow-y-auto pb-20">
-                    <div className="flex flex-col p-4 space-y-4">
+                <div className="absolute right-4 top-16 z-50 w-64 bg-white rounded-lg shadow-xl border border-slate-100 p-2 lg:hidden">
+                    <div className="flex flex-col space-y-1">
                         <MobileNavLink href="/">HOME</MobileNavLink>
                         {isLoggedIn && (
                             <>
@@ -100,11 +100,13 @@ export function SiteNav() {
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
                             </>
                         )}
-                        <Link href="/apply" className="w-full">
-                            <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-6 text-lg shadow-md">
-                                APPLY NOW
-                            </Button>
-                        </Link>
+                        <div className="pt-2 mt-2 border-t border-slate-100">
+                            <Link href="/apply" className="w-full">
+                                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2 text-sm shadow-sm">
+                                    APPLY NOW
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             )}
@@ -128,7 +130,7 @@ function MobileNavLink({ href, children }: { href: string; children: React.React
     return (
         <Link
             href={href}
-            className="block w-full px-4 py-3 text-lg font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 rounded-lg transition-colors border-b border-slate-100 last:border-0"
+            className="block w-full px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-emerald-600 rounded-md transition-colors"
         >
             {children}
         </Link>

@@ -129,11 +129,19 @@ export function BookingCalendar({
         .fc-scrollgrid { border-radius: 12px !important; overflow: hidden; }
         .fc-scrollgrid td, .fc-scrollgrid th { border-color: #e2e8f0 !important; }
         
+
         /* Mobile specific adjustments */
         @media (max-width: 768px) {
           .fc-toolbar { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem !important; }
           .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
         }
+
+        /* List view text darkening */
+        .fc-list-event-title { color: #0f172a !important; font-weight: 500 !important; }
+        .fc-list-event-time { color: #334155 !important; }
+        .fc-list-day-text { color: #0f172a !important; font-weight: 700 !important; }
+        .fc-list-day-side-text { color: #334155 !important; }
+        .fc-list-table td { border-color: #e2e8f0 !important; }
       `}</style>
     </div>
   )
