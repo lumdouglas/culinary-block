@@ -9,6 +9,14 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
+const navItems = [
+  { name: "CALENDAR", href: "/calendar", icon: Calendar },
+  { name: "Timesheets", href: "/timesheets", icon: Clock },
+  { name: "My Billing", href: "/billing", icon: Receipt },
+  { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
+  { name: "Settings", href: "/settings", icon: Settings },
+];
+
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
