@@ -51,7 +51,7 @@ export default async function TimesheetsPage() {
                             <Card key={shift.id}>
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm font-medium text-slate-500">
-                                        {format(new Date(shift.clock_in), "MMM d, yyyy")}
+                                        {new Date(shift.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric', year: 'numeric' })}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -61,8 +61,8 @@ export default async function TimesheetsPage() {
                                             : "Active"}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1">
-                                        {format(new Date(shift.clock_in), "h:mm a")} -
-                                        {shift.clock_out ? format(new Date(shift.clock_out), "h:mm a") : " Now"}
+                                        {new Date(shift.clock_in).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' })} -
+                                        {shift.clock_out ? new Date(shift.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' }) : " Now"}
                                     </div>
                                 </CardContent>
                             </Card>
