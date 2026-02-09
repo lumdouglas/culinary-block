@@ -295,14 +295,14 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <h4 className="text-teal-500 font-bold text-lg mb-4">Culinary Block</h4>
+              <h4 className="text-teal-400 font-bold text-lg mb-4">Culinary Block</h4>
               <p className="text-sm leading-relaxed">
                 8,000 sq ft professional commercial kitchen space for food entrepreneurs,
                 caterers, bakers, and culinary creatives.
               </p>
             </div>
             <div>
-              <h4 className="text-teal-500 font-bold text-lg mb-4">Contact</h4>
+              <h4 className="text-teal-400 font-bold text-lg mb-4">Contact</h4>
               <div className="space-y-2 text-sm">
                 <p className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
@@ -315,7 +315,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <h4 className="text-teal-500 font-bold text-lg mb-4">Hours</h4>
+              <h4 className="text-teal-400 font-bold text-lg mb-4">Hours</h4>
               <div className="space-y-3 text-sm">
                 <div>
                   <p className="text-white font-medium">Kitchen Access</p>
@@ -328,7 +328,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <h4 className="text-teal-500 font-bold text-lg mb-4">Location</h4>
+              <h4 className="text-teal-400 font-bold text-lg mb-4">Location</h4>
               <div className="rounded-lg overflow-hidden mb-3">
                 <iframe
                   src="https://maps.google.com/maps?q=1901%20Las%20Plumas%20Ave%2C%20San%20Jose%2C%20CA%2095133&t=&z=13&ie=UTF8&iwloc=&output=embed"
