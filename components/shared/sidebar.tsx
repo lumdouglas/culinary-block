@@ -1,8 +1,13 @@
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+"use client"
 
-// ... imports ...
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 export function Sidebar() {
   const pathname = usePathname();

@@ -13,13 +13,17 @@ interface RequestsTableProps {
 const statusColors: Record<RequestStatus, string> = {
     pending: 'bg-amber-100 text-amber-700 border-amber-200',
     in_progress: 'bg-blue-100 text-blue-700 border-blue-200',
-    resolved: 'bg-green-100 text-green-700 border-green-200'
+    resolved: 'bg-green-100 text-green-700 border-green-200',
+    approved: 'bg-green-100 text-green-700 border-green-200',
+    rejected: 'bg-red-100 text-red-700 border-red-200'
 }
 
 const statusLabels: Record<RequestStatus, string> = {
     pending: 'Pending',
     in_progress: 'In Progress',
-    resolved: 'Resolved'
+    resolved: 'Resolved',
+    approved: 'Approved',
+    rejected: 'Rejected'
 }
 
 const priorityColors: Record<RequestPriority, string> = {
@@ -40,9 +44,9 @@ export function RequestsTable({ requests }: RequestsTableProps) {
         return true
     })
 
-    const handleStatusChange = (requestId: string, status: RequestStatus) => {
+    const handleStatusChange = (request: Request, status: RequestStatus) => {
         startTransition(async () => {
-            const result = await updateRequest(requestId, { status })
+            const result = await updateRequest(request, { status })
             if (result.error) {
                 toast.error(result.error)
             } else {
@@ -51,9 +55,9 @@ export function RequestsTable({ requests }: RequestsTableProps) {
         })
     }
 
-    const handlePriorityChange = (requestId: string, priority: RequestPriority) => {
+    const handlePriorityChange = (request: Request, priority: RequestPriority) => {
         startTransition(async () => {
-            const result = await updateRequest(requestId, { priority })
+            const result = await updateRequest(request, { priority })
             if (result.error) {
                 toast.error(result.error)
             } else {
@@ -76,6 +80,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         <option value="all">All Types</option>
                         <option value="maintenance">Maintenance</option>
                         <option value="rule_violation">Rule Violation</option>
+                        <option value="timesheet">Timesheet</option>
                     </select>
                 </div>
                 <div>
@@ -88,7 +93,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         <option value="all">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
+                        <option value="resolved">Resolved/Approved</option>
                     </select>
                 </div>
             </div>
@@ -116,10 +121,10 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                     <div className="flex items-center gap-2 text-green-700">
                         <CheckCircle className="h-5 w-5" />
-                        <span className="font-medium">Resolved</span>
+                        <span className="font-medium">Resolved/Approved</span>
                     </div>
                     <p className="text-2xl font-bold text-green-800 mt-1">
-                        {requests.filter(r => r.status === 'resolved').length}
+                        {requests.filter(r => ['resolved', 'approved'].includes(r.status)).length}
                     </p>
                 </div>
             </div>
@@ -159,21 +164,27 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                     </td>
                                     <td className="px-4 py-3">
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
-                                                ? 'bg-teal-100 text-teal-700'
+                                            ? 'bg-teal-100 text-teal-700'
+                                            : request.type === 'timesheet'
+                                                ? 'bg-purple-100 text-purple-700'
                                                 : 'bg-amber-100 text-amber-700'
                                             }`}>
                                             {request.type === 'maintenance' ? (
                                                 <Wrench className="h-3 w-3" />
+                                            ) : request.type === 'timesheet' ? (
+                                                <Clock className="h-3 w-3" />
                                             ) : (
                                                 <AlertTriangle className="h-3 w-3" />
                                             )}
-                                            {request.type === 'maintenance' ? 'Maintenance' : 'Rule Violation'}
+                                            {request.type === 'maintenance' ? 'Maintenance'
+                                                : request.type === 'timesheet' ? 'Timesheet'
+                                                    : 'Rule Violation'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 max-w-xs">
-                                        <p className="text-sm text-slate-700 truncate" title={request.description}>
+                                        <div className="text-sm text-slate-700 whitespace-pre-wrap max-h-20 overflow-y-auto" title={request.description}>
                                             {request.description}
-                                        </p>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-3">
                                         {request.photo_url ? (
@@ -191,9 +202,9 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                     <td className="px-4 py-3">
                                         <select
                                             value={request.priority}
-                                            onChange={(e) => handlePriorityChange(request.id, e.target.value as RequestPriority)}
-                                            disabled={isPending}
-                                            className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${priorityColors[request.priority]}`}
+                                            onChange={(e) => handlePriorityChange(request, e.target.value as RequestPriority)}
+                                            disabled={isPending || request.type === 'timesheet'}
+                                            className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${request.type === 'timesheet' ? 'opacity-50 cursor-not-allowed' : ''} ${priorityColors[request.priority]}`}
                                         >
                                             <option value="low">Low</option>
                                             <option value="medium">Medium</option>
@@ -203,13 +214,15 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                     <td className="px-4 py-3">
                                         <select
                                             value={request.status}
-                                            onChange={(e) => handleStatusChange(request.id, e.target.value as RequestStatus)}
+                                            onChange={(e) => handleStatusChange(request, e.target.value as RequestStatus)}
                                             disabled={isPending}
                                             className={`px-2 py-1 rounded text-xs font-medium border cursor-pointer ${statusColors[request.status]}`}
                                         >
                                             <option value="pending">Pending</option>
                                             <option value="in_progress">In Progress</option>
                                             <option value="resolved">Resolved</option>
+                                            <option value="approved">Approved</option>
+                                            <option value="rejected">Rejected</option>
                                         </select>
                                     </td>
                                 </tr>
