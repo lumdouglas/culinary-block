@@ -124,6 +124,9 @@ export function SiteNav() {
                                         APPLY NOW
                                     </Button>
                                 </Link>
+                                <Link href="/login" className="block w-full text-center mt-3 text-sm font-medium text-slate-600 hover:text-slate-900">
+                                    Tenant Login
+                                </Link>
                             </div>
                         )}
                     </div>
