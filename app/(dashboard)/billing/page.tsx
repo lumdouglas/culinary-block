@@ -31,9 +31,6 @@ function calculateTieredCost(totalHours: number): number {
 export default async function BillingPage() {
   const supabase = await createClient();
 
-  const now = new Date();
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return <div>Please log in to view billing.</div>;
@@ -60,13 +57,20 @@ export default async function BillingPage() {
 
   let totalMinutes = 0;
 
+  // Helper to get PST Date object
+  const getPSTDate = (dateStr: string) => {
+    const pstStr = new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+    return new Date(pstStr);
+  };
+
   // Group records by month for history
   const history = records.reduce((acc: any, record: any) => {
-    const clockIn = new Date(record.clock_in);
-    // Convert to PST string then parse back to get correct bucket
-    const pstDateStr = clockIn.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
-    const pstDate = new Date(pstDateStr);
+    if (!record.clock_in) return acc;
 
+    // Convert to PST string then parse back to get correct bucket
+    const pstDate = getPSTDate(record.clock_in);
+
+    // Key format: YYYY-MM
     const key = `${pstDate.getFullYear()}-${String(pstDate.getMonth() + 1).padStart(2, '0')}`;
 
     if (!acc[key]) {
@@ -91,144 +95,134 @@ export default async function BillingPage() {
     return acc;
   }, {});
 
-  if (!acc[key]) {
-    acc[key] = {
-      month: key,
-      date: date, // Keep a date object for formatting
-      totalMinutes: 0,
-      recordCount: 0
-    };
-  }
+  const totalHours = totalMinutes / 60;
+  const currentMonthCost = calculateTieredCost(totalHours);
 
-  const timesheet = record.timesheets?.[0];
-  if (timesheet?.duration_minutes) {
-    acc[key].totalMinutes += timesheet.duration_minutes;
-  }
-  acc[key].recordCount++;
+  const historyList = Object.values(history || {}).sort((a: any, b: any) => b.month.localeCompare(a.month));
 
-  return acc;
-}, { });
+  return (
+    <div className="p-8 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
+        <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
+      </div>
 
-const historyList = Object.values(history || {}).sort((a: any, b: any) => b.month.localeCompare(a.month));
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="bg-emerald-50 border-emerald-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-emerald-900 text-sm font-medium">Current Month Usage (PST)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-emerald-700">{totalHours.toFixed(1)} hrs</div>
+            <p className="text-xs text-emerald-600 mt-1">
+              Current Tier: {totalHours <= 20 ? "$50/hr" : totalHours <= 100 ? "$40/hr" : "$30/hr"}
+            </p>
+          </CardContent>
+        </Card>
 
-return (
-  <div className="p-8 space-y-8">
-    <div>
-      <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
-      <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
-    </div>
+        <Card className="bg-slate-900 text-white border-none shadow-lg">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-slate-400 text-sm font-medium">Estimated Balance (Current Month)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">${currentMonthCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-slate-400 mt-1">Next rate drop at {totalHours <= 20 ? "20" : "100"} hours</p>
+          </CardContent>
+        </Card>
+      </div>
 
-    <div className="grid gap-4 md:grid-cols-2">
-      <Card className="bg-emerald-50 border-emerald-200">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-emerald-900 text-sm font-medium">Current Month Usage</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold text-emerald-700">{totalHours.toFixed(1)} hrs</div>
-          <p className="text-xs text-emerald-600 mt-1">
-            Current Tier: {totalHours <= 20 ? "$50/hr" : totalHours <= 100 ? "$40/hr" : "$30/hr"}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-slate-900 text-white border-none shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-slate-400 text-sm font-medium">Estimated Balance (Current Month)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-3xl font-bold">${currentMonthCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-          <p className="text-xs text-slate-400 mt-1">Next rate drop at {totalHours <= 20 ? "20" : "100"} hours</p>
-        </CardContent>
-      </Card>
-    </div>
-
-    {/* Billing History */}
-    <div>
-      <h2 className="text-xl font-bold mb-4">Billing History</h2>
-      <div className="rounded-md border bg-white overflow-hidden">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>Month</TableHead>
-              <TableHead>Total Hours</TableHead>
-              <TableHead>Bookings</TableHead>
-              <TableHead>Estimated Cost</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {historyList.map((period: any) => {
-              const hours = period.totalMinutes / 60;
-              const cost = calculateTieredCost(hours);
-              const monthName = period.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-              const isCurrentMonth = period.month === currentMonthKey;
-
-              return (
-                <TableRow key={period.month}>
-                  <TableCell className="font-medium">{monthName}</TableCell>
-                  <TableCell>{hours.toFixed(1)} hrs</TableCell>
-                  <TableCell>{period.recordCount}</TableCell>
-                  <TableCell>${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell>
-                    <Badge variant={isCurrentMonth ? "outline" : "default"}>
-                      {isCurrentMonth ? "In Progress" : "Invoiced"}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {historyList.length === 0 && (
+      {/* Billing History */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">Billing History</h2>
+        <div className="rounded-md border bg-white overflow-hidden">
+          <Table>
+            <TableHeader className="bg-slate-50">
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4 text-slate-500">No billing history found.</TableCell>
+                <TableHead>Month</TableHead>
+                <TableHead>Total Hours</TableHead>
+                <TableHead>Bookings</TableHead>
+                <TableHead>Estimated Cost</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+            </TableHeader>
+            <TableBody>
+              {historyList.map((period: any) => {
+                const hours = period.totalMinutes / 60;
+                const cost = calculateTieredCost(hours);
+                const monthName = period.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const isCurrentMonth = period.month === currentMonthKey;
 
-    {/* Usage Table */}
-    <div>
-      <h2 className="text-xl font-bold mb-4">Recent Usage Details</h2>
-      <div className="rounded-md border bg-white overflow-hidden">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Kitchen</TableHead>
-              <TableHead>Scheduled</TableHead>
-              <TableHead>Actual Duration</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {records?.slice(0, 50).map((record: any) => {
-              const timesheet = record.timesheets?.[0];
-              const date = new Date(record.start_time).toLocaleDateString();
-              const scheduled = `${new Date(record.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(record.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-              return (
-                <TableRow key={record.id}>
-                  <TableCell className="font-medium">{date}</TableCell>
-                  <TableCell>{record.kitchens?.name}</TableCell>
-                  <TableCell className="text-slate-500">{scheduled}</TableCell>
-                  <TableCell>
-                    {timesheet?.duration_minutes
-                      ? `${(timesheet.duration_minutes / 60).toFixed(1)} hrs`
-                      : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={timesheet?.clock_out ? "default" : "secondary"}>
-                      {timesheet?.clock_out ? "Verified" : "Upcoming/Pending"}
-                    </Badge>
-                  </TableCell>
+                return (
+                  <TableRow key={period.month}>
+                    <TableCell className="font-medium">{monthName}</TableCell>
+                    <TableCell>{hours.toFixed(1)} hrs</TableCell>
+                    <TableCell>{period.recordCount}</TableCell>
+                    <TableCell>${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>
+                      <Badge variant={isCurrentMonth ? "outline" : "default"}>
+                        {isCurrentMonth ? "In Progress" : "Invoiced"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {historyList.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-slate-500">No billing history found.</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Usage Table */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">Recent Usage Details</h2>
+        <div className="rounded-md border bg-white overflow-hidden">
+          <Table>
+            <TableHeader className="bg-slate-50">
+              <TableRow>
+                <TableHead>Date (PST)</TableHead>
+                <TableHead>Kitchen</TableHead>
+                <TableHead>Time Range (PST)</TableHead>
+                <TableHead>Actual Duration</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {records?.slice(0, 50).map((record: any) => {
+                // Determine PST Date
+                const datePST = new Date(record.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
+
+                // Format Time Range in PST
+                const startPST = new Date(record.clock_in).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute: '2-digit' });
+                const endPST = record.clock_out
+                  ? new Date(record.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute: '2-digit' })
+                  : "Active";
+
+                return (
+                  <TableRow key={record.id}>
+                    <TableCell className="font-medium">{datePST}</TableCell>
+                    <TableCell>{record.kitchens?.name || 'Unknown'}</TableCell>
+                    <TableCell className="text-slate-500">{startPST} - {endPST}</TableCell>
+                    <TableCell>
+                      {record.duration_minutes
+                        ? `${(record.duration_minutes / 60).toFixed(1)} hrs`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={record.clock_out ? "default" : "secondary"}>
+                        {record.clock_out ? "Verified" : "In Progress"}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
