@@ -1,24 +1,12 @@
-"use client"
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-
-const navItems = [
-  { name: "CALENDAR", href: "/calendar", icon: Calendar },
-  { name: "Timesheets", href: "/timesheets", icon: Clock },
-  { name: "My Billing", href: "/billing", icon: Receipt },
-  { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+// ... imports ...
 
 export function Sidebar() {
   const pathname = usePathname();
-  // Auto-collapse on calendar page, otherwise expand by default (or keep user choice? User said "goes straight... with sidebar collapsed")
-  // We'll initialize based on path, but also listen to path changes
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(pathname === "/calendar");
 
   // Effect to collapse when entering calendar
@@ -28,6 +16,18 @@ export function Sidebar() {
     }
   }, [pathname]);
 
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/login");
+      router.refresh();
+      toast.success("Signed out successfully");
+    } catch (error) {
+      toast.error("Error signing out");
+    }
+  };
+
   return (
     <>
       {/* Mobile Toggle Button (Visible only when sidebar is collapsed on mobile) */}
@@ -35,8 +35,8 @@ export function Sidebar() {
         variant="ghost"
         size="icon"
         className={cn(
-          "fixed left-0 top-24 z-[60] md:hidden h-10 w-8 rounded-r-lg border bg-white shadow-md text-slate-600 hover:bg-slate-50 transition-transform duration-300",
-          !isCollapsed && "-translate-x-full" // Hide off-screen if expanded (though expanded sidebar covers it anyway)
+          "fixed left-0 top-24 z-[100] md:hidden h-10 w-8 rounded-r-lg border border-l-0 border-slate-700 bg-slate-900 shadow-xl text-white hover:bg-slate-800 transition-transform duration-300",
+          !isCollapsed && "-translate-x-full"
         )}
         onClick={() => setIsCollapsed(false)}
       >
@@ -51,18 +51,20 @@ export function Sidebar() {
           isCollapsed ? "-translate-x-full w-0 md:translate-x-0 md:w-20" : "translate-x-0 w-64 shadow-2xl md:shadow-none"
         )}
       >
-        {/* Mobile Backdrop */}
+        {/* ... backdrop ... */}
         {!isCollapsed && (
           <div
             className="fixed inset-0 bg-black/50 z-[-1] md:hidden"
             onClick={() => setIsCollapsed(true)}
           />
         )}
-        {/* Sidebar Header */}
+
+        {/* ... header ... */}
         <div className={cn(
           "mb-8 flex transition-all duration-300",
           isCollapsed ? "flex-col items-center justify-center gap-4" : "flex-row items-center justify-between"
         )}>
+          {/* ... logo ... */}
           <div className="flex items-center overflow-hidden">
             <div className="h-8 w-8 rounded-lg bg-emerald-600 shrink-0 flex items-center justify-center text-white font-bold">
               CB
@@ -72,7 +74,6 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Toggle Button */}
           <Button
             variant="ghost"
             size="icon"
@@ -118,6 +119,7 @@ export function Sidebar() {
               "w-full text-slate-600 hover:text-red-600",
               isCollapsed ? "justify-center px-0" : "justify-start"
             )}
+            onClick={handleSignOut}
           >
             <LogOut className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-3")} />
             {!isCollapsed && <span>Sign Out</span>}
