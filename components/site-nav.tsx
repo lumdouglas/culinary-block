@@ -56,7 +56,7 @@ export function SiteNav() {
                         {isLoggedIn && (
                             <>
                                 <NavLink href="/kiosk">TIMESHEET</NavLink>
-                                <NavLink href="/calendar">SCHEDULE</NavLink>
+                                <NavLink href="/calendar">CALENDAR</NavLink>
                                 <NavLink href="/contact">CONTACT</NavLink>
                             </>
                         )}
@@ -100,7 +100,7 @@ export function SiteNav() {
                         {isLoggedIn && (
                             <>
                                 <MobileNavLink href="/kiosk">TIMESHEET</MobileNavLink>
-                                <MobileNavLink href="/calendar">Schedule</MobileNavLink>
+                                <MobileNavLink href="/calendar">Calendar</MobileNavLink>
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
                                 <div className="py-2 border-t border-slate-100 my-2">
                                     <p className="px-3 text-xs font-semibold text-slate-500 mb-1">ACCOUNT</p>

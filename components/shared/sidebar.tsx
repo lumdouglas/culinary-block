@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const navItems = [
-  { name: "Schedule", href: "/calendar", icon: Calendar },
+  { name: "CALENDAR", href: "/calendar", icon: Calendar },
   { name: "Timesheets", href: "/timesheets", icon: Clock },
   { name: "My Billing", href: "/billing", icon: Receipt },
   { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
@@ -17,7 +17,16 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Auto-collapse on calendar page, otherwise expand by default (or keep user choice? User said "goes straight... with sidebar collapsed")
+  // We'll initialize based on path, but also listen to path changes
+  const [isCollapsed, setIsCollapsed] = useState(pathname === "/calendar");
+
+  // Effect to collapse when entering calendar
+  useEffect(() => {
+    if (pathname === "/calendar") {
+      setIsCollapsed(true);
+    }
+  }, [pathname]);
 
   return (
     <div

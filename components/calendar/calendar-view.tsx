@@ -99,6 +99,7 @@ export function BookingCalendar({
         select={handleDateSelect}
         slotMinTime="00:00:00"
         slotMaxTime="24:00:00"
+        scrollTime="07:00:00"
         slotDuration="00:30:00"
         allDaySlot={false}
         weekends={true}
