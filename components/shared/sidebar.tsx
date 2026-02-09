@@ -36,29 +36,32 @@ export function Sidebar() {
         />
       )}
       {/* Toggle Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute -right-4 top-6 h-8 w-8 rounded-full border bg-white shadow-md z-[100] hover:bg-slate-100 flex"
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </Button>
-
       <div className={cn(
-        "mb-8 flex items-center px-2",
-        isCollapsed ? "justify-center" : ""
+        "mb-8 flex transition-all duration-300",
+        isCollapsed ? "flex-col items-center justify-center gap-4" : "flex-row items-center justify-between"
       )}>
-        <div className="h-8 w-8 rounded-lg bg-emerald-600 shrink-0 flex items-center justify-center text-white font-bold">
-          CB
+        <div className="flex items-center overflow-hidden">
+          <div className="h-8 w-8 rounded-lg bg-emerald-600 shrink-0 flex items-center justify-center text-white font-bold">
+            CB
+          </div>
+          {!isCollapsed && (
+            <span className="ml-3 text-xl font-bold whitespace-nowrap overflow-hidden">Culinary Block</span>
+          )}
         </div>
-        {!isCollapsed && (
-          <span className="ml-3 text-xl font-bold whitespace-nowrap overflow-hidden">Culinary Block</span>
-        )}
+
+        {/* Toggle Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full border bg-white shadow-sm hover:bg-slate-100 flex shrink-0"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
       </div>
 
       <nav className="flex-1 space-y-1">
