@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { createClient } from '@/utils/supabase/client'
 import { User, Building2, Phone, Mail, FileText, Bell, Save } from 'lucide-react'
+import { SecuritySettings } from "@/components/settings/security-form"
 
 const profileSchema = z.object({
   company_name: z.string().min(1, "Company name is required"),
@@ -297,6 +298,17 @@ export default function SettingsPage() {
           </div>
         </form>
       </Form>
+
+      {/* Security Settings */}
+      <div className="mt-8 pt-8 border-t">
+        <h2 className="text-xl font-bold mb-6">Security</h2>
+        <div className="bg-slate-50 p-6 rounded-xl border mb-6">
+          <p className="text-sm text-slate-600 mb-4">
+            Manage your password and Kiosk PIN.
+          </p>
+          <SecuritySettings />
+        </div>
+      </div>
     </div>
   )
 }

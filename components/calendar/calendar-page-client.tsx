@@ -111,7 +111,7 @@ export default function CalendarPageClient() {
 
                             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-slate-900 hover:bg-slate-800" size="lg">
+                                    <Button className="bg-slate-900 hover:bg-slate-800 text-white" size="lg">
                                         <Plus className="mr-2 h-5 w-5" />
                                         New Booking
                                     </Button>

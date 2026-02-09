@@ -72,6 +72,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const [countdown, setCountdown] = useState(10);
   const [sessionDuration, setSessionDuration] = useState<string>("");
+  const [successTime, setSuccessTime] = useState<string | null>(null);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
   // Check if the user is already clocked in
@@ -141,7 +142,9 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
       toast.error("Wrong PIN", { description: "Please try again" });
       triggerErrorAnimation();
     } else {
-      setActiveSession(result.data);
+      const time = new Date().toISOString();
+      setSuccessTime(time);
+      setActiveSession(result.data); // Optimistic update or use returned data
       setPin("");
       setCountdown(10);
       setScreenState('clocked-in');
@@ -203,7 +206,9 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
         <div>
           <h2 className="text-3xl font-bold text-slate-900">{companyName}</h2>
           <p className="text-xl text-emerald-600 font-semibold mt-2">Shift Started!</p>
-          <p className="text-slate-500 mt-1">You are now clocked in.</p>
+          <p className="text-slate-500 mt-1">
+            You are now clocked in at {successTime ? new Date(successTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}.
+          </p>
         </div>
         <div className="text-slate-400 text-sm">
           Returning to main screen in {countdown} seconds...
