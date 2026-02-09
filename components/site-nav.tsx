@@ -56,7 +56,7 @@ export function SiteNav() {
                         {isLoggedIn && (
                             <>
                                 <NavLink href="/kiosk">TIMESHEET</NavLink>
-                                <NavLink href="/calendar">SCHEDULING</NavLink>
+                                <NavLink href="/calendar">SCHEDULE</NavLink>
                                 <NavLink href="/contact">CONTACT</NavLink>
                             </>
                         )}
