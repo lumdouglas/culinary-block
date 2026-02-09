@@ -91,7 +91,7 @@ export function UserMenu() {
                 onClick={() => router.push('/login')}
                 className="border-slate-600 text-slate-600 hover:bg-slate-50"
             >
-                Sign In
+                Tenant Login
             </Button>
         )
     }
