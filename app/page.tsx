@@ -331,7 +331,7 @@ export default function Home() {
               <h4 className="text-teal-500 font-bold text-lg mb-4">Location</h4>
               <div className="rounded-lg overflow-hidden mb-3">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d101276.41585721947!2d-122.0016215!3d37.3382082!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x808fcae48af93ff5%3A0xb99d8c0aca9f717b!2sSan%20Jose%2C%20CA!5e0!3m2!1sen!2sus!4v1234567890"
+                  src="https://maps.google.com/maps?q=1901%20Las%20Plumas%20Ave%2C%20San%20Jose%2C%20CA%2095133&t=&z=13&ie=UTF8&iwloc=&output=embed"
                   width="100%"
                   height="120"
                   style={{ border: 0 }}
@@ -342,7 +342,7 @@ export default function Home() {
                 ></iframe>
               </div>
               <a
-                href="https://maps.google.com/?q=San+Jose,+CA"
+                href="https://maps.google.com/?q=1901+Las+Plumas+Ave,+San+Jose,+CA+95133"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-white hover:text-slate-200 font-medium"
