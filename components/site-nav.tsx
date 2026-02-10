@@ -106,7 +106,7 @@ export function SiteNav() {
                                     <p className="px-3 text-xs font-semibold text-slate-500 mb-1">ACCOUNT</p>
                                     <MobileNavLink href="/calendar">My Bookings</MobileNavLink>
                                     <MobileNavLink href="/settings">Settings</MobileNavLink>
-                                    <MobileNavLink href="/admin/requests">Maintenance Requests</MobileNavLink>
+                                    <MobileNavLink href="/admin/requests">Tenant Requests</MobileNavLink>
                                     <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
                                     <button
                                         onClick={() => supabase.auth.signOut().then(() => { window.location.href = '/' })}
