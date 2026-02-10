@@ -109,10 +109,10 @@ export function Sidebar() {
             return (
               <Link key={item.href} href={item.href}>
                 <span className={cn(
-                  "flex items-center rounded-md px-3 py-2 text-sm font-medium cursor-pointer transition-colors",
+                  "flex items-center rounded-md px-3 py-2 text-sm font-semibold cursor-pointer transition-colors",
                   isActive
                     ? "bg-white text-emerald-600 shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-600 hover:bg-slate-200",
+                    : "text-slate-700 hover:bg-slate-200",
                   isCollapsed && "justify-center px-2"
                 )}>
                   <Icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-3")} />
