@@ -90,8 +90,8 @@ export function BookingCalendar({
           right: isMobile ? 'timeGridDay,listWeek' : 'dayGridMonth,timeGridWeek,timeGridDay'
         }}
         events={events}
-        height={isMobile ? "auto" : "70vh"}
-        contentHeight={isMobile ? "auto" : undefined}
+        height={isMobile ? "80vh" : "70vh"}
+        contentHeight={undefined}
         aspectRatio={isMobile ? 0.8 : 1.35}
         nowIndicator={true}
         editable={false}
