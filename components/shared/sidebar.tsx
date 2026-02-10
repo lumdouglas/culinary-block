@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock, PenTool as Tool } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -13,6 +13,7 @@ const navItems = [
   { name: "CALENDAR", href: "/calendar", icon: Calendar },
   { name: "Timesheets", href: "/timesheets", icon: Clock },
   { name: "My Billing", href: "/billing", icon: Receipt },
+  { name: "Maintenance", href: "/maintenance", icon: Tool },
   { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

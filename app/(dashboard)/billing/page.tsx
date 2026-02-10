@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 // Local algorithm to handle your specific 50/40/30 pricing tiers
 function calculateTieredCost(totalHours: number): number {
@@ -102,9 +104,14 @@ export default async function BillingPage() {
 
   return (
     <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
-        <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
+          <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
+        </div>
+        <Link href="/billing/invoices">
+          <Button variant="outline">View Invoices</Button>
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

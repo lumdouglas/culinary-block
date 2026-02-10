@@ -23,14 +23,14 @@ const stationColors: Record<string, string> = {
 interface BookingCalendarProps {
   bookings: Booking[]
   stations: Station[]
-  selectedStation: number | null
+  selectedStations: number[]
   onDateSelect?: (start: Date, end: Date) => void
 }
 
 export function BookingCalendar({
   bookings,
   stations,
-  selectedStation,
+  selectedStations,
   onDateSelect
 }: BookingCalendarProps) {
   const [isMobile, setIsMobile] = useState(false)
@@ -50,9 +50,9 @@ export function BookingCalendar({
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Filter bookings by selected station
-  const filteredBookings = selectedStation
-    ? bookings.filter(b => b.station_id === selectedStation)
+  // Filter bookings by selected stations
+  const filteredBookings = selectedStations.length > 0
+    ? bookings.filter(b => selectedStations.includes(b.station_id))
     : bookings
 
   // Map bookings to FullCalendar events

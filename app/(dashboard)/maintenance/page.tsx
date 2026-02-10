@@ -1,0 +1,156 @@
+import { createClient } from "@/utils/supabase/server";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Plus } from "lucide-react";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { CreateTicketForm } from "@/components/maintenance/create-ticket-form";
+
+export default async function MaintenancePage() {
+    const supabase = await createClient();
+
+    const { data: tickets } = await supabase
+        .from("maintenance_tickets")
+        .select("*, profiles:user_id(company_name), kitchens(name)")
+        .order("created_at", { ascending: false });
+
+    // Get kitchens for the form
+    const { data: kitchens } = await supabase.from("kitchens").select("id, name").eq("is_active", true);
+
+    return (
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Maintenance</h1>
+                    <p className="text-slate-500">Report and track equipment issues</p>
+                </div>
+
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Report Issue
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Report Maintenance Issue</DialogTitle>
+                            <DialogDescription>
+                                Describe the issue clearly. We will address it as soon as possible.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <CreateTicketForm kitchens={kitchens || []} />
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Issue</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Reported By</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Priority</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {tickets?.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                    No maintenance tickets found.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            tickets?.map((ticket) => (
+                                <TableRow key={ticket.id}>
+                                    <TableCell className="font-medium max-w-[200px] truncate">
+                                        {ticket.title}
+                                    </TableCell>
+                                    <TableCell>
+                                        {ticket.kitchens?.name || "General Facility"}
+                                    </TableCell>
+                                    <TableCell>
+                                        {ticket.profiles?.company_name || "Unknown"}
+                                    </TableCell>
+                                    <TableCell>
+                                        {format(new Date(ticket.created_at), "MMM d, yyyy")}
+                                    </TableCell>
+                                    <TableCell>
+                                        <PriorityBadge priority={ticket.priority} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={ticket.status} />
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Link href={`/maintenance/${ticket.id}`}>
+                                            <Button variant="ghost" size="sm">
+                                                View
+                                            </Button>
+                                        </Link>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
+}
+
+function StatusBadge({ status }: { status: string }) {
+    const styles = {
+        open: "bg-blue-100 text-blue-700",
+        in_progress: "bg-yellow-100 text-yellow-700",
+        resolved: "bg-green-100 text-green-700",
+        closed: "bg-slate-100 text-slate-700",
+    };
+
+    return (
+        <Badge
+            variant="secondary"
+            className={styles[status as keyof typeof styles] || "bg-gray-100"}
+        >
+            {status.replace("_", " ").toUpperCase()}
+        </Badge>
+    );
+}
+
+function PriorityBadge({ priority }: { priority: string }) {
+    const styles = {
+        low: "bg-slate-100 text-slate-700",
+        medium: "bg-blue-50 text-blue-600",
+        high: "bg-orange-50 text-orange-600",
+        critical: "bg-red-50 text-red-600",
+    };
+
+    return (
+        <Badge
+            variant="outline"
+            className={styles[priority as keyof typeof styles] || "bg-gray-100"}
+        >
+            {priority.charAt(0).toUpperCase() + priority.slice(1)}
+        </Badge>
+    );
+}
