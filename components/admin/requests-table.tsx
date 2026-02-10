@@ -129,8 +129,8 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
+            {/* Desktop Table */}
+            <div className="hidden md:block bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
                 <table className="w-full">
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
