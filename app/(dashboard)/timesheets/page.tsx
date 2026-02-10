@@ -106,7 +106,7 @@ export default async function TimesheetsPage() {
                                                     </Badge>
                                                 </div>
                                                 <p className="text-sm text-slate-500">{req.reason}</p>
-                                                <p className="text-xs text-slate-400">{format(new Date(req.created_at), "MMM d, h:mm a")}</p>
+                                                <p className="text-xs text-slate-500">{format(new Date(req.created_at), "MMM d, h:mm a")}</p>
                                             </div>
                                             {req.admin_notes && (
                                                 <div className="text-sm text-slate-600 italic bg-slate-50 p-2 rounded">

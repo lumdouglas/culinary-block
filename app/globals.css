@@ -40,10 +40,23 @@
 
   /* Component colors */
   --primary: var(--teal-600);
+  --primary-foreground: #ffffff;
   --primary-hover: var(--teal-700);
   --primary-light: var(--teal-50);
+
   --secondary: var(--charcoal-800);
+  --secondary-foreground: #ffffff;
+
+  --muted: var(--charcoal-100);
+  --muted-foreground: var(--charcoal-500);
+
   --accent: var(--gold-500);
+  --accent-foreground: #ffffff;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --ring: var(--teal-600);
 }
 
 @theme inline {
