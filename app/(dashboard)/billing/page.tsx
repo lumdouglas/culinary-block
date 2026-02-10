@@ -136,7 +136,7 @@ export default async function BillingPage() {
         <h2 className="text-xl font-bold mb-4">Billing History</h2>
         <div className="rounded-md border bg-white overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50">
+            <TableHeader className="bg-slate-50 [&_th]:text-slate-700">
               <TableRow>
                 <TableHead>Month</TableHead>
                 <TableHead>Total Hours</TableHead>
@@ -181,7 +181,7 @@ export default async function BillingPage() {
         <h2 className="text-xl font-bold mb-4">Recent Usage Details</h2>
         <div className="rounded-md border bg-white overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50">
+            <TableHeader className="bg-slate-50 [&_th]:text-slate-700">
               <TableRow>
                 <TableHead>Date (PST)</TableHead>
                 <TableHead>Kitchen</TableHead>
