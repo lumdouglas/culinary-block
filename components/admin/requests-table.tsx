@@ -232,6 +232,110 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                 </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+                {filteredRequests.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400">
+                        No requests found
+                    </div>
+                ) : (
+                    filteredRequests.map((request) => (
+                        <div key={request.id} className="bg-white rounded-xl shadow border border-slate-100 p-4">
+                            {/* Header: Date + Status Badge */}
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm text-slate-500">
+                                    {new Date(request.created_at).toLocaleDateString()}
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
+                                    ? 'bg-teal-100 text-teal-700'
+                                    : request.type === 'timesheet'
+                                        ? 'bg-purple-100 text-purple-700'
+                                        : 'bg-amber-100 text-amber-700'
+                                    }`}>
+                                    {request.type === 'maintenance' ? (
+                                        <Wrench className="h-3 w-3" />
+                                    ) : request.type === 'timesheet' ? (
+                                        <Clock className="h-3 w-3" />
+                                    ) : (
+                                        <AlertTriangle className="h-3 w-3" />
+                                    )}
+                                    {request.type === 'maintenance' ? 'Maintenance'
+                                        : request.type === 'timesheet' ? 'Timesheet'
+                                            : 'Violation'}
+                                </span>
+                            </div>
+
+                            {/* Tenant Info */}
+                            <div className="mb-3">
+                                <h3 className="font-semibold text-slate-900 leading-tight">
+                                    {request.profiles?.company_name || 'Unknown Company'}
+                                </h3>
+                                <p className="text-xs text-slate-500">{request.profiles?.email}</p>
+                            </div>
+
+                            {/* Description */}
+                            <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                {request.description}
+                            </div>
+
+                            {/* Actions Row */}
+                            <div className="flex items-center gap-3 border-t border-slate-100 pt-3">
+                                {/* Photo Button */}
+                                {request.photo_url ? (
+                                    <button
+                                        onClick={() => setSelectedImage(request.photo_url)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+                                    >
+                                        <ImageIcon className="h-4 w-4" />
+                                        View Photo
+                                    </button>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-400 bg-slate-50 rounded-lg cursor-not-allowed">
+                                        <ImageIcon className="h-4 w-4 opacity-50" />
+                                        No Photo
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Controls Row */}
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                                {/* Priority Dropdown */}
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 mb-1 block">Priority</label>
+                                    <select
+                                        value={request.priority}
+                                        onChange={(e) => handlePriorityChange(request, e.target.value as RequestPriority)}
+                                        disabled={isPending || request.type === 'timesheet'}
+                                        className={`w-full h-9 px-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${request.type === 'timesheet' ? 'opacity-50 cursor-not-allowed' : ''} ${priorityColors[request.priority]}`}
+                                    >
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </div>
+
+                                {/* Status Dropdown */}
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 mb-1 block">Status</label>
+                                    <select
+                                        value={request.status}
+                                        onChange={(e) => handleStatusChange(request, e.target.value as RequestStatus)}
+                                        disabled={isPending}
+                                        className={`w-full h-9 px-2 rounded-lg text-sm font-medium border cursor-pointer ${statusColors[request.status]}`}
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="resolved">Resolved</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
             {/* Image Modal */}
             {selectedImage && (
                 <div
