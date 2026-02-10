@@ -1,5 +1,5 @@
 import { RequestForm } from '@/components/contact/request-form'
-import { Mail, Phone, MapPin, Clock } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
 
 export default function ContactPage() {
     return (
@@ -45,8 +45,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <p className="font-medium text-slate-900">Email</p>
-                                        <a href="mailto:info@culinaryblock.com" className="text-teal-600 hover:underline">
-                                            info@culinaryblock.com
+                                        <a href="mailto:culinaryblockkitchen@gmail.com" className="text-teal-600 hover:underline break-all">
+                                            culinaryblockkitchen@gmail.com
                                         </a>
                                     </div>
                                 </div>
@@ -57,33 +57,10 @@ export default function ContactPage() {
                                     <div>
                                         <p className="font-medium text-slate-900">Address</p>
                                         <p className="text-slate-600">
-                                            123 Kitchen Street<br />
-                                            Suite 100<br />
-                                            Cityville, ST 12345
+                                            1901 Las Plumas Ave<br />
+                                            San Jose 95133
                                         </p>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Hours */}
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <Clock className="h-5 w-5 text-teal-600" />
-                                Kitchen Hours
-                            </h3>
-                            <div className="space-y-2 text-slate-600">
-                                <div className="flex justify-between">
-                                    <span>Monday - Friday</span>
-                                    <span className="font-medium">6am - 10pm</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>Saturday</span>
-                                    <span className="font-medium">7am - 9pm</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span>Sunday</span>
-                                    <span className="font-medium">8am - 6pm</span>
                                 </div>
                             </div>
                         </div>
