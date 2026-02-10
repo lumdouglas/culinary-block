@@ -129,7 +129,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             className={cn(
-              "w-full text-slate-600 hover:text-red-600",
+              "w-full text-slate-700 hover:text-red-600",
               isCollapsed ? "justify-center px-0" : "justify-start"
             )}
             onClick={handleSignOut}
