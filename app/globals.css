@@ -48,7 +48,7 @@
   --secondary-foreground: #ffffff;
 
   --muted: var(--charcoal-100);
-  --muted-foreground: var(--charcoal-500);
+  --muted-foreground: var(--charcoal-600);
 
   --accent: var(--gold-500);
   --accent-foreground: #ffffff;

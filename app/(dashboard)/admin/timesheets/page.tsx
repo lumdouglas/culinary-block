@@ -60,8 +60,8 @@ export default async function AdminTimesheetsPage() {
                             requests.map((req: any) => (
                                 <TableRow key={req.id}>
                                     <TableCell>
-                                        <div className="font-medium">{req.profiles?.company_name}</div>
-                                        <div className="text-xs text-slate-500">{req.profiles?.email}</div>
+                                        <div className="font-medium text-slate-900">{req.profiles?.company_name}</div>
+                                        <div className="text-xs text-slate-600">{req.profiles?.email}</div>
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="uppercase">{req.type}</Badge>
@@ -77,7 +77,7 @@ export default async function AdminTimesheetsPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell className="max-w-[200px]">
-                                        <p className="text-sm text-slate-600 truncate" title={req.reason}>{req.reason}</p>
+                                        <p className="text-sm text-slate-700 truncate" title={req.reason}>{req.reason}</p>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">

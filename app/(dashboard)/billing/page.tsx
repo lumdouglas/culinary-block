@@ -210,9 +210,9 @@ export default async function BillingPage() {
 
                 return (
                   <TableRow key={record.id}>
-                    <TableCell className="font-medium">{datePST}</TableCell>
-                    <TableCell>{record.kitchens?.name || 'Unknown'}</TableCell>
-                    <TableCell className="text-slate-500">{startPST} - {endPST}</TableCell>
+                    <TableCell className="font-medium text-slate-900">{datePST}</TableCell>
+                    <TableCell className="text-slate-900">{record.kitchens?.name || 'Unknown'}</TableCell>
+                    <TableCell className="text-slate-700">{startPST} - {endPST}</TableCell>
                     <TableCell>
                       {record.duration_minutes
                         ? `${(record.duration_minutes / 60).toFixed(1)} hrs`

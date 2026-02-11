@@ -44,7 +44,7 @@ export default async function InvoicesPage() {
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50 [&_th]:text-slate-700">
                         <TableRow>
                             <TableHead>Invoice #</TableHead>
                             <TableHead>Tenant</TableHead>
@@ -64,14 +64,14 @@ export default async function InvoicesPage() {
                         ) : (
                             invoices?.map((invoice) => (
                                 <TableRow key={invoice.id}>
-                                    <TableCell className="font-medium">
+                                    <TableCell className="font-medium text-slate-900">
                                         {invoice.invoice_number}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-slate-900">
                                         {invoice.profiles?.company_name || "Unknown Tenant"}
                                     </TableCell>
-                                    <TableCell>${invoice.total.toFixed(2)}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-slate-700">${invoice.total.toFixed(2)}</TableCell>
+                                    <TableCell className="text-slate-700">
                                         {invoice.due_date
                                             ? format(new Date(invoice.due_date), "MMM d, yyyy")
                                             : "-"}

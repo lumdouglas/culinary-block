@@ -49,27 +49,27 @@ export default async function TimesheetsPage() {
                 <TabsContent value="shifts" className="space-y-4">
                     <div className="rounded-md border bg-white overflow-hidden">
                         <Table>
-                            <TableHeader className="bg-slate-50">
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Time Range</TableHead>
-                                    <TableHead>Kitchen</TableHead>
-                                    <TableHead>Duration</TableHead>
-                                    <TableHead>Status</TableHead>
+                            <TableHeader className="bg-slate-100 border-b border-slate-300">
+                                <TableRow className="border-slate-300 hover:bg-transparent">
+                                    <TableHead className="text-slate-900 font-bold">Date</TableHead>
+                                    <TableHead className="text-slate-900 font-bold">Time Range</TableHead>
+                                    <TableHead className="text-slate-900 font-bold">Kitchen</TableHead>
+                                    <TableHead className="text-slate-900 font-bold">Duration</TableHead>
+                                    <TableHead className="text-slate-900 font-bold">Status</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {timesheets?.map((shift) => (
-                                    <TableRow key={shift.id}>
-                                        <TableCell className="font-medium">
+                                    <TableRow key={shift.id} className="border-b border-slate-200">
+                                        <TableCell className="font-medium text-slate-900">
                                             {new Date(shift.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric', year: 'numeric' })}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-slate-700">
                                             {new Date(shift.clock_in).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' })} -
                                             {shift.clock_out ? new Date(shift.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' }) : " Now"}
                                         </TableCell>
-                                        <TableCell>{shift.kitchens?.name || '—'}</TableCell>
-                                        <TableCell>
+                                        <TableCell className="text-slate-900">{shift.kitchens?.name || '—'}</TableCell>
+                                        <TableCell className="text-slate-700">
                                             {shift.duration_minutes ?
                                                 `${Math.floor(shift.duration_minutes / 60)}h ${shift.duration_minutes % 60}m`
                                                 : "Active"}
