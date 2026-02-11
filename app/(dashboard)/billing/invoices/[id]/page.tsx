@@ -31,7 +31,7 @@ export default async function InvoiceDetailPage({
             <div className="mb-6">
                 <Link
                     href="/billing/invoices"
-                    className="text-sm text-slate-500 hover:text-slate-800 flex items-center"
+                    className="text-sm text-slate-700 hover:text-slate-900 flex items-center"
                 >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Back to Invoices
@@ -43,7 +43,7 @@ export default async function InvoiceDetailPage({
                     <h1 className="text-3xl font-bold text-slate-900">
                         Invoice {invoice.invoice_number}
                     </h1>
-                    <p className="text-slate-500">
+                    <p className="text-slate-600">
                         Issued to {invoice.profiles?.company_name}
                     </p>
                 </div>
@@ -76,7 +76,7 @@ export default async function InvoiceDetailPage({
                         </Badge>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-slate-700">
                             Due Date: {format(new Date(invoice.due_date), "PPP")}
                         </div>
                         {invoice.paid_at && (
@@ -101,7 +101,7 @@ export default async function InvoiceDetailPage({
                                 >
                                     <div>
                                         <div className="font-medium">{line.description}</div>
-                                        <div className="text-sm text-slate-500">
+                                        <div className="text-sm text-slate-700">
                                             {line.quantity} x ${line.unit_price.toFixed(2)}
                                         </div>
                                     </div>
@@ -114,11 +114,11 @@ export default async function InvoiceDetailPage({
 
                         <div className="mt-8 pt-4 border-t border-slate-200 flex flex-col items-end gap-2">
                             <div className="flex justify-between w-48 text-sm">
-                                <span className="text-slate-500">Subtotal</span>
+                                <span className="text-slate-700">Subtotal</span>
                                 <span>${invoice.subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between w-48 text-sm">
-                                <span className="text-slate-500">Tax</span>
+                                <span className="text-slate-700">Tax</span>
                                 <span>${invoice.tax.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between w-48 text-lg font-bold mt-2">

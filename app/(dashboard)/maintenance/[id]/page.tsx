@@ -38,7 +38,7 @@ export default async function TicketDetailPage({
             <div className="mb-6">
                 <Link
                     href="/maintenance"
-                    className="text-sm text-slate-500 hover:text-slate-800 flex items-center"
+                    className="text-sm text-slate-700 hover:text-slate-900 flex items-center"
                 >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Back to Maintenance
@@ -50,7 +50,7 @@ export default async function TicketDetailPage({
                     <h1 className="text-3xl font-bold text-slate-900 leading-tight">
                         {ticket.title}
                     </h1>
-                    <div className="flex items-center gap-2 mt-2 text-slate-500">
+                    <div className="flex items-center gap-2 mt-2 text-slate-700">
                         <span>Reported by {ticket.profiles?.company_name}</span>
                         <span>•</span>
                         <span>{format(new Date(ticket.created_at), "PPP p")}</span>
@@ -91,7 +91,7 @@ export default async function TicketDetailPage({
                             <CardTitle>Description</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="whitespace-pre-wrap text-slate-700">{ticket.description}</p>
+                            <p className="whitespace-pre-wrap text-slate-900">{ticket.description}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -104,19 +104,19 @@ export default async function TicketDetailPage({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <div className="text-sm text-slate-500 mb-1">Status</div>
+                                <div className="text-sm text-slate-700 mb-1">Status</div>
                                 <StatusBadge status={ticket.status} />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-500 mb-1">Priority</div>
+                                <div className="text-sm text-slate-700 mb-1">Priority</div>
                                 <PriorityBadge priority={ticket.priority} />
                             </div>
                             <div>
-                                <div className="text-sm text-slate-500 mb-1">Location</div>
+                                <div className="text-sm text-slate-700 mb-1">Location</div>
                                 <div className="font-medium">{ticket.kitchens?.name || "General Facility"}</div>
                             </div>
                             <div>
-                                <div className="text-sm text-slate-500 mb-1">Contact</div>
+                                <div className="text-sm text-slate-700 mb-1">Contact</div>
                                 <div className="font-medium truncate">{ticket.profiles?.email}</div>
                             </div>
                         </CardContent>

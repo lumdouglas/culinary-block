@@ -63,21 +63,21 @@ export default async function MaintenancePage() {
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Issue</TableHead>
-                            <TableHead>Location</TableHead>
-                            <TableHead>Reported By</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Priority</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                    <TableHeader className="bg-slate-100 border-b border-slate-300">
+                        <TableRow className="border-slate-300 hover:bg-transparent">
+                            <TableHead className="text-slate-900 font-bold">Issue</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Location</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Reported By</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Date</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Priority</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Status</TableHead>
+                            <TableHead className="text-right text-slate-900 font-bold">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {tickets?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-slate-500">
+                                <TableCell colSpan={7} className="text-center py-12 text-slate-600 font-medium">
                                     No maintenance tickets found.
                                 </TableCell>
                             </TableRow>
@@ -87,13 +87,13 @@ export default async function MaintenancePage() {
                                     <TableCell className="font-medium max-w-[200px] truncate">
                                         {ticket.title}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-slate-900">
                                         {ticket.kitchens?.name || "General Facility"}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-slate-900">
                                         {ticket.profiles?.company_name || "Unknown"}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="text-slate-700">
                                         {format(new Date(ticket.created_at), "MMM d, yyyy")}
                                     </TableCell>
                                     <TableCell>

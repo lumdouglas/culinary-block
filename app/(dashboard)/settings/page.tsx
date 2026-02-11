@@ -124,7 +124,7 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-2">Settings</h1>
-      <p className="text-slate-600 mb-8">Manage your account and business information</p>
+      <p className="text-slate-700 mb-8">Manage your account and business information</p>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -136,7 +136,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold">Business Information</h2>
-                <p className="text-sm text-slate-500">Your company details</p>
+                <p className="text-sm text-slate-700">Your company details</p>
               </div>
             </div>
 
@@ -197,7 +197,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold">Contact Information</h2>
-                <p className="text-sm text-slate-500">How we can reach you</p>
+                <p className="text-sm text-slate-700">How we can reach you</p>
               </div>
             </div>
 
@@ -256,7 +256,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold">Notification Preferences</h2>
-                <p className="text-sm text-slate-500">Where to send booking confirmations and alerts</p>
+                <p className="text-sm text-slate-700">Where to send booking confirmations and alerts</p>
               </div>
             </div>
 
@@ -303,7 +303,7 @@ export default function SettingsPage() {
       <div className="mt-8 pt-8 border-t">
         <h2 className="text-xl font-bold mb-6">Security</h2>
         <div className="bg-slate-50 p-6 rounded-xl border mb-6">
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-slate-700 mb-4">
             Manage your password and Kiosk PIN.
           </p>
           <SecuritySettings />
