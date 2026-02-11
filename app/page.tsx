@@ -65,8 +65,8 @@ export default function Home() {
               className="object-cover"
               priority={index === 0}
             />
-            {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/60 to-transparent" />
+            {/* Dark overlay for text readability - Strengthened */}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/70 to-slate-900/30" />
           </div>
         ))}
 

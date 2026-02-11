@@ -28,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
 CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON invoices(created_at);
 
 -- Trigger for updated_at
+DROP TRIGGER IF EXISTS update_invoices_updated_at ON invoices;
 CREATE TRIGGER update_invoices_updated_at
   BEFORE UPDATE ON invoices
   FOR EACH ROW
@@ -57,6 +58,7 @@ ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invoice_lines ENABLE ROW LEVEL SECURITY;
 
 -- ADMINS: Full access to invoices
+DROP POLICY IF EXISTS "Admins can manage all invoices" ON invoices;
 CREATE POLICY "Admins can manage all invoices"
   ON invoices FOR ALL
   TO authenticated
@@ -69,6 +71,7 @@ CREATE POLICY "Admins can manage all invoices"
   );
 
 -- ADMINS: Full access to invoice lines
+DROP POLICY IF EXISTS "Admins can manage all invoice lines" ON invoice_lines;
 CREATE POLICY "Admins can manage all invoice lines"
   ON invoice_lines FOR ALL
   TO authenticated
@@ -81,12 +84,14 @@ CREATE POLICY "Admins can manage all invoice lines"
   );
 
 -- TENANTS: View their own invoices
+DROP POLICY IF EXISTS "Tenants can view own invoices" ON invoices;
 CREATE POLICY "Tenants can view own invoices"
   ON invoices FOR SELECT
   TO authenticated
   USING (auth.uid() = tenant_id);
 
 -- TENANTS: View lines for their invoices
+DROP POLICY IF EXISTS "Tenants can view own invoice lines" ON invoice_lines;
 CREATE POLICY "Tenants can view own invoice lines"
   ON invoice_lines FOR SELECT
   TO authenticated

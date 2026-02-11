@@ -143,13 +143,13 @@ export default async function BillingPage() {
         <h2 className="text-xl font-bold mb-4">Billing History</h2>
         <div className="rounded-md border bg-white overflow-hidden">
           <Table>
-            <TableHeader className="bg-slate-50 [&_th]:text-slate-700">
-              <TableRow>
-                <TableHead>Month</TableHead>
-                <TableHead>Total Hours</TableHead>
-                <TableHead>Bookings</TableHead>
-                <TableHead>Estimated Cost</TableHead>
-                <TableHead>Status</TableHead>
+            <TableHeader className="bg-slate-100 border-b border-slate-300">
+              <TableRow className="border-slate-300 hover:bg-transparent">
+                <TableHead className="text-slate-900 font-bold">Month</TableHead>
+                <TableHead className="text-slate-900 font-bold">Total Hours</TableHead>
+                <TableHead className="text-slate-900 font-bold">Bookings</TableHead>
+                <TableHead className="text-slate-900 font-bold">Estimated Cost</TableHead>
+                <TableHead className="text-slate-900 font-bold">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,11 +160,11 @@ export default async function BillingPage() {
                 const isCurrentMonth = period.month === currentMonthKey;
 
                 return (
-                  <TableRow key={period.month}>
-                    <TableCell className="font-medium">{monthName}</TableCell>
-                    <TableCell>{hours.toFixed(1)} hrs</TableCell>
-                    <TableCell>{period.recordCount}</TableCell>
-                    <TableCell>${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                  <TableRow key={period.month} className="border-b border-slate-200">
+                    <TableCell className="font-medium text-slate-900">{monthName}</TableCell>
+                    <TableCell className="text-slate-900">{hours.toFixed(1)} hrs</TableCell>
+                    <TableCell className="text-slate-900">{period.recordCount}</TableCell>
+                    <TableCell className="text-slate-900">${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>
                       <Badge variant={isCurrentMonth ? "outline" : "default"}>
                         {isCurrentMonth ? "In Progress" : "Invoiced"}

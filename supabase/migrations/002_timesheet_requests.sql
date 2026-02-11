@@ -30,6 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_timesheet_requests_user_id ON timesheet_requests(
 CREATE INDEX IF NOT EXISTS idx_timesheet_requests_status ON timesheet_requests(status);
 
 -- Trigger for updated_at
+DROP TRIGGER IF EXISTS update_timesheet_requests_updated_at ON timesheet_requests;
 CREATE TRIGGER update_timesheet_requests_updated_at
   BEFORE UPDATE ON timesheet_requests
   FOR EACH ROW

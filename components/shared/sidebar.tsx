@@ -91,7 +91,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-full border bg-white shadow-sm hover:bg-slate-100 flex shrink-0"
+            className="h-8 w-8 rounded-full border border-slate-300 bg-white shadow-sm hover:bg-slate-100 flex shrink-0 text-slate-900"
             onClick={() => setIsCollapsed(!isCollapsed)}
           >
             {isCollapsed ? (

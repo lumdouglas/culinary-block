@@ -26,6 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_user_id ON maintenance_tickets(user_i
 CREATE INDEX IF NOT EXISTS idx_maintenance_status ON maintenance_tickets(status);
 
 -- Trigger for updated_at
+DROP TRIGGER IF EXISTS update_maintenance_tickets_updated_at ON maintenance_tickets;
 CREATE TRIGGER update_maintenance_tickets_updated_at
   BEFORE UPDATE ON maintenance_tickets
   FOR EACH ROW
@@ -37,6 +38,7 @@ CREATE TRIGGER update_maintenance_tickets_updated_at
 ALTER TABLE maintenance_tickets ENABLE ROW LEVEL SECURITY;
 
 -- ADMINS: Full access
+DROP POLICY IF EXISTS "Admins can manage all tickets" ON maintenance_tickets;
 CREATE POLICY "Admins can manage all tickets"
   ON maintenance_tickets FOR ALL
   TO authenticated
@@ -49,6 +51,7 @@ CREATE POLICY "Admins can manage all tickets"
   );
 
 -- USERS: Can create tickets
+DROP POLICY IF EXISTS "Users can create tickets" ON maintenance_tickets;
 CREATE POLICY "Users can create tickets"
   ON maintenance_tickets FOR INSERT
   TO authenticated
@@ -56,6 +59,7 @@ CREATE POLICY "Users can create tickets"
 
 -- USERS: Can view tickets they created OR tickets for kitchens they have booked (complex, so let's stick to simple visibility first)
 -- For now, let's allow users to see tickets they created AND all tickets for kitchens (so they know if equipment is broken)
+DROP POLICY IF EXISTS "Users can view relevant tickets" ON maintenance_tickets;
 CREATE POLICY "Users can view relevant tickets"
   ON maintenance_tickets FOR SELECT
   TO authenticated
@@ -66,6 +70,7 @@ CREATE POLICY "Users can view relevant tickets"
   );
 
 -- USERS: Can update their own tickets (e.g. to add more info or close it)
+DROP POLICY IF EXISTS "Users can update own tickets" ON maintenance_tickets;
 CREATE POLICY "Users can update own tickets"
   ON maintenance_tickets FOR UPDATE
   TO authenticated
