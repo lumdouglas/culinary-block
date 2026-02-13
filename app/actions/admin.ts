@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/utils/supabase/server";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export async function approveApplication(applicationId: string) {
@@ -33,8 +34,9 @@ export async function approveApplication(applicationId: string) {
         return { error: "Application not found" };
     }
 
-    // Send Supabase Auth invitation
-    const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+    // Send Supabase Auth invitation (requires service role key)
+    const adminSupabase = createAdminClient();
+    const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(
         application.email,
         {
             data: {

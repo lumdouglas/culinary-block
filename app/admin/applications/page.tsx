@@ -7,7 +7,6 @@ import { ApplicationDetails } from "@/components/application-details";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { SiteNav } from "@/components/site-nav";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -75,8 +74,6 @@ export default function AdminApplicationsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <SiteNav />
-
       <div className="max-w-7xl mx-auto py-12 px-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Application Management</h1>
