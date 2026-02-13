@@ -94,11 +94,13 @@ h6 {
   letter-spacing: -0.025em;
 }
 
-/* Safari gradient text support */
-.bg-clip-text,
-[class*="bg-clip-text"] {
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
+/* Safari-specific fixes for iOS */
+@supports (-webkit-touch-callout: none) {
+
+  /* iOS Safari viewport height fix */
+  section {
+    min-height: -webkit-fill-available;
+  }
 }
 
 /* Utility classes for brand styling */

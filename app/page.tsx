@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section with Image Carousel */}
-      <section className="relative h-[85dvh] min-h-[600px] overflow-hidden">
+      <section className="relative h-screen min-h-[600px] max-h-[900px] overflow-hidden">
         {/* Background Images */}
         {heroImages.map((image, index) => (
           <div
@@ -71,7 +71,7 @@ export default function Home() {
         ))}
 
         {/* Hero Content */}
-        <div className="relative h-full container mx-auto px-4 flex items-center">
+        <div className="relative z-10 h-full container mx-auto px-4 flex items-center">
           <div className="max-w-2xl">
             <p className="text-slate-300 font-semibold tracking-[0.2em] uppercase mb-4 text-sm">
               Commercial Kitchen Rental
@@ -79,7 +79,7 @@ export default function Home() {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-white">
               <span className="text-teal-400">Your Kitchen,</span>
               <br />
-              <span className="bg-gradient-to-r from-slate-200 to-white bg-clip-text text-transparent">Your Vision</span>
+              <span className="text-white">Your Vision</span>
             </h1>
             <p className="text-xl text-slate-300 mb-10 leading-relaxed">
               Professional-grade equipment, flexible scheduling, and the space
