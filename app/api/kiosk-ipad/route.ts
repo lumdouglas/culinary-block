@@ -2,38 +2,43 @@ import { createAdminClient } from '@/utils/supabase/admin';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-    // Fetch tenant list from Supabase
-    const supabase = createAdminClient();
-    const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, company_name')
-        .eq('role', 'tenant');
+  const supabase = createAdminClient();
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, company_name')
+    .eq('role', 'tenant');
 
-    const tenantButtons = (profiles || [])
-        .map((p) => `<button class="tenant-btn" onclick="selectTenant('${p.id}', '${p.company_name.replace(/'/g, "\\'")}')">${p.company_name}</button>`)
-        .join('\n          ');
+  const tenantButtons = (profiles || [])
+    .map((p) => `<button class="tenant-btn" onclick="selectTenant('${p.id}', '${p.company_name.replace(/'/g, "\\'")}')">${p.company_name}</button>`)
+    .join('\n          ');
 
-    const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>Culinary Block - Kiosk</title>
   <style>
     * { margin: 0; padding: 0; -webkit-box-sizing: border-box; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f8fafc;
+      background-color: #f1f5f9;
       color: #1e293b;
       -webkit-text-size-adjust: 100%;
-      min-height: 100vh;
     }
+
+    /* Screens */
     .screen {
       display: none;
-      min-height: 100vh;
-      padding: 24px;
+      height: 100vh;
+      height: -webkit-fill-available;
+      padding: 32px;
     }
     .screen.active {
       display: -webkit-box;
@@ -49,24 +54,26 @@ export async function GET() {
       -webkit-justify-content: center;
       justify-content: center;
     }
+
+    /* ─── SCREEN 1: Tenant Select ─── */
     .brand-title {
-      font-size: 28px;
+      font-size: 42px;
       font-weight: 800;
       color: #0d9488;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
     }
     .brand-subtitle {
-      font-size: 14px;
+      font-size: 18px;
       color: #64748b;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      margin-top: 4px;
+      margin-top: 6px;
     }
     .section-title {
-      font-size: 20px;
+      font-size: 28px;
       font-weight: 700;
       color: #1e293b;
-      margin: 32px 0 20px;
+      margin: 40px 0 24px;
       text-align: center;
     }
     .tenant-grid {
@@ -75,8 +82,8 @@ export async function GET() {
       display: flex;
       -webkit-flex-wrap: wrap;
       flex-wrap: wrap;
-      gap: 16px;
-      max-width: 600px;
+      gap: 20px;
+      max-width: 700px;
       width: 100%;
       -webkit-box-pack: center;
       -webkit-justify-content: center;
@@ -84,14 +91,14 @@ export async function GET() {
     }
     .tenant-btn {
       -webkit-box-flex: 0;
-      -webkit-flex: 0 0 calc(50% - 8px);
-      flex: 0 0 calc(50% - 8px);
-      padding: 28px 16px;
+      -webkit-flex: 0 0 calc(50% - 10px);
+      flex: 0 0 calc(50% - 10px);
+      padding: 36px 20px;
       background: #fff;
       border: 2px solid #e2e8f0;
-      border-radius: 16px;
+      border-radius: 20px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 24px;
       font-weight: 700;
       color: #334155;
       text-align: center;
@@ -105,15 +112,22 @@ export async function GET() {
       border-color: #059669;
       color: #047857;
     }
+
+    /* ─── SCREEN 2: Kiosk PIN ─── */
+    .kiosk-container {
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+    }
     .company-name {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 36px;
+      font-weight: 800;
       color: #0f172a;
     }
     .status-text {
-      font-size: 16px;
+      font-size: 20px;
       color: #64748b;
-      margin-top: 4px;
+      margin-top: 6px;
     }
     .active-badge {
       display: -webkit-inline-box;
@@ -122,55 +136,117 @@ export async function GET() {
       -webkit-box-align: center;
       -webkit-align-items: center;
       align-items: center;
-      margin-top: 20px;
+      margin-top: 16px;
       background: #ffedd5;
       color: #c2410c;
-      padding: 10px 20px;
-      border-radius: 24px;
-      font-size: 18px;
+      padding: 12px 24px;
+      border-radius: 28px;
+      font-size: 20px;
       font-family: monospace;
     }
-    .pin-section {
-      margin-top: 32px;
-      width: 100%;
-      max-width: 320px;
-      text-align: center;
+
+    /* PIN display */
+    .pin-display {
+      margin-top: 28px;
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      gap: 16px;
     }
-    .pin-label {
-      display: block;
-      font-size: 14px;
-      font-weight: 500;
-      color: #64748b;
-      margin-bottom: 8px;
-    }
-    .pin-input {
-      width: 100%;
-      text-align: center;
-      font-size: 32px;
-      letter-spacing: 0.5em;
-      font-family: monospace;
-      padding: 16px 0;
-      border: 2px solid #cbd5e1;
-      border-radius: 12px;
-      outline: none;
+    .pin-dot {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 3px solid #cbd5e1;
       background: #fff;
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
       color: #0f172a;
-      -webkit-appearance: none;
     }
-    .pin-input:focus {
+    .pin-dot.filled {
       border-color: #0d9488;
-      -webkit-box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
-      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+      background: #f0fdfa;
     }
-    .pin-input.error {
+    .pin-dot.error {
       border-color: #ef4444;
       background: #fef2f2;
     }
     .error-msg {
-      font-size: 14px;
+      font-size: 18px;
       color: #ef4444;
-      margin-top: 8px;
+      margin-top: 12px;
+      font-weight: 600;
     }
+
+    /* Numpad */
+    .numpad {
+      margin-top: 24px;
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-wrap: wrap;
+      flex-wrap: wrap;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      justify-content: center;
+      gap: 12px;
+      max-width: 340px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .num-btn {
+      -webkit-box-flex: 0;
+      -webkit-flex: 0 0 calc(33.333% - 8px);
+      flex: 0 0 calc(33.333% - 8px);
+      height: 72px;
+      border-radius: 16px;
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      -webkit-appearance: none;
+      outline: none;
+      -webkit-transition: background 0.1s;
+      transition: background 0.1s;
+    }
+    .num-btn:active {
+      background: #e2e8f0;
+    }
+    .num-btn.clear {
+      font-size: 18px;
+      font-weight: 600;
+      color: #94a3b8;
+      border-color: #f1f5f9;
+      background: #f1f5f9;
+    }
+    .num-btn.clear:active {
+      background: #e2e8f0;
+    }
+    .num-btn.backspace {
+      font-size: 24px;
+      color: #64748b;
+      border-color: #f1f5f9;
+      background: #f1f5f9;
+    }
+    .num-btn.backspace:active {
+      background: #e2e8f0;
+    }
+
+    /* Action button */
     .action-btn {
       display: -webkit-box;
       display: -webkit-flex;
@@ -182,37 +258,43 @@ export async function GET() {
       -webkit-justify-content: center;
       justify-content: center;
       width: 100%;
-      max-width: 320px;
-      padding: 20px 0;
-      margin-top: 24px;
-      font-size: 24px;
-      font-weight: 700;
+      max-width: 340px;
+      padding: 22px 0;
+      margin: 20px auto 0;
+      font-size: 28px;
+      font-weight: 800;
       color: #fff;
       border: none;
-      border-radius: 16px;
+      border-radius: 18px;
       cursor: pointer;
       -webkit-appearance: none;
       outline: none;
+      letter-spacing: 1px;
     }
     .action-btn:disabled {
       background: #cbd5e1 !important;
       cursor: default;
     }
     .btn-clock-in { background: #059669; }
+    .btn-clock-in:active:not(:disabled) { background: #047857; }
     .btn-clock-out { background: #dc2626; }
+    .btn-clock-out:active:not(:disabled) { background: #b91c1c; }
+
     .back-btn {
-      margin-top: 24px;
+      margin-top: 20px;
       background: none;
       border: none;
       color: #94a3b8;
-      font-size: 14px;
+      font-size: 18px;
       cursor: pointer;
       -webkit-appearance: none;
-      padding: 8px;
+      padding: 12px;
     }
+
+    /* ─── SCREEN 3 & 4: Success / Summary ─── */
     .icon-circle {
-      width: 100px;
-      height: 100px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
       display: -webkit-box;
       display: -webkit-flex;
@@ -223,42 +305,45 @@ export async function GET() {
       -webkit-box-pack: center;
       -webkit-justify-content: center;
       justify-content: center;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     .icon-circle.green { background: #d1fae5; }
     .icon-circle.blue { background: #dbeafe; }
-    .success-text { font-size: 20px; font-weight: 600; margin-top: 8px; }
+    .success-text { font-size: 28px; font-weight: 700; margin-top: 10px; }
     .success-text.green { color: #059669; }
     .success-text.blue { color: #2563eb; }
-    .detail-text { font-size: 16px; color: #64748b; margin-top: 4px; }
-    .countdown-text { font-size: 14px; color: #94a3b8; margin-top: 32px; }
+    .detail-text { font-size: 22px; color: #64748b; margin-top: 6px; }
+    .countdown-text { font-size: 18px; color: #94a3b8; margin-top: 36px; }
     .duration-box {
-      margin-top: 20px;
+      margin-top: 24px;
       background: #f1f5f9;
-      border-radius: 12px;
-      padding: 16px 32px;
+      border-radius: 16px;
+      padding: 20px 40px;
       text-align: center;
     }
-    .duration-label { font-size: 14px; color: #64748b; }
-    .duration-value { font-size: 28px; font-weight: 700; color: #0f172a; margin-top: 4px; }
+    .duration-label { font-size: 18px; color: #64748b; }
+    .duration-value { font-size: 36px; font-weight: 800; color: #0f172a; margin-top: 6px; }
+
     .empty-state {
       text-align: center;
       padding: 60px 20px;
       color: #94a3b8;
       border: 2px dashed #cbd5e1;
       border-radius: 16px;
-      max-width: 600px;
+      max-width: 700px;
       width: 100%;
+      font-size: 22px;
     }
+
     @-webkit-keyframes shake {
       0%, 100% { -webkit-transform: translateX(0); transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { -webkit-transform: translateX(-8px); transform: translateX(-8px); }
-      20%, 40%, 60%, 80% { -webkit-transform: translateX(8px); transform: translateX(8px); }
+      10%, 30%, 50%, 70%, 90% { -webkit-transform: translateX(-10px); transform: translateX(-10px); }
+      20%, 40%, 60%, 80% { -webkit-transform: translateX(10px); transform: translateX(10px); }
     }
     @keyframes shake {
       0%, 100% { -webkit-transform: translateX(0); transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { -webkit-transform: translateX(-8px); transform: translateX(-8px); }
-      20%, 40%, 60%, 80% { -webkit-transform: translateX(8px); transform: translateX(8px); }
+      10%, 30%, 50%, 70%, 90% { -webkit-transform: translateX(-10px); transform: translateX(-10px); }
+      20%, 40%, 60%, 80% { -webkit-transform: translateX(10px); transform: translateX(10px); }
     }
     .shake {
       -webkit-animation: shake 0.5s ease-in-out;
@@ -282,23 +367,43 @@ export async function GET() {
 
   <!-- SCREEN 2: PIN Entry / Clock In/Out -->
   <div id="screen-kiosk" class="screen">
-    <div style="text-align:center; width:100%; max-width:400px">
+    <div class="kiosk-container">
       <div class="company-name" id="kiosk-company"></div>
       <div class="status-text" id="kiosk-status"></div>
 
       <div id="active-badge" class="active-badge" style="display:none">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
         <span id="active-time"></span>
       </div>
 
-      <div class="pin-section">
-        <label class="pin-label">Enter your 4-digit PIN</label>
-        <div id="pin-wrapper">
-          <input id="pin-input" class="pin-input" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off" autofocus>
-        </div>
-        <div id="error-msg" class="error-msg" style="display:none"></div>
+      <!-- PIN dots display -->
+      <div class="pin-display" id="pin-display">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+
+      <!-- Hidden input to store PIN value -->
+      <input type="hidden" id="pin-value" value="">
+
+      <!-- Numpad -->
+      <div class="numpad">
+        <button class="num-btn" onclick="pressNum('1')">1</button>
+        <button class="num-btn" onclick="pressNum('2')">2</button>
+        <button class="num-btn" onclick="pressNum('3')">3</button>
+        <button class="num-btn" onclick="pressNum('4')">4</button>
+        <button class="num-btn" onclick="pressNum('5')">5</button>
+        <button class="num-btn" onclick="pressNum('6')">6</button>
+        <button class="num-btn" onclick="pressNum('7')">7</button>
+        <button class="num-btn" onclick="pressNum('8')">8</button>
+        <button class="num-btn" onclick="pressNum('9')">9</button>
+        <button class="num-btn clear" onclick="pressClear()">CLEAR</button>
+        <button class="num-btn" onclick="pressNum('0')">0</button>
+        <button class="num-btn backspace" onclick="pressBackspace()">&#9003;</button>
       </div>
 
       <button id="action-btn" class="action-btn" disabled onclick="handleAction()">
@@ -312,7 +417,7 @@ export async function GET() {
   <!-- SCREEN 3: Success (Clocked In) -->
   <div id="screen-clocked-in" class="screen">
     <div class="icon-circle green">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
       </svg>
     </div>
@@ -325,7 +430,7 @@ export async function GET() {
   <!-- SCREEN 4: Summary (Clocked Out) -->
   <div id="screen-clocked-out" class="screen">
     <div class="icon-circle blue">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
       </svg>
     </div>
@@ -343,7 +448,8 @@ export async function GET() {
       tenantId: '',
       tenantName: '',
       activeSession: null,
-      processing: false
+      processing: false,
+      pin: ''
     };
 
     var countdownTimer = null;
@@ -356,28 +462,79 @@ export async function GET() {
       document.getElementById('screen-' + id).className = 'screen active';
     }
 
+    // ─── Numpad functions ───
+
+    function pressNum(digit) {
+      if (state.pin.length >= 4) return;
+      state.pin = state.pin + digit;
+      updatePinDots();
+      clearError();
+      updateButtonState();
+    }
+
+    function pressBackspace() {
+      if (state.pin.length === 0) return;
+      state.pin = state.pin.slice(0, -1);
+      updatePinDots();
+      clearError();
+      updateButtonState();
+    }
+
+    function pressClear() {
+      state.pin = '';
+      updatePinDots();
+      clearError();
+      updateButtonState();
+    }
+
+    function updatePinDots() {
+      for (var i = 0; i < 4; i++) {
+        var dot = document.getElementById('dot-' + i);
+        if (i < state.pin.length) {
+          dot.textContent = '\\u2022';
+          dot.className = 'pin-dot filled';
+        } else {
+          dot.textContent = '';
+          dot.className = 'pin-dot';
+        }
+      }
+    }
+
+    function clearError() {
+      document.getElementById('error-msg').style.display = 'none';
+      for (var i = 0; i < 4; i++) {
+        var dot = document.getElementById('dot-' + i);
+        if (dot.className.indexOf('error') !== -1) {
+          dot.className = i < state.pin.length ? 'pin-dot filled' : 'pin-dot';
+        }
+      }
+    }
+
+    function updateButtonState() {
+      document.getElementById('action-btn').disabled = state.processing || state.pin.length !== 4;
+    }
+
+    // ─── Screen transitions ───
+
     function selectTenant(id, name) {
       state.tenantId = id;
       state.tenantName = name;
+      state.pin = '';
+      updatePinDots();
+
       document.getElementById('kiosk-company').textContent = name;
-      document.getElementById('pin-input').value = '';
       document.getElementById('error-msg').style.display = 'none';
-      document.getElementById('pin-input').className = 'pin-input';
 
       showScreen('kiosk');
       document.getElementById('kiosk-status').textContent = 'Loading...';
       document.getElementById('action-btn').disabled = true;
       document.getElementById('active-badge').style.display = 'none';
 
-      // Check for active session
       fetch('/api/kiosk/active-session?userId=' + encodeURIComponent(id))
         .then(function(res) { return res.json(); })
         .then(function(data) {
           state.activeSession = data.session || null;
           updateKioskUI();
-          setTimeout(function() {
-            document.getElementById('pin-input').focus();
-          }, 100);
         })
         .catch(function() {
           state.activeSession = null;
@@ -386,7 +543,6 @@ export async function GET() {
     }
 
     function updateKioskUI() {
-      var pinInput = document.getElementById('pin-input');
       var actionBtn = document.getElementById('action-btn');
       var statusEl = document.getElementById('kiosk-status');
       var badgeEl = document.getElementById('active-badge');
@@ -395,7 +551,7 @@ export async function GET() {
         statusEl.textContent = 'Currently Working';
         badgeEl.style.display = '';
         var clockInTime = new Date(state.activeSession.clock_in);
-        document.getElementById('active-time').textContent = 'Active since: ' + clockInTime.toLocaleTimeString();
+        document.getElementById('active-time').textContent = 'Since ' + clockInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         actionBtn.className = 'action-btn btn-clock-out';
         document.getElementById('action-label').textContent = 'CLOCK OUT';
       } else {
@@ -408,56 +564,40 @@ export async function GET() {
       updateButtonState();
     }
 
-    function updateButtonState() {
-      var pin = document.getElementById('pin-input').value;
-      document.getElementById('action-btn').disabled = state.processing || pin.length !== 4;
-    }
-
-    // PIN input handler
-    document.getElementById('pin-input').addEventListener('input', function(e) {
-      var val = e.target.value.replace(/[^0-9]/g, '');
-      if (val.length > 4) val = val.slice(0, 4);
-      e.target.value = val;
-      document.getElementById('pin-input').className = 'pin-input';
-      document.getElementById('error-msg').style.display = 'none';
-      updateButtonState();
-    });
-
-    document.getElementById('pin-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && e.target.value.length === 4) {
-        handleAction();
-      }
-    });
+    // ─── Error handling ───
 
     function triggerError(msg) {
-      var wrapper = document.getElementById('pin-wrapper');
-      var input = document.getElementById('pin-input');
+      var display = document.getElementById('pin-display');
       var errorEl = document.getElementById('error-msg');
 
-      input.className = 'pin-input error';
+      for (var i = 0; i < 4; i++) {
+        document.getElementById('dot-' + i).className = 'pin-dot error';
+      }
       errorEl.textContent = msg;
       errorEl.style.display = 'block';
-      input.value = '';
+      state.pin = '';
 
-      wrapper.className = 'shake';
-      setTimeout(function() { wrapper.className = ''; }, 600);
-      setTimeout(function() { input.focus(); }, 100);
+      display.className = 'pin-display shake';
+      setTimeout(function() {
+        display.className = 'pin-display';
+        updatePinDots();
+      }, 600);
       updateButtonState();
     }
 
+    // ─── Actions ───
+
     function handleAction() {
-      if (state.processing) return;
-      var pin = document.getElementById('pin-input').value;
-      if (pin.length !== 4) return;
+      if (state.processing || state.pin.length !== 4) return;
 
       state.processing = true;
       document.getElementById('action-btn').disabled = true;
       document.getElementById('action-label').textContent = 'Processing...';
 
       if (state.activeSession) {
-        clockOut(pin);
+        clockOut(state.pin);
       } else {
-        clockIn(pin);
+        clockIn(state.pin);
       }
     }
 
@@ -476,7 +616,7 @@ export async function GET() {
         } else {
           var now = new Date();
           document.getElementById('success-company').textContent = state.tenantName;
-          document.getElementById('success-time').textContent = 'You are now clocked in at ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '.';
+          document.getElementById('success-time').textContent = 'Clocked in at ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
           showScreen('clocked-in');
           startCountdown('countdown-in');
         }
@@ -520,14 +660,14 @@ export async function GET() {
       var totalMinutes = Math.floor(ms / 60000);
       var hours = Math.floor(totalMinutes / 60);
       var minutes = totalMinutes % 60;
-      if (hours === 0) return minutes + ' minute' + (minutes !== 1 ? 's' : '');
-      return hours + ' hour' + (hours !== 1 ? 's' : '') + ' ' + minutes + ' minute' + (minutes !== 1 ? 's' : '');
+      if (hours === 0) return minutes + ' min';
+      return hours + 'h ' + minutes + 'min';
     }
 
     function startCountdown(elementId) {
       var seconds = 10;
       var el = document.getElementById(elementId);
-      el.textContent = 'Returning to main screen in ' + seconds + ' seconds...';
+      el.textContent = 'Returning in ' + seconds + 's...';
 
       if (countdownTimer) clearInterval(countdownTimer);
       countdownTimer = setInterval(function() {
@@ -536,7 +676,7 @@ export async function GET() {
           clearInterval(countdownTimer);
           goBack();
         } else {
-          el.textContent = 'Returning to main screen in ' + seconds + ' seconds...';
+          el.textContent = 'Returning in ' + seconds + 's...';
         }
       }, 1000);
     }
@@ -547,17 +687,17 @@ export async function GET() {
       state.tenantName = '';
       state.activeSession = null;
       state.processing = false;
-      document.getElementById('pin-input').value = '';
+      state.pin = '';
       showScreen('select');
     }
   </script>
 </body>
 </html>`;
 
-    return new NextResponse(html, {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store',
-        },
-    });
+  return new NextResponse(html, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
 }
