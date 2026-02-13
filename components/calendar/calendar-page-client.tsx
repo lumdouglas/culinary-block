@@ -6,7 +6,7 @@ import { BookingCalendar } from '@/components/calendar/calendar-view'
 import { BookingForm } from '@/components/calendar/booking-modal'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Plus, RefreshCw, CalendarDays, Filter, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, RefreshCw, CalendarDays, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 // Station color mapping for legend
@@ -21,11 +21,14 @@ const stationColors: Record<string, string> = {
     'General Kitchen': 'bg-amber-500',
 }
 
+type ViewMode = 'schedule' | 'my-bookings'
+
 export default function CalendarPageClient() {
     const [stations, setStations] = useState<Station[]>([])
     const [bookings, setBookings] = useState<Booking[]>([])
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const [selectedStations, setSelectedStations] = useState<number[]>([])
-    // const [isFilterOpen, setIsFilterOpen] = useState(false) // Removed as filter bar is always visible
+    const [viewMode, setViewMode] = useState<ViewMode>('schedule')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [loading, setLoading] = useState(true)
     const [preselectedDate, setPreselectedDate] = useState<Date | undefined>(undefined)
@@ -61,6 +64,9 @@ export default function CalendarPageClient() {
             if (bookingsResult.data) {
                 setBookings(bookingsResult.data)
             }
+            if (bookingsResult.currentUserId) {
+                setCurrentUserId(bookingsResult.currentUserId)
+            }
         } catch (error) {
             toast.error('Failed to load calendar data')
         } finally {
@@ -80,13 +86,17 @@ export default function CalendarPageClient() {
     }
 
     const handleDateSelect = (start: Date, end: Date) => {
-        // Extract date and time from selection
         setPreselectedDate(start)
         const hours = start.getHours().toString().padStart(2, '0')
         const minutes = start.getMinutes().toString().padStart(2, '0')
         setPreselectedStartTime(`${hours}:${minutes}`)
         setIsDialogOpen(true)
     }
+
+    // Filter bookings based on view mode
+    const displayedBookings = viewMode === 'my-bookings' && currentUserId
+        ? bookings.filter(b => b.user_id === currentUserId)
+        : bookings
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -99,8 +109,14 @@ export default function CalendarPageClient() {
                                 <CalendarDays className="w-8 h-8 text-slate-700" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-slate-900">Kitchen Schedule</h1>
-                                <p className="text-slate-500">Click on a time slot to book, or use the button below</p>
+                                <h1 className="text-2xl font-bold text-slate-900">
+                                    {viewMode === 'schedule' ? 'Kitchen Schedule' : 'My Bookings'}
+                                </h1>
+                                <p className="text-slate-500">
+                                    {viewMode === 'schedule'
+                                        ? 'Click on a time slot to book, or use the button below'
+                                        : 'Showing only your reservations'}
+                                </p>
                             </div>
                         </div>
 
@@ -135,44 +151,72 @@ export default function CalendarPageClient() {
                     </div>
                 </div>
 
-                {/* Station Filter Bar */}
+                {/* View Toggle + Station Filter Bar */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-1">
                     <div className="flex items-center gap-2 overflow-x-auto p-2 scrollbar-hide">
+                        {/* View Mode Toggle */}
                         <button
-                            onClick={() => setSelectedStations([])}
-                            className={`flex-none px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedStations.length === 0
+                            onClick={() => setViewMode('schedule')}
+                            className={`flex-none px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'schedule'
                                 ? 'bg-slate-900 text-white shadow-md'
                                 : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                 }`}
                         >
+                            <CalendarDays className="w-3.5 h-3.5" />
                             All Stations
                         </button>
-                        <div className="w-px h-6 bg-slate-200 mx-1 flex-none" />
-                        {stations.map((station) => {
-                            const isSelected = selectedStations.includes(station.id);
-                            // Get background color class or default
-                            const colorClass = stationColors[station.name] || 'bg-slate-500';
+                        <button
+                            onClick={() => setViewMode('my-bookings')}
+                            className={`flex-none px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'my-bookings'
+                                ? 'bg-slate-900 text-white shadow-md'
+                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                                }`}
+                        >
+                            <User className="w-3.5 h-3.5" />
+                            My Bookings
+                        </button>
 
-                            return (
+                        {/* Divider */}
+                        <div className="w-px h-6 bg-slate-200 mx-1 flex-none" />
+
+                        {/* Station Filters (only show in schedule mode) */}
+                        {viewMode === 'schedule' && (
+                            <>
                                 <button
-                                    key={station.id}
-                                    onClick={() => {
-                                        if (isSelected) {
-                                            setSelectedStations(selectedStations.filter(id => id !== station.id));
-                                        } else {
-                                            setSelectedStations([...selectedStations, station.id]);
-                                        }
-                                    }}
-                                    className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isSelected
-                                        ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
+                                    onClick={() => setSelectedStations([])}
+                                    className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all ${selectedStations.length === 0
+                                        ? 'bg-teal-600 text-white shadow-md'
                                         : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                         }`}
                                 >
-                                    <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : colorClass}`} />
-                                    {station.name}
+                                    All
                                 </button>
-                            );
-                        })}
+                                {stations.map((station) => {
+                                    const isSelected = selectedStations.includes(station.id);
+                                    const colorClass = stationColors[station.name] || 'bg-slate-500';
+
+                                    return (
+                                        <button
+                                            key={station.id}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedStations(selectedStations.filter(id => id !== station.id));
+                                                } else {
+                                                    setSelectedStations([...selectedStations, station.id]);
+                                                }
+                                            }}
+                                            className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isSelected
+                                                ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
+                                                : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                                                }`}
+                                        >
+                                            <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : colorClass}`} />
+                                            {station.name}
+                                        </button>
+                                    );
+                                })}
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -185,9 +229,10 @@ export default function CalendarPageClient() {
                         </div>
                     ) : (
                         <BookingCalendar
-                            bookings={bookings}
+                            bookings={displayedBookings}
                             stations={stations}
                             selectedStations={selectedStations}
+                            currentUserId={currentUserId}
                             onDateSelect={handleDateSelect}
                         />
                     )}

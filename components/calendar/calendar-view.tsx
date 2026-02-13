@@ -24,6 +24,7 @@ interface BookingCalendarProps {
   bookings: Booking[]
   stations: Station[]
   selectedStations: number[]
+  currentUserId?: string | null
   onDateSelect?: (start: Date, end: Date) => void
 }
 
@@ -31,6 +32,7 @@ export function BookingCalendar({
   bookings,
   stations,
   selectedStations,
+  currentUserId,
   onDateSelect
 }: BookingCalendarProps) {
   const [isMobile, setIsMobile] = useState(false)
@@ -60,14 +62,19 @@ export function BookingCalendar({
     const station = stations.find((s) => s.id === booking.station_id)
     const stationName = station?.name || 'Unknown'
     const color = stationColors[stationName] || '#6b7280'
+    const isOwnBooking = currentUserId && booking.user_id === currentUserId
 
     return {
       id: booking.id,
-      title: `${stationName} - ${booking.profile?.company_name || 'Reserved'}`,
+      title: isOwnBooking
+        ? `★ ${stationName} - ${booking.profile?.company_name || 'You'}`
+        : `${stationName} - ${booking.profile?.company_name || 'Reserved'}`,
       start: booking.start_time,
       end: booking.end_time,
       backgroundColor: color,
-      borderColor: color,
+      borderColor: isOwnBooking ? '#0f172a' : color,
+      textColor: isOwnBooking ? '#ffffff' : undefined,
+      classNames: isOwnBooking ? ['own-booking'] : [],
       extendedProps: { ...booking }
     }
   })
@@ -129,6 +136,9 @@ export function BookingCalendar({
         .fc-daygrid-day-top { padding: 8px; }
         .fc-scrollgrid { border-radius: 12px !important; overflow: hidden; }
         .fc-scrollgrid td, .fc-scrollgrid th { border-color: #e2e8f0 !important; }
+
+        /* Own booking highlight */
+        .own-booking { border-width: 2px !important; border-style: solid !important; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25) !important; }
         
 
         /* Mobile specific adjustments */

@@ -46,6 +46,10 @@ export async function getStations() {
 export async function getBookingsForDateRange(startDate: string, endDate: string, stationId?: number) {
   const supabase = await createClient();
 
+  // Get current user ID for client-side "My Bookings" filtering
+  const { data: { user } } = await supabase.auth.getUser();
+  const currentUserId = user?.id || null;
+
   // Query bookings that overlap with the date range
   // A booking overlaps if: booking.start_time < endDate AND booking.end_time > startDate
   let query = supabase
@@ -67,11 +71,11 @@ export async function getBookingsForDateRange(startDate: string, endDate: string
 
   if (error) {
     console.error('Error fetching bookings:', error);
-    return { error: error.message, data: [] };
+    return { error: error.message, data: [], currentUserId };
   }
 
   if (!bookings || bookings.length === 0) {
-    return { data: [] };
+    return { data: [], currentUserId };
   }
 
   // Get unique user IDs from bookings
@@ -92,7 +96,7 @@ export async function getBookingsForDateRange(startDate: string, endDate: string
     profile: profileMap.get(booking.user_id) || { company_name: 'Unknown' }
   }));
 
-  return { data: bookingsWithProfiles as Booking[] };
+  return { data: bookingsWithProfiles as Booking[], currentUserId };
 }
 
 
