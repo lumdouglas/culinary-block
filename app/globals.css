@@ -4,6 +4,11 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+/* Force light mode - site is not designed for dark mode */
+html {
+  color-scheme: light;
+}
+
 /* Brand Colors - Culinary Block */
 :root {
   /* Primary: Teal (from logo) */
@@ -70,12 +75,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-  }
-}
+/* Dark mode disabled - site is light-mode only */
 
 body {
   background: var(--background);
@@ -91,8 +91,14 @@ h4,
 h5,
 h6 {
   font-weight: 700;
-  color: var(--charcoal-800);
   letter-spacing: -0.025em;
+}
+
+/* Safari gradient text support */
+.bg-clip-text,
+[class*="bg-clip-text"] {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
 }
 
 /* Utility classes for brand styling */

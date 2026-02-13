@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section with Image Carousel */}
-      <section className="relative h-[85vh] min-h-[600px] overflow-hidden">
+      <section className="relative h-[85dvh] min-h-[600px] overflow-hidden">
         {/* Background Images */}
         {heroImages.map((image, index) => (
           <div
