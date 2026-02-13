@@ -82,17 +82,18 @@ export async function GET() {
       display: flex;
       -webkit-flex-wrap: wrap;
       flex-wrap: wrap;
-      gap: 20px;
       max-width: 700px;
       width: 100%;
       -webkit-box-pack: center;
       -webkit-justify-content: center;
       justify-content: center;
+      margin: -10px;
     }
     .tenant-btn {
       -webkit-box-flex: 0;
-      -webkit-flex: 0 0 calc(50% - 10px);
-      flex: 0 0 calc(50% - 10px);
+      -webkit-flex: 0 0 calc(50% - 20px);
+      flex: 0 0 calc(50% - 20px);
+      margin: 10px;
       padding: 36px 20px;
       background: #fff;
       border: 2px solid #e2e8f0;
@@ -154,9 +155,9 @@ export async function GET() {
       -webkit-box-pack: center;
       -webkit-justify-content: center;
       justify-content: center;
-      gap: 16px;
     }
     .pin-dot {
+      margin: 0 8px;
       width: 56px;
       height: 56px;
       border-radius: 14px;
@@ -201,15 +202,15 @@ export async function GET() {
       -webkit-box-pack: center;
       -webkit-justify-content: center;
       justify-content: center;
-      gap: 12px;
-      max-width: 340px;
+      max-width: 352px;
       margin-left: auto;
       margin-right: auto;
     }
     .num-btn {
       -webkit-box-flex: 0;
-      -webkit-flex: 0 0 calc(33.333% - 8px);
-      flex: 0 0 calc(33.333% - 8px);
+      -webkit-flex: 0 0 calc(33.333% - 12px);
+      flex: 0 0 calc(33.333% - 12px);
+      margin: 6px;
       height: 72px;
       border-radius: 16px;
       border: 2px solid #e2e8f0;
@@ -454,6 +455,50 @@ export async function GET() {
 
     var countdownTimer = null;
 
+    // ─── XHR helpers (Safari 9 has no fetch) ───
+
+    function httpGet(url, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            callback(xhr.status >= 400, data);
+          } catch(e) {
+            callback(true, null);
+          }
+        }
+      };
+      xhr.send();
+    }
+
+    function httpPost(url, body, callback) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            callback(xhr.status >= 400, data);
+          } catch(e) {
+            callback(true, null);
+          }
+        }
+      };
+      xhr.send(JSON.stringify(body));
+    }
+
+    function formatTime(date) {
+      var h = date.getHours();
+      var m = date.getMinutes();
+      var ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      if (h === 0) h = 12;
+      return h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
       for (var i = 0; i < screens.length; i++) {
@@ -530,16 +575,14 @@ export async function GET() {
       document.getElementById('action-btn').disabled = true;
       document.getElementById('active-badge').style.display = 'none';
 
-      fetch('/api/kiosk/active-session?userId=' + encodeURIComponent(id))
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          state.activeSession = data.session || null;
-          updateKioskUI();
-        })
-        .catch(function() {
+      httpGet('/api/kiosk/active-session?userId=' + encodeURIComponent(id), function(err, data) {
+        if (err || !data) {
           state.activeSession = null;
-          updateKioskUI();
-        });
+        } else {
+          state.activeSession = data.session || null;
+        }
+        updateKioskUI();
+      });
     }
 
     function updateKioskUI() {
@@ -551,7 +594,7 @@ export async function GET() {
         statusEl.textContent = 'Currently Working';
         badgeEl.style.display = '';
         var clockInTime = new Date(state.activeSession.clock_in);
-        document.getElementById('active-time').textContent = 'Since ' + clockInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('active-time').textContent = 'Since ' + formatTime(clockInTime);
         actionBtn.className = 'action-btn btn-clock-out';
         document.getElementById('action-label').textContent = 'CLOCK OUT';
       } else {
@@ -602,43 +645,26 @@ export async function GET() {
     }
 
     function clockIn(pin) {
-      fetch('/api/kiosk/clock-in', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: state.tenantId, pin: pin })
-      })
-      .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
-      .then(function(result) {
+      httpPost('/api/kiosk/clock-in', { userId: state.tenantId, pin: pin }, function(err, data) {
         state.processing = false;
-        if (!result.ok) {
-          triggerError(result.data.error || 'Invalid PIN');
+        if (err) {
+          triggerError((data && data.error) || 'Invalid PIN');
           updateKioskUI();
         } else {
           var now = new Date();
           document.getElementById('success-company').textContent = state.tenantName;
-          document.getElementById('success-time').textContent = 'Clocked in at ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          document.getElementById('success-time').textContent = 'Clocked in at ' + formatTime(now);
           showScreen('clocked-in');
           startCountdown('countdown-in');
         }
-      })
-      .catch(function() {
-        state.processing = false;
-        triggerError('Network error. Please try again.');
-        updateKioskUI();
       });
     }
 
     function clockOut(pin) {
-      fetch('/api/kiosk/clock-out', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: state.activeSession.id, userId: state.tenantId, pin: pin })
-      })
-      .then(function(res) { return res.json().then(function(d) { return { ok: res.ok, data: d }; }); })
-      .then(function(result) {
+      httpPost('/api/kiosk/clock-out', { sessionId: state.activeSession.id, userId: state.tenantId, pin: pin }, function(err, data) {
         state.processing = false;
-        if (!result.ok) {
-          triggerError(result.data.error || 'Invalid PIN');
+        if (err) {
+          triggerError((data && data.error) || 'Invalid PIN');
           updateKioskUI();
         } else {
           var clockInTime = new Date(state.activeSession.clock_in).getTime();
@@ -648,11 +674,6 @@ export async function GET() {
           showScreen('clocked-out');
           startCountdown('countdown-out');
         }
-      })
-      .catch(function() {
-        state.processing = false;
-        triggerError('Network error. Please try again.');
-        updateKioskUI();
       });
     }
 
