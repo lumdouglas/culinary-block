@@ -271,6 +271,7 @@ export async function GET() {
       -webkit-appearance: none;
       outline: none;
       letter-spacing: 1px;
+      text-align: center;
     }
     .action-btn:disabled {
       background: #cbd5e1 !important;
