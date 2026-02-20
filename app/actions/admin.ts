@@ -145,3 +145,68 @@ export async function getApplications(status?: string) {
 
     return { data };
 }
+
+export async function getTenants() {
+    const supabase = await createClient();
+
+    // Check if user is admin
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: "Not authenticated" };
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (profile?.role !== 'admin') {
+        return { error: "Not authorized" };
+    }
+
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'tenant')
+        .order('company_name', { ascending: true });
+
+    if (error) {
+        return { error: "Failed to fetch tenants" };
+    }
+
+    return { data };
+}
+
+export async function toggleTenantActive(tenantId: string, isActive: boolean) {
+    const supabase = await createClient();
+
+    // Check if user is admin
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: "Not authenticated" };
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (profile?.role !== 'admin') {
+        return { error: "Not authorized" };
+    }
+
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ is_active: isActive })
+        .eq('id', tenantId);
+
+    if (updateError) {
+        return { error: "Failed to update tenant status" };
+    }
+
+    revalidatePath('/admin/tenants');
+    revalidatePath('/kiosk');
+    return { success: true };
+}

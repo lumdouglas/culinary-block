@@ -147,6 +147,12 @@ export async function createBooking(
     return { error: "You must be an approved tenant to make bookings." };
   }
 
+  // Verify tenant is active
+  // @ts-ignore - is_active is now on profile but TS might not pick it up from the single() inference without explicit typing or restart
+  if (profile.is_active === false) {
+    return { error: "Your account is currently inactive. Please contact the administrator to restore booking privileges." };
+  }
+
   // Check availability before booking
   const availability = await checkAvailability(stationId, startTime, endTime);
   if (availability.error) {

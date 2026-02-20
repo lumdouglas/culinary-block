@@ -8,7 +8,7 @@ export default async function KioskPage({ searchParams }: { searchParams: Promis
 
   if (!params.tenantId) {
     const supabase = await createClient();
-    const { data: profiles } = await supabase.from('profiles').select('id, company_name').eq('role', 'tenant');
+    const { data: profiles } = await supabase.from('profiles').select('id, company_name').eq('role', 'tenant').eq('is_active', true);
 
     return (
       <div className="min-h-screen bg-slate-50">

@@ -4,6 +4,7 @@ export interface Profile {
   company_name: string
   phone?: string
   kiosk_pin_hash?: string
+  is_active?: boolean
   role: 'tenant' | 'admin'
   created_at: string
   updated_at: string

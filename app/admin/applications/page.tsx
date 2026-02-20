@@ -80,31 +80,38 @@ export default function AdminApplicationsPage() {
           <p className="text-slate-600">Review and manage kitchen space applications</p>
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            onClick={() => setFilter("all")}
-          >
-            All
-          </Button>
-          <Button
-            variant={filter === "pending" ? "default" : "outline"}
-            onClick={() => setFilter("pending")}
-          >
-            Pending
-          </Button>
-          <Button
-            variant={filter === "approved" ? "default" : "outline"}
-            onClick={() => setFilter("approved")}
-          >
-            Approved
-          </Button>
-          <Button
-            variant={filter === "rejected" ? "default" : "outline"}
-            onClick={() => setFilter("rejected")}
-          >
-            Rejected
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-2">
+            <Button
+              variant={filter === "all" ? "default" : "outline"}
+              onClick={() => setFilter("all")}
+            >
+              All
+            </Button>
+            <Button
+              variant={filter === "pending" ? "default" : "outline"}
+              onClick={() => setFilter("pending")}
+            >
+              Pending
+            </Button>
+            <Button
+              variant={filter === "approved" ? "default" : "outline"}
+              onClick={() => setFilter("approved")}
+            >
+              Approved
+            </Button>
+            <Button
+              variant={filter === "rejected" ? "default" : "outline"}
+              onClick={() => setFilter("rejected")}
+            >
+              Rejected
+            </Button>
+          </div>
+
+          <Button asChild variant="secondary" className="gap-2">
+            <a href="/admin/tenants">
+              Manage Active Tenants
+            </a>
           </Button>
         </div>
 
