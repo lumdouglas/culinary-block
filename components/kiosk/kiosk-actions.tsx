@@ -63,7 +63,7 @@ function formatDuration(ms: number): string {
 type ScreenState = 'idle' | 'clocked-in' | 'clocked-out';
 
 export function KioskActions({ userId, companyName }: { userId: string, companyName: string }) {
-  const [activeSession, setActiveSession] = useState<any>(null);
+  const [activeSession, setActiveSession] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pin, setPin] = useState("");
@@ -158,14 +158,16 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
       return;
     }
 
+    if (!activeSession) return;
+
     setIsProcessing(true);
-    const result = await clockOut(activeSession.id, userId, pin);
+    const result = await clockOut(String(activeSession.id), userId, pin);
     if (result.error) {
       toast.error("Wrong PIN", { description: "Please try again" });
       triggerErrorAnimation();
     } else {
       // Calculate session duration
-      const clockInTime = new Date(activeSession.clock_in).getTime();
+      const clockInTime = new Date(String(activeSession.clock_in)).getTime();
       const clockOutTime = Date.now();
       const duration = clockOutTime - clockInTime;
       setSessionDuration(formatDuration(duration));
@@ -266,7 +268,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
           <div className="flex flex-col items-center space-y-6 w-full">
             <div className="bg-orange-100 text-orange-700 px-6 py-3 rounded-full flex items-center font-mono text-xl">
               <Timer className="mr-2" />
-              Active since: {new Date(activeSession.clock_in).toLocaleTimeString()}
+              Active since: {activeSession.clock_in ? new Date(String(activeSession.clock_in)).toLocaleTimeString() : ''}
             </div>
 
             <div className="w-full max-w-xs space-y-2">

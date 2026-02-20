@@ -13,7 +13,7 @@ interface KioskControlsProps {
 }
 
 export function KioskControls({ userId, companyName }: KioskControlsProps) {
-  const [activeSession, setActiveSession] = useState<any>(null);
+  const [activeSession, setActiveSession] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -32,7 +32,7 @@ export function KioskControls({ userId, companyName }: KioskControlsProps) {
 
     setIsProcessing(true);
     const result = await clockIn(userId, pin);
-    
+
     if (result?.error) {
       toast.error(result.error);
     } else {
@@ -45,10 +45,10 @@ export function KioskControls({ userId, companyName }: KioskControlsProps) {
 
   const handleClockOut = async () => {
     if (!activeSession) return;
-    
+
     setIsProcessing(true);
-    const result = await clockOut(activeSession.id);
-    
+    const result = await clockOut(String(activeSession.id));
+
     if (result?.error) {
       toast.error(result.error);
     } else {
@@ -73,21 +73,21 @@ export function KioskControls({ userId, companyName }: KioskControlsProps) {
         <div className="flex flex-col items-center space-y-6">
           <div className="bg-amber-50 border border-amber-200 text-amber-700 px-8 py-4 rounded-2xl flex items-center font-mono text-2xl shadow-sm">
             <Timer className="mr-3 h-6 w-6" />
-            Active: {new Date(activeSession.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            Active: {new Date(String(activeSession.clock_in)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
-          <Button 
+          <Button
             disabled={isProcessing}
-            variant="destructive" 
-            className="w-72 h-28 text-3xl font-bold rounded-3xl shadow-xl hover:scale-105 transition-transform" 
+            variant="destructive"
+            className="w-72 h-28 text-3xl font-bold rounded-3xl shadow-xl hover:scale-105 transition-transform"
             onClick={handleClockOut}
           >
             {isProcessing ? <Loader2 className="animate-spin" /> : <><Square className="mr-3 fill-current h-8 w-8" /> STOP</>}
           </Button>
         </div>
       ) : (
-        <Button 
+        <Button
           disabled={isProcessing}
-          className="bg-emerald-600 hover:bg-emerald-700 w-72 h-28 text-3xl font-bold rounded-3xl shadow-xl hover:scale-105 transition-transform" 
+          className="bg-emerald-600 hover:bg-emerald-700 w-72 h-28 text-3xl font-bold rounded-3xl shadow-xl hover:scale-105 transition-transform"
           onClick={handleClockIn}
         >
           {isProcessing ? <Loader2 className="animate-spin" /> : <><Play className="mr-3 fill-current h-8 w-8" /> START</>}

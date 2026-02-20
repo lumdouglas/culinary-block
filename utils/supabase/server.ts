@@ -16,14 +16,14 @@ export async function createClient() { // 1. Must be an async function
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (error) {
+          } catch {
             // The can be ignored if the middleware is handling it
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (error) {
+          } catch {
             // The can be ignored if the middleware is handling it
           }
         },

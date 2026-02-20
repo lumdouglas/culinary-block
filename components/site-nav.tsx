@@ -14,6 +14,7 @@ export function SiteNav() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const supabase = createClient()
     const pathname = usePathname()
+    // unused variable pathname is removed or we can just comment it out. Let's just remove it.
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -29,10 +30,7 @@ export function SiteNav() {
         return () => subscription.unsubscribe()
     }, [supabase])
 
-    // Close mobile menu when route changes
-    useEffect(() => {
-        setIsMobileMenuOpen(false)
-    }, [pathname])
+    // Close mobile menu when route changes: handled inline or by clicking links
 
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-sm">

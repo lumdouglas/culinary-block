@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { createRequest, type RequestType } from '@/app/actions/requests'
-import { KITCHEN_RULES } from '@/lib/constants'
 import { Wrench, AlertTriangle, Camera, Send, Loader2 } from 'lucide-react'
 
 // Rule violation categories for the dropdown

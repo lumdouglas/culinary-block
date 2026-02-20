@@ -67,7 +67,7 @@ export default function CalendarPageClient() {
             if (bookingsResult.currentUserId) {
                 setCurrentUserId(bookingsResult.currentUserId)
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load calendar data')
         } finally {
             setLoading(false)
@@ -76,6 +76,7 @@ export default function CalendarPageClient() {
 
     useEffect(() => {
         loadData()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const handleBookingSuccess = () => {
@@ -85,7 +86,7 @@ export default function CalendarPageClient() {
         loadData()
     }
 
-    const handleDateSelect = (start: Date, end: Date) => {
+    const handleDateSelect = (start: Date) => {
         setPreselectedDate(start)
         const hours = start.getHours().toString().padStart(2, '0')
         const minutes = start.getMinutes().toString().padStart(2, '0')

@@ -5,8 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { CalendarIcon, Loader2 } from "lucide-react"
-import { format } from "date-fns"
+import { Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -72,7 +71,7 @@ export function TimesheetRequestDialog() {
             setOpen(false)
             form.reset()
             router.refresh()
-        } catch (error) {
+        } catch {
             toast.error("Something went wrong. Please try again.")
         }
     }

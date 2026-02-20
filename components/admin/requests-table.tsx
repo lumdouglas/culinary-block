@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { updateRequest, type Request, type RequestStatus, type RequestPriority } from '@/app/actions/requests'
 import { Wrench, AlertTriangle, Clock, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react'
@@ -16,14 +15,6 @@ const statusColors: Record<RequestStatus, string> = {
     resolved: 'bg-green-100 text-green-700 border-green-200',
     approved: 'bg-green-100 text-green-700 border-green-200',
     rejected: 'bg-red-100 text-red-700 border-red-200'
-}
-
-const statusLabels: Record<RequestStatus, string> = {
-    pending: 'Pending',
-    in_progress: 'In Progress',
-    resolved: 'Resolved',
-    approved: 'Approved',
-    rejected: 'Rejected'
 }
 
 const priorityColors: Record<RequestPriority, string> = {
@@ -349,6 +340,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         >
                             <X className="h-8 w-8" />
                         </button>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={selectedImage}
                             alt="Request photo"

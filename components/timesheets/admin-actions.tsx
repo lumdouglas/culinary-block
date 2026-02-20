@@ -46,7 +46,7 @@ export function RequestActionDialog({ requestId, status }: RequestActionProps) {
             toast.success(`Request ${status} successfully`)
             setOpen(false)
             router.refresh()
-        } catch (error) {
+        } catch {
             toast.error("Something went wrong. Please try again.")
         } finally {
             setLoading(false)

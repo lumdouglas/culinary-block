@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LogOut, User, Settings, Calendar, ClipboardList } from 'lucide-react'
+import { LogOut, Settings, Calendar, ClipboardList } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,

@@ -22,7 +22,7 @@ export function PinPad({ userId, onSucceed }: { userId: string, onSucceed: () =>
         toast.success("Identity Verified");
         onSucceed();
       }
-    } catch (err: any) {
+    } catch {
       toast.error("Invalid PIN");
       setPin("");
     } finally {

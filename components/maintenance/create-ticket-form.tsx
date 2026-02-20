@@ -14,9 +14,8 @@ import {
 } from "@/components/ui/select";
 import { createTicket } from "@/app/actions/maintenance";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
-export function CreateTicketForm({ kitchens }: { kitchens: any[] }) {
+export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknown>[] }) {
     const [loading, setLoading] = useState(false);
     // Note: We'd typically close the dialog on success, but for simplicity we rely on page refresh/revalidate or we can use a passed prop to close.
     // Since this is inside a Dialog in a server component, closing it programmatically without context/state lift is tricky.
@@ -57,8 +56,8 @@ export function CreateTicketForm({ kitchens }: { kitchens: any[] }) {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="general">General Facility</SelectItem>
-                        {kitchens.map((k) => (
-                            <SelectItem key={k.id} value={k.id}>{k.name}</SelectItem>
+                        {kitchens.map((k: Record<string, unknown>) => (
+                            <SelectItem key={String(k.id)} value={String(k.id)}>{String(k.name)}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>

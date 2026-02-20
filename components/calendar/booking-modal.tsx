@@ -107,7 +107,7 @@ export function BookingForm({
         form.reset()
         onSuccess?.()
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)

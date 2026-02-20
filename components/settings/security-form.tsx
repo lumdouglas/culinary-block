@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { createClient } from "@/utils/supabase/client"
-import { Lock, KeyRound, Save, Loader2 } from "lucide-react"
+import { Lock, KeyRound, Loader2 } from "lucide-react"
 
 const passwordSchema = z.object({
     password: z.string().min(6, "Password must be at least 6 characters"),
@@ -46,8 +46,8 @@ export function SecuritySettings() {
             if (error) throw error
             toast.success("Password updated successfully")
             passwordForm.reset()
-        } catch (error: any) {
-            toast.error(error.message || "Failed to update password")
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to update password")
         } finally {
             setSavingPwd(false)
         }
@@ -66,7 +66,7 @@ export function SecuritySettings() {
 
             toast.success("Kiosk PIN updated successfully")
             pinForm.reset()
-        } catch (error) {
+        } catch {
             toast.error("Failed to update PIN")
         } finally {
             setSavingPin(false)

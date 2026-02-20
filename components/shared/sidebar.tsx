@@ -26,6 +26,7 @@ export function Sidebar() {
   // Effect to collapse when entering calendar
   useEffect(() => {
     if (pathname === "/calendar") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsCollapsed(true);
     }
   }, [pathname]);
@@ -37,7 +38,7 @@ export function Sidebar() {
       router.push("/login");
       router.refresh();
       toast.success("Signed out successfully");
-    } catch (error) {
+    } catch {
       toast.error("Error signing out");
     }
   };

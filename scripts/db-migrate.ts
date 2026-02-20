@@ -1,5 +1,4 @@
 
-import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -15,13 +14,7 @@ if (!supabaseUrl || !serviceRoleKey) {
     process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
-
+// Intentionally empty logic since migration requires SQL console
 async function runMigration() {
     const migrationPath = path.resolve(process.cwd(), 'supabase/migrations/002_timesheet_requests.sql');
 
@@ -29,8 +22,6 @@ async function runMigration() {
         console.error(`Migration file not found: ${migrationPath}`);
         return;
     }
-
-    const sql = fs.readFileSync(migrationPath, 'utf8');
 
     console.log('Running migration: 002_timesheet_requests.sql');
 

@@ -79,7 +79,7 @@ export function BookingCalendar({
     }
   })
 
-  const handleDateSelect = (selectInfo: any) => {
+  const handleDateSelect = (selectInfo: { start: Date; end: Date }) => {
     if (onDateSelect) {
       onDateSelect(selectInfo.start, selectInfo.end)
     }
