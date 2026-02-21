@@ -17,8 +17,9 @@ export async function GET(request: Request) {
         }
     }
 
-    // Handle errors or missing code
-    // In a robust application, you might want to redirect to an explicit error page
-    // e.g., `/login?error=Invalid+or+expired+link`
-    return NextResponse.redirect(new URL('/login?error=Invalid link', requestUrl.origin));
+    // If there is no code, it might be an implicit auth flow which uses URL hashes
+    // Since the server can't see the hash, we redirect them to the destination page.
+    // The destination page (e.g., /account-setup) will parse the hash on the client side.
+    // If the link is truly invalid, the destination page's timeout will catch it and route them to /login.
+    return NextResponse.redirect(new URL(next, requestUrl.origin));
 }

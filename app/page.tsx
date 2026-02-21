@@ -43,9 +43,9 @@ export default function Home() {
     if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
       const hash = window.location.hash;
       if (hash.includes('type=invite') || hash.includes('type=recovery')) {
-        router.push('/account-setup' + hash);
+        window.location.assign('/account-setup' + hash);
       } else if (hash.includes('type=magiclink')) {
-        router.push('/calendar' + hash);
+        window.location.assign('/calendar' + hash);
       }
     }
   }, [router]);
