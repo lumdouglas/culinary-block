@@ -43,7 +43,7 @@ export async function approveApplication(applicationId: string) {
                 company_name: application.company_name,
                 phone: application.phone,
             },
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/account-setup`,
         }
     );
 

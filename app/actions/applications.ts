@@ -8,7 +8,7 @@ export async function approveApplication(applicationId: string, email: string) {
 
   // 1. Send Supabase Auth Invite
   const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/signup`
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/account-setup`
   });
 
   if (authError) return { error: authError.message };
