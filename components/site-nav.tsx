@@ -12,19 +12,31 @@ import { Menu, X } from "lucide-react"
 export function SiteNav() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [userRole, setUserRole] = useState<'admin' | 'tenant' | null>(null)
     const supabase = createClient()
     const pathname = usePathname()
-    // unused variable pathname is removed or we can just comment it out. Let's just remove it.
 
     useEffect(() => {
         const checkAuth = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             setIsLoggedIn(!!user)
+            if (user) {
+                const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+                setUserRole(profile?.role || 'tenant')
+            } else {
+                setUserRole(null)
+            }
         }
         checkAuth()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             setIsLoggedIn(!!session?.user)
+            if (session?.user) {
+                const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+                setUserRole(profile?.role || 'tenant')
+            } else {
+                setUserRole(null)
+            }
         })
 
         return () => subscription.unsubscribe()
@@ -53,8 +65,7 @@ export function SiteNav() {
                         <NavLink href="/">HOME</NavLink>
                         {isLoggedIn && (
                             <>
-                                <NavLink href="/kiosk">TIMESHEET</NavLink>
-                                <NavLink href="/calendar">CALENDAR</NavLink>
+                                <NavLink href="/calendar">DASHBOARD</NavLink>
                                 <NavLink href="/contact">CONTACT</NavLink>
                             </>
                         )}
@@ -97,18 +108,32 @@ export function SiteNav() {
                         <MobileNavLink href="/">HOME</MobileNavLink>
                         {isLoggedIn && (
                             <>
-                                <MobileNavLink href="/kiosk">TIMESHEET</MobileNavLink>
-                                <MobileNavLink href="/calendar">Calendar</MobileNavLink>
+                                <MobileNavLink href="/calendar">DASHBOARD</MobileNavLink>
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
                                 <div className="py-2 border-t border-slate-100 my-2">
                                     <p className="px-3 text-xs font-semibold text-slate-500 mb-1">ACCOUNT</p>
-                                    <MobileNavLink href="/calendar">My Bookings</MobileNavLink>
                                     <MobileNavLink href="/settings">Settings</MobileNavLink>
-                                    <MobileNavLink href="/admin/requests">Tenant Requests</MobileNavLink>
-                                    <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
+
+                                    {userRole === 'admin' ? (
+                                        <>
+                                            <MobileNavLink href="/admin/tenants">Active Tenants</MobileNavLink>
+                                            <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
+                                            <MobileNavLink href="/admin/requests">Tenant Requests</MobileNavLink>
+                                            <MobileNavLink href="/admin/timesheets">Timesheet Log</MobileNavLink>
+                                            <MobileNavLink href="/billing/invoices">All Invoices</MobileNavLink>
+                                            <MobileNavLink href="/kiosk">Kiosk Setup</MobileNavLink>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <MobileNavLink href="/timesheets">My Timesheets</MobileNavLink>
+                                            <MobileNavLink href="/billing">My Billing</MobileNavLink>
+                                            <MobileNavLink href="/maintenance">Maintenance</MobileNavLink>
+                                        </>
+                                    )}
+
                                     <button
                                         onClick={() => supabase.auth.signOut().then(() => { window.location.href = '/' })}
-                                        className="block w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-slate-50 transition-colors"
+                                        className="block w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-slate-50 transition-colors mt-2"
                                     >
                                         Sign Out
                                     </button>

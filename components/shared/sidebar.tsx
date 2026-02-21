@@ -2,23 +2,34 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock, PenTool as Tool } from "lucide-react";
+import { Calendar, Receipt, Monitor, Settings, LogOut, ChevronLeft, ChevronRight, Clock, PenTool as Tool, Users, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 
-const navItems = [
-  { name: "CALENDAR", href: "/calendar", icon: Calendar },
-  { name: "Timesheets", href: "/timesheets", icon: Clock },
-  { name: "My Billing", href: "/billing", icon: Receipt },
-  { name: "Maintenance", href: "/maintenance", icon: Tool },
-  { name: "Kiosk Mode", href: "/kiosk", icon: Monitor },
-  { name: "Settings", href: "/settings", icon: Settings },
-];
+export function Sidebar({ userRole = 'tenant' }: { userRole?: string }) {
+  const tenantNavItems = [
+    { name: "Calendar", href: "/calendar", icon: Calendar },
+    { name: "My Timesheets", href: "/timesheets", icon: Clock },
+    { name: "My Billing", href: "/billing", icon: Receipt },
+    { name: "Maintenance", href: "/maintenance", icon: Tool },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
 
-export function Sidebar() {
+  const adminNavItems = [
+    { name: "Calendar", href: "/calendar", icon: Calendar },
+    { name: "Active Tenants", href: "/admin/tenants", icon: Users },
+    { name: "Applications", href: "/admin/applications", icon: ClipboardList },
+    { name: "Tenant Requests", href: "/admin/requests", icon: Tool },
+    { name: "Timesheet Log", href: "/admin/timesheets", icon: Clock },
+    { name: "All Invoices", href: "/billing/invoices", icon: Receipt },
+    { name: "Kiosk Setup", href: "/kiosk", icon: Monitor },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
+
+  const navItems = userRole === 'admin' ? adminNavItems : tenantNavItems;
   const pathname = usePathname();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(pathname === "/calendar");
