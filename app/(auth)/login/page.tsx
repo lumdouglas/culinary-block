@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
+import { useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -22,6 +22,18 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
   });
+
+  // Handle Supabase Dashboard magic links & invites that land on /login
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
+      const hash = window.location.hash;
+      if (hash.includes('type=invite') || hash.includes('type=recovery')) {
+        window.location.assign('/account-setup' + hash);
+      } else if (hash.includes('type=magiclink')) {
+        window.location.assign('/calendar' + hash);
+      }
+    }
+  }, []);
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     const { error } = await supabase.auth.signInWithPassword(values);
