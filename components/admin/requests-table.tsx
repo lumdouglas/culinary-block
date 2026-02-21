@@ -156,20 +156,15 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                     <td className="px-4 py-3">
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
                                             ? 'bg-teal-100 text-teal-700'
-                                            : request.type === 'timesheet'
-                                                ? 'bg-purple-100 text-purple-700'
-                                                : 'bg-amber-100 text-amber-700'
+                                            : 'bg-amber-100 text-amber-700'
                                             }`}>
                                             {request.type === 'maintenance' ? (
                                                 <Wrench className="h-3 w-3" />
-                                            ) : request.type === 'timesheet' ? (
-                                                <Clock className="h-3 w-3" />
                                             ) : (
                                                 <AlertTriangle className="h-3 w-3" />
                                             )}
                                             {request.type === 'maintenance' ? 'Maintenance'
-                                                : request.type === 'timesheet' ? 'Timesheet'
-                                                    : 'Rule Violation'}
+                                                : 'Rule Violation'}
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 max-w-xs">
@@ -194,8 +189,8 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                         <select
                                             value={request.priority}
                                             onChange={(e) => handlePriorityChange(request, e.target.value as RequestPriority)}
-                                            disabled={isPending || request.type === 'timesheet'}
-                                            className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${request.type === 'timesheet' ? 'opacity-50 cursor-not-allowed' : ''} ${priorityColors[request.priority]}`}
+                                            disabled={isPending}
+                                            className={`px-2 py-1 rounded text-xs font-medium border-0 cursor-pointer ${priorityColors[request.priority]}`}
                                         >
                                             <option value="low">Low</option>
                                             <option value="medium">Medium</option>
@@ -239,20 +234,15 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                 </span>
                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
                                     ? 'bg-teal-100 text-teal-700'
-                                    : request.type === 'timesheet'
-                                        ? 'bg-purple-100 text-purple-700'
-                                        : 'bg-amber-100 text-amber-700'
+                                    : 'bg-amber-100 text-amber-700'
                                     }`}>
                                     {request.type === 'maintenance' ? (
                                         <Wrench className="h-3 w-3" />
-                                    ) : request.type === 'timesheet' ? (
-                                        <Clock className="h-3 w-3" />
                                     ) : (
                                         <AlertTriangle className="h-3 w-3" />
                                     )}
                                     {request.type === 'maintenance' ? 'Maintenance'
-                                        : request.type === 'timesheet' ? 'Timesheet'
-                                            : 'Violation'}
+                                        : 'Violation'}
                                 </span>
                             </div>
 
@@ -296,8 +286,8 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                     <select
                                         value={request.priority}
                                         onChange={(e) => handlePriorityChange(request, e.target.value as RequestPriority)}
-                                        disabled={isPending || request.type === 'timesheet'}
-                                        className={`w-full h-9 px-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${request.type === 'timesheet' ? 'opacity-50 cursor-not-allowed' : ''} ${priorityColors[request.priority]}`}
+                                        disabled={isPending}
+                                        className={`w-full h-9 px-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${priorityColors[request.priority]}`}
                                     >
                                         <option value="low">Low</option>
                                         <option value="medium">Medium</option>

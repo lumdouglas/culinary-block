@@ -136,6 +136,18 @@ export function UserMenu() {
                                 <span className="text-teal-900 font-medium">Applications</span>
                             </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/admin/timesheets" className="flex items-center">
+                                <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
+                                <span className="text-teal-900 font-medium">Timesheets</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/billing/invoices" className="flex items-center">
+                                <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
+                                <span className="text-teal-900 font-medium">All Invoices</span>
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                     </>
                 )}

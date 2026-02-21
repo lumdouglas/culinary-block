@@ -66,3 +66,27 @@ export async function clockOut(sessionId: string) {
   revalidatePath('/kiosk');
   return { success: true };
 }
+
+export async function updateTimesheet(sessionId: string, newClockIn: string, newClockOut: string | null) {
+  const supabase = await createClient();
+
+  const updateData: any = {
+    clock_in: new Date(newClockIn).toISOString(),
+    is_edited: true
+  };
+
+  if (newClockOut) {
+    updateData.clock_out = new Date(newClockOut).toISOString();
+  }
+
+  const { error } = await supabase
+    .from('timesheets')
+    .update(updateData)
+    .eq('id', sessionId);
+
+  if (error) return { error: "Failed to update timesheet." };
+
+  revalidatePath('/timesheets');
+  revalidatePath('/admin/timesheets');
+  return { success: true };
+}

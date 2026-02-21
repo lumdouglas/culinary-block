@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
-export type RequestType = 'maintenance' | 'rule_violation' | 'timesheet'
+export type RequestType = 'maintenance' | 'rule_violation'
 export type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'approved' | 'rejected'
 export type RequestPriority = 'low' | 'medium' | 'high'
 
@@ -18,7 +18,7 @@ export interface Request {
     priority: RequestPriority
     created_at: string
     updated_at: string
-    source: 'requests' | 'timesheet_requests'
+    source: 'requests'
     profiles?: {
         company_name: string
         email: string
@@ -129,7 +129,7 @@ export async function getRequests(filters?: {
     `)
         .order('created_at', { ascending: false })
 
-    if (filters?.type && filters.type !== 'timesheet') {
+    if (filters?.type) {
         requestsQuery = requestsQuery.eq('type', filters.type)
     }
     if (filters?.status) {
@@ -149,56 +149,9 @@ export async function getRequests(filters?: {
         source: 'requests'
     }))
 
-    // Fetch Timesheet Requests
-    let timesheetQuery = adminClient
-        .from('timesheet_requests')
-        .select(`
-            *,
-            profiles:user_id (
-                company_name,
-                email
-            )
-        `)
-        .order('created_at', { ascending: false })
+    let allRequests = [...standardRequests]
 
-    if (filters?.type && filters.type !== 'timesheet') {
-        // If filtering by maintenance/violation, don't fetch timesheets
-        // If filtering by timesheet, DO fetch.
-        // If filter is 'timesheet', we only want timesheets.
-    }
-
-    const { data: timesheetRequestsData, error: timesheetError } = await timesheetQuery
-
-    if (timesheetError) {
-        console.error('Error fetching timesheet requests:', timesheetError)
-    }
-
-    const timesheetRequests: Request[] = (timesheetRequestsData || []).map((r: any) => {
-        // Format description
-        const typeStr = r.type.toUpperCase()
-        const timeIn = r.clock_in ? new Date(r.clock_in).toLocaleString() : 'N/A'
-        const timeOut = r.clock_out ? new Date(r.clock_out).toLocaleString() : 'N/A'
-        const description = `[${typeStr}] ${r.reason || 'No reason provided'}\nIn: ${timeIn}\nOut: ${timeOut}`
-
-        return {
-            id: r.id,
-            user_id: r.user_id,
-            type: 'timesheet',
-            description,
-            photo_url: null,
-            status: r.status, // pending, approved, rejected
-            priority: 'medium', // Default
-            created_at: r.created_at,
-            updated_at: r.updated_at,
-            source: 'timesheet_requests',
-            profiles: r.profiles
-        }
-    })
-
-    // Combine and Filter
-    let allRequests = [...standardRequests, ...timesheetRequests]
-
-    // Apply filters in memory for simplicity (since we combine sources)
+    // Apply filters in memory
     if (filters?.type) {
         allRequests = allRequests.filter(r => r.type === filters.type)
     }
@@ -239,59 +192,18 @@ export async function updateRequest(
     // 3. Proceed with Admin Client
     const adminClient = createAdminClient()
 
-    if (req.source === 'timesheet_requests') {
-        // Timesheet requests update
-        if (updates.priority) {
-            // Priority not supported on timesheets
-        }
+    // Standard Requests
+    const { error } = await adminClient
+        .from('requests')
+        .update({
+            ...updates,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', req.id)
 
-        if (updates.status) {
-            // Verify status is valid for timesheets (pending, approved, rejected)
-            if (!['pending', 'approved', 'rejected'].includes(updates.status)) {
-                return { error: 'Invalid status for timesheet request' }
-            }
-
-            // If Approved, we might need to apply changes to timesheets table?
-            // The constraint says logic: "Status flow: pending -> approved (updates timesheets table) OR rejected"
-            // Usually handled by Database Trigger or logic here.
-            // Since it's SQL based, maybe there's a trigger?
-            // "002_timesheet_requests.sql" lines 33-36: update updated_at trigger only.
-            // There is no logic to apply to timesheets table in the SQL dump provided.
-            // So we might need to Implement the Logic here!
-
-            // For now, just update status. If user needs logic, they would have provided it or it's a separate task.
-            // "add timesheet requests to this page" implies visibility and status updating.
-            // Logic for "Applying" the timesheet change is complex.
-            // I will update the status for now.
-            const { error } = await adminClient
-                .from('timesheet_requests')
-                .update({
-                    status: updates.status,
-                    updated_at: new Date().toISOString(),
-                    reviewed_by: user.id,
-                    reviewed_at: new Date().toISOString()
-                })
-                .eq('id', req.id)
-
-            if (error) {
-                console.error('Error updating timesheet request:', error)
-                return { error: 'Failed to update timesheet request' }
-            }
-        }
-    } else {
-        // Standard Requests
-        const { error } = await adminClient
-            .from('requests')
-            .update({
-                ...updates,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', req.id)
-
-        if (error) {
-            console.error('Error updating request:', error)
-            return { error: 'Failed to update request' }
-        }
+    if (error) {
+        console.error('Error updating request:', error)
+        return { error: 'Failed to update request' }
     }
 
     revalidatePath('/admin/requests')

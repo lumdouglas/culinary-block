@@ -1,8 +1,5 @@
-
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
-import { format } from "date-fns"
-import { RequestActionDialog } from "@/components/timesheets/admin-actions"
 import { Badge } from "@/components/ui/badge"
 import {
     Table,
@@ -28,69 +25,79 @@ export default async function AdminTimesheetsPage() {
 
     if (profile?.role !== "admin") return redirect("/")
 
-    // Fetch pending requests
-    const { data: requests, error } = await supabase
-        .from("timesheet_requests")
+    // Fetch all timesheets across all tenants
+    const { data: timesheets, error } = await supabase
+        .from("timesheets")
         .select(`
-        *,
-        profiles:user_id (company_name, email)
-    `)
-        .eq("status", "pending")
-        .order("created_at", { ascending: true })
+            id, clock_in, clock_out, duration_minutes, is_edited,
+            profiles:user_id (company_name, email),
+            kitchens (name)
+        `)
+        .order("clock_in", { ascending: false })
+        .limit(100)
+
+    if (error) {
+        console.error("Error fetching timesheets:", error)
+    }
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Timesheet Requests</h2>
+            <div className="flex items-center justify-between space-y-2 mb-6">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Global Timesheet Log</h2>
+                    <p className="text-slate-500 mt-2">View and track all tenant entries and edits</p>
+                </div>
             </div>
 
-            <div className="rounded-md border bg-white">
+            <div className="rounded-md border bg-white overflow-hidden shadow-sm">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Tenant</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Requested Time</TableHead>
-                            <TableHead>Reason</TableHead>
-                            <TableHead>Actions</TableHead>
+                    <TableHeader className="bg-slate-100 border-b border-slate-300">
+                        <TableRow className="border-slate-300 hover:bg-transparent">
+                            <TableHead className="text-slate-900 font-bold">Tenant</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Date</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Time Range</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Kitchen</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Duration</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {requests && requests.length > 0 ? (
-                            requests.map((req: any) => (
-                                <TableRow key={req.id}>
+                        {timesheets && timesheets.length > 0 ? (
+                            timesheets.map((shift: any) => (
+                                <TableRow key={shift.id} className="border-b border-slate-200">
                                     <TableCell>
-                                        <div className="font-medium text-slate-900">{req.profiles?.company_name}</div>
-                                        <div className="text-xs text-slate-600">{req.profiles?.email}</div>
+                                        <div className="font-medium text-slate-900">{shift.profiles?.company_name || 'Unknown'}</div>
+                                        <div className="text-xs text-slate-600">{shift.profiles?.email}</div>
+                                    </TableCell>
+                                    <TableCell className="font-medium text-slate-900">
+                                        {new Date(shift.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </TableCell>
+                                    <TableCell className="text-slate-700">
+                                        {new Date(shift.clock_in).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' })} -
+                                        {shift.clock_out ? new Date(shift.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' }) : " Now"}
+                                        {shift.is_edited && (
+                                            <Badge variant="outline" className="ml-2 text-[10px] h-5 px-1.5 border-amber-200 text-amber-700 bg-amber-50">
+                                                Edited
+                                            </Badge>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="text-slate-900">{shift.kitchens?.name || '—'}</TableCell>
+                                    <TableCell className="text-slate-700">
+                                        {shift.duration_minutes ?
+                                            `${Math.floor(shift.duration_minutes / 60)}h ${shift.duration_minutes % 60}m`
+                                            : "Active"}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className="uppercase">{req.type}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="text-sm">
-                                            {req.clock_in && (
-                                                <div>In: {format(new Date(req.clock_in), "MM/dd h:mm a")}</div>
-                                            )}
-                                            {req.clock_out && (
-                                                <div>Out: {format(new Date(req.clock_out), "MM/dd h:mm a")}</div>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px]">
-                                        <p className="text-sm text-slate-700 truncate" title={req.reason}>{req.reason}</p>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <RequestActionDialog requestId={req.id} status="approved" />
-                                            <RequestActionDialog requestId={req.id} status="rejected" />
-                                        </div>
+                                        <Badge variant={shift.clock_out ? "secondary" : "default"}>
+                                            {shift.clock_out ? "Completed" : "Active"}
+                                        </Badge>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center text-slate-500">
-                                    No pending requests.
+                                <TableCell colSpan={6} className="h-24 text-center text-slate-500">
+                                    No timesheets found.
                                 </TableCell>
                             </TableRow>
                         )}
