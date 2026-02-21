@@ -28,38 +28,30 @@ export default function AccountSetupPage() {
     const supabase = createClient();
     const [checkingAuth, setCheckingAuth] = useState(true);
 
-    // Use onAuthStateChange to properly handle hash fragments as Supabase establishes the session
     useEffect(() => {
-        let active = true;
-
-        async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session && active) {
+        // Listen for auth state changes — this fires when Supabase processes the URL hash token
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
                 setCheckingAuth(false);
             }
-        }
-        checkSession();
+            // Only handle SIGNED_OUT if we were previously authenticated
+            if (event === 'SIGNED_OUT') {
+                router.push('/login');
+            }
+        });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && active) {
+        // Also immediately check if a session already exists (e.g. user refreshes the page)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
                 setCheckingAuth(false);
             }
         });
 
-        // Timeout safety net just in case the hash was totally invalid
-        const timeout = setTimeout(() => {
-            if (active && checkingAuth) {
-                toast.error("Invalid or expired invite link. Please log in or request a new invite.");
-                router.push("/login");
-            }
-        }, 4000);
-
         return () => {
-            active = false;
             subscription.unsubscribe();
-            clearTimeout(timeout);
         };
-    }, [router, supabase.auth, checkingAuth]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty deps: only run once on mount — no timeout, no loop
 
     const form = useForm<z.infer<typeof accountSetupSchema>>({
         resolver: zodResolver(accountSetupSchema),
@@ -77,8 +69,7 @@ export default function AccountSetupPage() {
         if (error) {
             toast.error(error.message);
         } else {
-            toast.success("Password set successfully!");
-            // Send them to complete their account profile
+            toast.success("Password set! Let's finish your profile.");
             router.push("/account-setup/profile");
             router.refresh();
         }
@@ -87,10 +78,10 @@ export default function AccountSetupPage() {
     if (checkingAuth) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-pulse flex flex-col items-center">
-                    <div className="h-8 w-8 rounded-full border-4 border-slate-200 border-t-slate-800 animate-spin mb-4" />
-                    <p className="text-slate-500 text-sm font-medium">Verifying secure link...</p>
-                    <p className="text-slate-400 text-xs mt-1">This may take a second</p>
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 rounded-full border-4 border-slate-200 border-t-slate-800 animate-spin" />
+                    <p className="text-slate-600 text-sm font-medium">Verifying your secure link...</p>
+                    <p className="text-slate-400 text-xs">This may take a few seconds</p>
                 </div>
             </div>
         )
@@ -113,7 +104,7 @@ export default function AccountSetupPage() {
                                 <FormItem>
                                     <FormLabel>New Password</FormLabel>
                                     <FormControl><Input type="password" {...field} /></FormControl>
-                                    <FormDescription>Must be at least 8 characters, and include a number and a symbol.</FormDescription>
+                                    <FormDescription>At least 8 characters, one number, and one symbol.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )} />
