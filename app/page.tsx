@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Calendar, Clock, CheckCircle, Shield, MapPin, Phone, Mail, ChefHat, Thermometer, Building, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -35,6 +36,19 @@ const amenities = [
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const router = useRouter()
+
+  // Handle Supabase Dashboard magic links & invites
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
+      const hash = window.location.hash;
+      if (hash.includes('type=invite') || hash.includes('type=recovery')) {
+        router.push('/account-setup' + hash);
+      } else if (hash.includes('type=magiclink')) {
+        router.push('/calendar' + hash);
+      }
+    }
+  }, [router]);
 
   // Auto-advance slideshow
   useEffect(() => {
