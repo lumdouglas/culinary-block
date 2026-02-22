@@ -29,29 +29,42 @@ export default function AccountSetupPage() {
     const [checkingAuth, setCheckingAuth] = useState(true);
 
     useEffect(() => {
-        // Listen for auth state changes — this fires when Supabase processes the URL hash token
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+        let resolved = false;
+
+        // Check for an existing session first (handles page refresh case)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                resolved = true;
                 setCheckingAuth(false);
             }
-            // Only handle SIGNED_OUT if we were previously authenticated
-            if (event === 'SIGNED_OUT') {
+        });
+
+        // Listen for auth state changes — fires when Supabase processes the URL hash token
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+                resolved = true;
+                setCheckingAuth(false);
+            }
+            // Only redirect to login on SIGNED_OUT if we've already confirmed a session
+            // (prevents premature redirect when SIGNED_OUT fires before SIGNED_IN on invite links)
+            if (event === 'SIGNED_OUT' && resolved) {
                 router.push('/login');
             }
         });
 
-        // Also immediately check if a session already exists (e.g. user refreshes the page)
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                setCheckingAuth(false);
+        // Fallback: if nothing resolves within 6 seconds, send to login
+        const timeout = setTimeout(() => {
+            if (!resolved) {
+                router.push('/login');
             }
-        });
+        }, 6000);
 
         return () => {
             subscription.unsubscribe();
+            clearTimeout(timeout);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty deps: only run once on mount — no timeout, no loop
+    }, []);
 
     const form = useForm<z.infer<typeof accountSetupSchema>>({
         resolver: zodResolver(accountSetupSchema),

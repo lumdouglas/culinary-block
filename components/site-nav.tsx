@@ -9,11 +9,13 @@ import { UserMenu } from "@/components/user-menu"
 import { createClient } from "@/utils/supabase/client"
 import { Menu, X } from "lucide-react"
 
+// Create client once outside component to prevent re-render loop
+const supabase = createClient()
+
 export function SiteNav() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [userRole, setUserRole] = useState<'admin' | 'tenant' | null>(null)
-    const supabase = createClient()
     const pathname = usePathname()
 
     useEffect(() => {
@@ -40,7 +42,7 @@ export function SiteNav() {
         })
 
         return () => subscription.unsubscribe()
-    }, [supabase])
+    }, [])
 
     // Close mobile menu when route changes: handled inline or by clicking links
 
