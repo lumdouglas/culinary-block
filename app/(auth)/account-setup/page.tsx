@@ -27,42 +27,81 @@ export default function AccountSetupPage() {
     const router = useRouter();
     const supabase = createClient();
     const [checkingAuth, setCheckingAuth] = useState(true);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     useEffect(() => {
-        let resolved = false;
+        let cancelled = false;
 
-        // Check for an existing session first (handles page refresh case)
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                resolved = true;
+        async function init() {
+            // Parse hash params — invite links using implicit flow land here with #access_token=...
+            const hashParams = typeof window !== 'undefined' && window.location.hash
+                ? Object.fromEntries(new URLSearchParams(window.location.hash.slice(1)))
+                : {};
+
+            // Hash contains an explicit error (e.g. expired link)
+            if (hashParams.error || hashParams.error_description) {
+                if (!cancelled) router.push(`/login?error=${encodeURIComponent(hashParams.error_description || hashParams.error || 'Link expired')}`);
+                return;
+            }
+
+            // Hash contains implicit-flow tokens — manually set session.
+            // createBrowserClient uses flowType:"pkce" which throws during URL auto-detection
+            // for implicit tokens, but setSession() bypasses that restriction and works directly.
+            if (hashParams.access_token && hashParams.refresh_token) {
+                const { data: { session }, error } = await supabase.auth.setSession({
+                    access_token: hashParams.access_token,
+                    refresh_token: hashParams.refresh_token,
+                });
+                if (cancelled) return;
+                if (session) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                    setCheckingAuth(false);
+                    return;
+                }
+                // setSession failed — show the error so the user can report it
+                console.error('[account-setup] setSession failed:', error);
+                setAuthError(`Could not verify your invite link: ${error?.message ?? 'unknown error'}. Please contact your administrator to request a new invite.`);
                 setCheckingAuth(false);
+                return;
             }
-        });
 
-        // Listen for auth state changes — fires when Supabase processes the URL hash token
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-                resolved = true;
+            // No hash tokens — look for a session established via cookie (the callback route
+            // exchanges token_hash / code server-side and sets cookies before redirecting here).
+            //
+            // We subscribe to onAuthStateChange and wait for INITIAL_SESSION, which fires after
+            // _recoverAndRefresh() completes. This avoids a race where getSession() returns null
+            // because the client hasn't finished reading cookies yet.
+            const hasSession = await new Promise<boolean>((resolve) => {
+                // Short-circuit: if getSession already has the answer, don't wait for the event
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    if (session) resolve(true);
+                });
+
+                const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                    // INITIAL_SESSION fires when the client restores a session from cookies.
+                    // SIGNED_IN / USER_UPDATED fire when a session is newly established.
+                    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+                        subscription.unsubscribe();
+                        resolve(!!session);
+                    }
+                });
+
+                // Fallback after 4 seconds if no auth event arrives
+                setTimeout(() => resolve(false), 4000);
+            });
+
+            if (cancelled) return;
+
+            if (hasSession) {
                 setCheckingAuth(false);
+            } else {
+                router.push('/login?error=Your+invite+link+has+expired+or+is+invalid.+Please+contact+your+administrator.');
             }
-            // Only redirect to login on SIGNED_OUT if we've already confirmed a session
-            // (prevents premature redirect when SIGNED_OUT fires before SIGNED_IN on invite links)
-            if (event === 'SIGNED_OUT' && resolved) {
-                router.push('/login');
-            }
-        });
+        }
 
-        // Fallback: if nothing resolves within 6 seconds, send to login
-        const timeout = setTimeout(() => {
-            if (!resolved) {
-                router.push('/login');
-            }
-        }, 6000);
+        init();
 
-        return () => {
-            subscription.unsubscribe();
-            clearTimeout(timeout);
-        };
+        return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -95,6 +134,18 @@ export default function AccountSetupPage() {
                     <div className="h-8 w-8 rounded-full border-4 border-slate-200 border-t-slate-800 animate-spin" />
                     <p className="text-slate-600 text-sm font-medium">Verifying your secure link...</p>
                     <p className="text-slate-400 text-xs">This may take a few seconds</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (authError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-sm text-center space-y-4">
+                    <h2 className="text-xl font-bold text-red-600">Invite Link Error</h2>
+                    <p className="text-slate-600 text-sm">{authError}</p>
+                    <Button variant="outline" onClick={() => router.push('/login')}>Go to Login</Button>
                 </div>
             </div>
         )

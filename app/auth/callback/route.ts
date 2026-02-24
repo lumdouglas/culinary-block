@@ -1,25 +1,61 @@
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url);
     const code = requestUrl.searchParams.get('code');
+    const tokenHash = requestUrl.searchParams.get('token_hash');
+    const type = requestUrl.searchParams.get('type') ?? 'invite';
     const next = requestUrl.searchParams.get('next') ?? '/account-setup';
 
-    if (code) {
-        const supabase = await createClient();
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
+    // Build the redirect response first so we can set cookies ON it.
+    // cookies() from next/headers does not apply to a returned NextResponse.redirect().
+    const redirectTo = new URL(next, requestUrl.origin);
+    const redirectResponse = NextResponse.redirect(redirectTo);
+    const cookieStore = await cookies();
 
-        if (!error) {
-            // Successful authentication via PKCE
-            // Redirect to the designated page (defaulting to /account-setup for invites)
-            return NextResponse.redirect(new URL(next, requestUrl.origin));
+    if (code || tokenHash) {
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll();
+                    },
+                    setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+                        cookiesToSet.forEach(({ name, value, options }) =>
+                            redirectResponse.cookies.set(name, value, options as Record<string, unknown>)
+                        );
+                    },
+                },
+            }
+        );
+
+        if (code) {
+            // PKCE authorization code flow
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error) return redirectResponse;
+        } else if (tokenHash) {
+            // Email OTP / invite / magic-link flow — Supabase appends token_hash as a query param
+            const { error } = await supabase.auth.verifyOtp({
+                token_hash: tokenHash,
+                type: type as Parameters<typeof supabase.auth.verifyOtp>[0]['type'],
+            });
+            if (!error) return redirectResponse;
         }
+    } else {
+        // No code, no token_hash = legacy implicit flow (tokens in URL hash).
+        // Server never sees the hash, so redirect client-side to preserve it for the destination.
+        const nextEscaped = next.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting...</title></head><body><script>window.location.replace("${nextEscaped}"+window.location.hash);</script><p>Redirecting...</p></body></html>`;
+        return new NextResponse(html, {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+        });
     }
 
-    // If there is no code, it might be an implicit auth flow which uses URL hashes
-    // Since the server can't see the hash, we redirect them to the destination page.
-    // The destination page (e.g., /account-setup) will parse the hash on the client side.
-    // If the link is truly invalid, the destination page's timeout will catch it and route them to /login.
-    return NextResponse.redirect(new URL(next, requestUrl.origin));
+    // Exchange failed; redirect without session (destination page will handle).
+    return redirectResponse;
 }
