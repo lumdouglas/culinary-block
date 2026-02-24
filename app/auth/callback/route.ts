@@ -44,7 +44,7 @@ export async function GET(request: Request) {
         // Email OTP / invite / magic-link flow — Supabase appends token_hash as a query param
         const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
-            type: type as Parameters<typeof supabase.auth.verifyOtp>[0]['type'],
+            type: type as 'invite' | 'signup' | 'recovery' | 'magiclink' | 'email_change' | 'email',
         });
         console.log('[auth/callback] verifyOtp:', error ? `ERROR: ${error.message}` : 'success');
         if (!error) return redirectResponse;
