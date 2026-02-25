@@ -60,6 +60,7 @@ export default function AccountSetupPage() {
                     const { error } = await supabase.auth.setSession({ access_token, refresh_token });
                     if (error) {
                         setAuthError(error.message);
+                        setCheckingAuth(false); // Fix: Must disable spinner to show error UI
                     } else {
                         setCheckingAuth(false);
                     }
