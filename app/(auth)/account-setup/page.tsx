@@ -35,17 +35,9 @@ export default function AccountSetupPage() {
         let timeoutId: NodeJS.Timeout;
 
         async function init() {
-            // Check immediately if we already have a session
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (session) {
-                // If it's a new password recovery or invite, they need to set a password
-                setCheckingAuth(false);
-                return;
-            }
-
-            // Manually capture implicit tokens from URL hash 
-            // since Next.js @supabase/ssr prefers PKCE and ignores hashes in some flows
+            // Manually capture implicit tokens from URL hash FIRST.
+            // This ensures that hitting a fresh invite link overwrites any orphaned or 
+            // "zombie" sessions stuck in local storage from previous tests.
             const hash = typeof window !== 'undefined' ? window.location.hash : '';
             if (hash && hash.includes('access_token=')) {
                 // Immediately remove hash to prevent infinite loops if component remounts
@@ -57,15 +49,27 @@ export default function AccountSetupPage() {
                 const refresh_token = params.get('refresh_token');
 
                 if (access_token && refresh_token) {
+                    // Sign out of any local session first just to be completely sure
+                    await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+
                     const { error } = await supabase.auth.setSession({ access_token, refresh_token });
                     if (error) {
                         setAuthError(error.message);
-                        setCheckingAuth(false); // Fix: Must disable spinner to show error UI
+                        setCheckingAuth(false);
                     } else {
                         setCheckingAuth(false);
                     }
                     return; // Skip standard listener
                 }
+            }
+
+            // If no token hash was present, gracefully check for an existing active session
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session) {
+                // If they are already signed in correctly, show the password form
+                setCheckingAuth(false);
+                return;
             }
 
             // If no immediate session, wait for the auth listener to pick up
@@ -126,7 +130,7 @@ export default function AccountSetupPage() {
             // If the user's auth record was deleted but their browser still has an active JWT,
             // Supabase throws this error. We must explicitly clear their stale local session.
             if (error.message.includes("User from sub claim in JWT does not exist")) {
-                await supabase.auth.signOut();
+                await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
                 toast.error("Your account session is invalid or has been removed. Please ask for a new invite.");
                 router.push("/login");
             } else {

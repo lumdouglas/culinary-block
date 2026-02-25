@@ -72,7 +72,9 @@ export function UserMenu() {
     }, [supabase])
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut()
+        try {
+            await supabase.auth.signOut({ scope: 'local' })
+        } catch (e) { console.error(e) }
         router.push('/')
         router.refresh()
     }

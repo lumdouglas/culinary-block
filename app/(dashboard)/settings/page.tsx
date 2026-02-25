@@ -47,7 +47,11 @@ export default function SettingsPage() {
   useEffect(() => {
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        setLoading(false)
+        window.location.href = '/login'
+        return
+      }
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -86,21 +90,24 @@ export default function SettingsPage() {
         return
       }
 
+      const profilePayload = {
+        id: user.id,
+        email: user.email ?? '',
+        company_name: values.company_name,
+        contact_name: values.contact_name,
+        phone: values.phone || null,
+        business_type: values.business_type || null,
+        business_description: values.business_description || null,
+        notification_email: values.notification_email || null,
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          company_name: values.company_name,
-          contact_name: values.contact_name,
-          phone: values.phone,
-          business_type: values.business_type,
-          business_description: values.business_description,
-          notification_email: values.notification_email,
-        })
-        .eq('id', user.id)
+        .upsert(profilePayload, { onConflict: 'id' })
 
       if (error) {
         console.error('Update error:', error)
-        toast.error("Failed to update profile")
+        toast.error(error.message || "Failed to save changes")
       } else {
         toast.success("Profile updated successfully!")
       }

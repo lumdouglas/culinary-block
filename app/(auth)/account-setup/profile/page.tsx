@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { hash } from "bcrypt-ts";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -70,19 +71,20 @@ export default function ProfileSetupPage() {
     async function onSubmit(values: z.infer<typeof profileSetupSchema>) {
         if (!userId) return;
 
+        const pinHash = await hash(values.kiosk_pin, 10);
+
         const { error } = await supabase
             .from('profiles')
             .update({
                 company_name: values.company_name,
                 phone: values.phone,
-                kiosk_pin: values.kiosk_pin,
-                address: values.address,
-                updated_at: new Date().toISOString()
+                kiosk_pin_hash: pinHash,
+                address: values.address || null,
             })
             .eq('id', userId);
 
         if (error) {
-            toast.error(error.message);
+            toast.error(error.message || "Failed to save profile");
         } else {
             toast.success("Profile completed successfully!");
             router.push("/calendar");

@@ -1,0 +1,44 @@
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771832173171,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771832177030,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771832177031,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771832177106,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771832183007,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/auth/callback","hasUser":false},"timestamp":1771963018020,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"app/auth/callback/route.ts","message":"callback","data":{"hasCode":false,"takingSuccessRedirect":false},"timestamp":1771963020661,"hypothesisId":"H1-H2"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/auth/callback","hasUser":false},"timestamp":1771963020716,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771963020729,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"app/auth/callback/route.ts","message":"callback","data":{"hasCode":false,"takingSuccessRedirect":false},"timestamp":1771963020739,"hypothesisId":"H1-H2"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771963021023,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771963024050,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771963024058,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771963024058,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771963024052,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771963024121,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771963024691,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771963030021,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771963030431,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/auth/callback","hasUser":false},"timestamp":1771963286452,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"app/auth/callback/route.ts","message":"callback","data":{"hasCode":false,"takingSuccessRedirect":false},"timestamp":1771963286717,"hypothesisId":"H1-H2"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771963286732,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771963287729,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771963287731,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771963287771,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771963293674,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/auth/callback","hasUser":false},"timestamp":1771963300246,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"app/auth/callback/route.ts","message":"callback","data":{"hasCode":false,"takingSuccessRedirect":false},"timestamp":1771963300283,"hypothesisId":"H1-H2"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771963300293,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771963300905,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771963300906,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771963300991,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/auth/callback","hasUser":false},"timestamp":1771963370738,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","location":"app/auth/callback/route.ts","message":"callback","data":{"hasCode":false,"takingSuccessRedirect":false},"timestamp":1771963370846,"hypothesisId":"H1-H2"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771963370870,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771963371653,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771963371654,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771963371738,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771963377637,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","location":"utils/supabase/middleware.ts","message":"middleware getUser","data":{"pathname":"/account-setup","hasUser":false},"timestamp":1771964583844,"hypothesisId":"H2-H5"}
+{"sessionId":"d68280","message":"getSession result","data":{"hasSession":false},"hypothesisId":"H1-H2-H4","timestamp":1771964585523,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"onAuthStateChange","data":{"event":"INITIAL_SESSION","hasSession":false},"hypothesisId":"H3","timestamp":1771964585526,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"getSession after 100ms","data":{"hasSession":false,"resolved":false},"hypothesisId":"H4","timestamp":1771964585600,"location":"app/(auth)/account-setup/page.tsx"}
+{"sessionId":"d68280","message":"timeout fired","data":{"resolved":false},"hypothesisId":"H3-H4","timestamp":1771964591470,"location":"app/(auth)/account-setup/page.tsx"}

@@ -7,8 +7,9 @@ export async function approveApplication(applicationId: string, email: string) {
   const supabase = await createClient();
 
   // 1. Send Supabase Auth Invite
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.culinaryblock.com';
   const { data: authData, error: authError } = await supabase.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/account-setup`
+    redirectTo: `${siteUrl}/auth/callback?next=/settings`
   });
 
   if (authError) return { error: authError.message };

@@ -134,7 +134,7 @@ export function SiteNav() {
                                     )}
 
                                     <button
-                                        onClick={() => supabase.auth.signOut().then(() => { window.location.href = '/' })}
+                                        onClick={() => supabase.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => { window.location.href = '/' })}
                                         className="block w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-slate-50 transition-colors mt-2"
                                     >
                                         Sign Out
