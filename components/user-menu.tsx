@@ -28,6 +28,16 @@ export function UserMenu() {
     const supabase = createClient()
 
     useEffect(() => {
+        let isMounted = true;
+
+        // Failsafe timeout: if Supabase hangs indefinitely on a zombie token refresh,
+        // force the UI out of the loading state so the user isn't trapped.
+        const timeoutId = setTimeout(() => {
+            if (isMounted && loading) {
+                setLoading(false);
+            }
+        }, 1500);
+
         const getUser = async () => {
             try {
                 const { data, error } = await supabase.auth.getUser()
@@ -41,16 +51,18 @@ export function UserMenu() {
                         .eq('id', authUser.id)
                         .single()
 
-                    setUser({
-                        email: authUser.email || '',
-                        name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                        role: profile?.role
-                    })
+                    if (isMounted) {
+                        setUser({
+                            email: authUser.email || '',
+                            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                            role: profile?.role
+                        })
+                    }
                 }
             } catch (err) {
                 console.error("UserMenu session error:", err);
             } finally {
-                setLoading(false)
+                if (isMounted) setLoading(false)
             }
         }
         getUser()
@@ -64,17 +76,23 @@ export function UserMenu() {
                     .eq('id', session.user.id)
                     .single()
 
-                setUser({
-                    email: session.user.email || '',
-                    name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                    role: profile?.role
-                })
+                if (isMounted) {
+                    setUser({
+                        email: session.user.email || '',
+                        name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                        role: profile?.role
+                    })
+                }
             } else {
-                setUser(null)
+                if (isMounted) setUser(null)
             }
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            isMounted = false;
+            clearTimeout(timeoutId);
+            subscription.unsubscribe();
+        }
     }, [supabase])
 
     const handleSignOut = async () => {
@@ -87,7 +105,11 @@ export function UserMenu() {
 
     if (loading) {
         return (
-            <div className="w-9 h-9 rounded-full bg-slate-200 animate-pulse" />
+            <button
+                onClick={handleSignOut}
+                title="Click to Force Sign Out"
+                className="w-9 h-9 rounded-full bg-slate-200 animate-pulse hover:bg-red-200 focus:outline-none transition-colors border-2 border-transparent hover:border-red-400"
+            />
         )
     }
 
