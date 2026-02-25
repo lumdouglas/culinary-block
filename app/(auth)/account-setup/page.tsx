@@ -30,78 +30,49 @@ export default function AccountSetupPage() {
     const [authError, setAuthError] = useState<string | null>(null);
 
     useEffect(() => {
-        let cancelled = false;
+        let subscription: { unsubscribe: () => void } | null = null;
 
         async function init() {
-            // Parse hash params — invite links using implicit flow land here with #access_token=...
-            const hashParams = typeof window !== 'undefined' && window.location.hash
-                ? Object.fromEntries(new URLSearchParams(window.location.hash.slice(1)))
-                : {};
+            // Check immediately if we already have a session
+            const { data: { session } } = await supabase.auth.getSession();
 
-            // Hash contains an explicit error (e.g. expired link)
-            if (hashParams.error || hashParams.error_description) {
-                if (!cancelled) router.push(`/login?error=${encodeURIComponent(hashParams.error_description || hashParams.error || 'Link expired')}`);
-                return;
-            }
-
-            // Hash contains implicit-flow tokens — manually set session.
-            // createBrowserClient uses flowType:"pkce" which throws during URL auto-detection
-            // for implicit tokens, but setSession() bypasses that restriction and works directly.
-            if (hashParams.access_token && hashParams.refresh_token) {
-                const { data: { session }, error } = await supabase.auth.setSession({
-                    access_token: hashParams.access_token,
-                    refresh_token: hashParams.refresh_token,
-                });
-                if (cancelled) return;
-                if (session) {
-                    window.history.replaceState(null, '', window.location.pathname);
-                    setCheckingAuth(false);
-                    return;
-                }
-                // setSession failed — show the error so the user can report it
-                console.error('[account-setup] setSession failed:', error);
-                setAuthError(`Could not verify your invite link: ${error?.message ?? 'unknown error'}. Please contact your administrator to request a new invite.`);
+            if (session) {
+                // If it's a new password recovery or invite, they need to set a password
                 setCheckingAuth(false);
                 return;
             }
 
-            // No hash tokens — look for a session established via cookie (the callback route
-            // exchanges token_hash / code server-side and sets cookies before redirecting here).
-            //
-            // We subscribe to onAuthStateChange and wait for INITIAL_SESSION, which fires after
-            // _recoverAndRefresh() completes. This avoids a race where getSession() returns null
-            // because the client hasn't finished reading cookies yet.
-            const hasSession = await new Promise<boolean>((resolve) => {
-                // Short-circuit: if getSession already has the answer, don't wait for the event
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (session) resolve(true);
-                });
-
-                const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                    // INITIAL_SESSION fires when the client restores a session from cookies.
-                    // SIGNED_IN / USER_UPDATED fire when a session is newly established.
-                    if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-                        subscription.unsubscribe();
-                        resolve(!!session);
+            // If no immediate session, wait for the auth listener to pick up
+            // the implicit token from the URL hash or cookies
+            const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+                if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                    if (currentSession) {
+                        setCheckingAuth(false);
+                    } else {
+                        // Wait a short moment before failing, sometimes the event fires 
+                        // before the session is fully committed to storage
+                        setTimeout(() => {
+                            if (!currentSession) {
+                                setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
+                                setCheckingAuth(false);
+                            }
+                        }, 1000);
                     }
-                });
-
-                // Fallback after 4 seconds if no auth event arrives
-                setTimeout(() => resolve(false), 4000);
+                }
             });
+            subscription = data.subscription;
 
-            if (cancelled) return;
-
-            if (hasSession) {
+            // Fallback timeout in case no event ever fires
+            setTimeout(() => {
                 setCheckingAuth(false);
-            } else {
-                router.push('/login?error=Your+invite+link+has+expired+or+is+invalid.+Please+contact+your+administrator.');
-            }
+            }, 5000);
         }
 
         init();
 
-        return () => { cancelled = true; };
+        return () => {
+            if (subscription) subscription.unsubscribe();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
