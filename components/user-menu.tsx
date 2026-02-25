@@ -73,27 +73,31 @@ export function UserMenu() {
         }
         getUser()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (session?.user?.id) {
-                try {
-                    // Fetch profile to get role
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('role')
-                        .eq('id', session.user.id)
-                        .single()
+                // Fire and forget: Do NOT await this inside the listener callback.
+                // Supabase GoTrue internally awaits all listeners; if we block here, 
+                // signInWithPassword will hang indefinitely on the login page.
+                (async () => {
+                    try {
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', session.user.id)
+                            .single()
 
-                    if (isMounted) {
-                        setUser({
-                            email: session.user.email || '',
-                            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                            role: profile?.role
-                        })
+                        if (isMounted) {
+                            setUser({
+                                email: session.user.email || '',
+                                name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                                role: profile?.role
+                            })
+                        }
+                    } catch (err) {
+                        console.error("UserMenu Listener Error:", err)
+                        if (isMounted) setUser(null)
                     }
-                } catch (err) {
-                    console.error("UserMenu Listener Error:", err)
-                    if (isMounted) setUser(null)
-                }
+                })();
             } else {
                 if (isMounted) setUser(null)
             }

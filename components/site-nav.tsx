@@ -19,29 +19,57 @@ export function SiteNav() {
     const pathname = usePathname()
 
     useEffect(() => {
+        let isMounted = true;
+
         const checkAuth = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            setIsLoggedIn(!!user)
-            if (user) {
+            try {
+                const { data: { user }, error } = await supabase.auth.getUser()
+                if (error || !user) {
+                    if (isMounted) {
+                        setIsLoggedIn(false)
+                        setUserRole(null)
+                    }
+                    return;
+                }
+
+                if (isMounted) setIsLoggedIn(true)
+
                 const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-                setUserRole(profile?.role || 'tenant')
-            } else {
-                setUserRole(null)
+                if (isMounted) setUserRole(profile?.role || 'tenant')
+
+            } catch (err) {
+                console.error("SiteNav checkAuth error:", err)
+                if (isMounted) {
+                    setIsLoggedIn(false)
+                    setUserRole(null)
+                }
             }
         }
         checkAuth()
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            setIsLoggedIn(!!session?.user)
-            if (session?.user) {
-                const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-                setUserRole(profile?.role || 'tenant')
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (isMounted) setIsLoggedIn(!!session?.user)
+
+            if (session?.user?.id) {
+                // Fire and forget to prevent blocking Supabase's signInWithPassword promise
+                (async () => {
+                    try {
+                        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+                        if (isMounted) setUserRole(profile?.role || 'tenant')
+                    } catch (err) {
+                        console.error("SiteNav listener error:", err)
+                        if (isMounted) setUserRole(null)
+                    }
+                })();
             } else {
-                setUserRole(null)
+                if (isMounted) setUserRole(null)
             }
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        }
     }, [])
 
     // Close mobile menu when route changes: handled inline or by clicking links
@@ -134,7 +162,7 @@ export function SiteNav() {
                                     )}
 
                                     <button
-                                        onClick={() => supabase.auth.signOut({ scope: 'local' }).catch(() => {}).finally(() => { window.location.href = '/' })}
+                                        onClick={() => supabase.auth.signOut({ scope: 'local' }).catch(() => { }).finally(() => { window.location.href = '/' })}
                                         className="block w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-slate-50 transition-colors mt-2"
                                     >
                                         Sign Out
