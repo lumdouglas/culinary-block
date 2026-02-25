@@ -99,7 +99,15 @@ export default function AccountSetupPage() {
         });
 
         if (error) {
-            toast.error(error.message);
+            // If the user's auth record was deleted but their browser still has an active JWT,
+            // Supabase throws this error. We must explicitly clear their stale local session.
+            if (error.message.includes("User from sub claim in JWT does not exist")) {
+                await supabase.auth.signOut();
+                toast.error("Your account session is invalid or has been removed. Please ask for a new invite.");
+                router.push("/login");
+            } else {
+                toast.error(error.message);
+            }
         } else {
             toast.success("Password set! Let's finish your profile.");
             router.push("/account-setup/profile");
