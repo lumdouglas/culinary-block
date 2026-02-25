@@ -85,6 +85,15 @@ export default function AccountSetupPage() {
     });
 
     async function onSubmit(values: z.infer<typeof accountSetupSchema>) {
+        // Explicitly check for an active session to prevent "User from sub claim doesn't exist" errors
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            toast.error("Your invite session has expired. Please request a new link.");
+            router.push("/login");
+            return;
+        }
+
         const { error } = await supabase.auth.updateUser({
             password: values.password
         });
