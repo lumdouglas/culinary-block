@@ -45,18 +45,22 @@ export default function AccountSetupPage() {
             // If no immediate session, wait for the auth listener to pick up
             // the implicit token from the URL hash or cookies
             const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-                if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                if (event === 'INITIAL_SESSION') {
                     if (currentSession) {
                         setCheckingAuth(false);
                     } else {
-                        // Wait a short moment before failing, sometimes the event fires 
-                        // before the session is fully committed to storage
-                        setTimeout(() => {
-                            if (!currentSession) {
+                        // Check again after a delay, avoiding stale closure variables
+                        setTimeout(async () => {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (!session) {
                                 setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
-                                setCheckingAuth(false);
                             }
-                        }, 1000);
+                            setCheckingAuth(false);
+                        }, 1500);
+                    }
+                } else if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                    if (currentSession) {
+                        setCheckingAuth(false);
                     }
                 }
             });
