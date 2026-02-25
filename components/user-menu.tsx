@@ -40,27 +40,33 @@ export function UserMenu() {
 
         const getUser = async () => {
             try {
-                const { data, error } = await supabase.auth.getUser()
-                const authUser = data?.user
+                const { data: { user: authUser }, error } = await supabase.auth.getUser()
 
-                if (authUser) {
-                    // Fetch profile to get role
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('role')
-                        .eq('id', authUser.id)
-                        .single()
-
-                    if (isMounted) {
-                        setUser({
-                            email: authUser.email || '',
-                            name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-                            role: profile?.role
-                        })
-                    }
+                if (error || !authUser) {
+                    if (isMounted) setUser(null);
+                    return; // Explicitly stop execution to avoid malformed DB queries
                 }
+
+                // Fetch profile to get role ONLY if we have a valid, active user ID
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', authUser.id)
+                    .single()
+
+                if (isMounted) {
+                    setUser({
+                        email: authUser.email || '',
+                        name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                        role: profile?.role
+                    })
+                }
+
             } catch (err) {
-                console.error("UserMenu session error:", err);
+                // Silently devour errors so we don't crash the Next.js layout 
+                // and trigger an AbortError during hydration or active routing
+                console.error("UserMenu session fetch silently failed:", err);
+                if (isMounted) setUser(null);
             } finally {
                 if (isMounted) setLoading(false)
             }
@@ -68,20 +74,25 @@ export function UserMenu() {
         getUser()
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (session?.user) {
-                // Fetch profile to get role
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', session.user.id)
-                    .single()
+            if (session?.user?.id) {
+                try {
+                    // Fetch profile to get role
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', session.user.id)
+                        .single()
 
-                if (isMounted) {
-                    setUser({
-                        email: session.user.email || '',
-                        name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
-                        role: profile?.role
-                    })
+                    if (isMounted) {
+                        setUser({
+                            email: session.user.email || '',
+                            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0],
+                            role: profile?.role
+                        })
+                    }
+                } catch (err) {
+                    console.error("UserMenu Listener Error:", err)
+                    if (isMounted) setUser(null)
                 }
             } else {
                 if (isMounted) setUser(null)

@@ -36,13 +36,20 @@ export default function LoginPage() {
   }, []);
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
-    const { error } = await supabase.auth.signInWithPassword(values);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword(values);
+
+      if (error) {
+        toast.error(error.message);
+        return; // Early return to let react-hook-form finish submitting cleanly
+      }
+
       toast.success("Welcome back!");
       router.push("/calendar");
       router.refresh();
+
+    } catch (e) {
+      toast.error("An unexpected application error occurred.");
     }
   }
 
