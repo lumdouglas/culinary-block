@@ -29,23 +29,29 @@ export function UserMenu() {
 
     useEffect(() => {
         const getUser = async () => {
-            const { data: { user: authUser } } = await supabase.auth.getUser()
+            try {
+                const { data, error } = await supabase.auth.getUser()
+                const authUser = data?.user
 
-            if (authUser) {
-                // Fetch profile to get role
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', authUser.id)
-                    .single()
+                if (authUser) {
+                    // Fetch profile to get role
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', authUser.id)
+                        .single()
 
-                setUser({
-                    email: authUser.email || '',
-                    name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0],
-                    role: profile?.role
-                })
+                    setUser({
+                        email: authUser.email || '',
+                        name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+                        role: profile?.role
+                    })
+                }
+            } catch (err) {
+                console.error("UserMenu session error:", err);
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
         getUser()
 
