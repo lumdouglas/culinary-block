@@ -34,25 +34,7 @@ export async function approveApplication(applicationId: string) {
         return { error: "Application not found" };
     }
 
-    // Send Supabase Auth invitation (requires service role key)
-    const adminSupabase = createAdminClient();
-    const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(
-        application.email,
-        {
-            data: {
-                company_name: application.company_name,
-                phone: application.phone,
-            },
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback?next=/account-setup`,
-        }
-    );
-
-    if (inviteError) {
-        console.error('Invitation error:', inviteError);
-        return { error: `Failed to send invitation: ${inviteError.message}` };
-    }
-
-    // Update application status
+    // 1. Update application status first so the Postgres trigger finds it when the user is created
     const { error: updateError } = await supabase
         .from('applications')
         .update({
@@ -65,6 +47,29 @@ export async function approveApplication(applicationId: string) {
 
     if (updateError) {
         return { error: "Failed to update application status" };
+    }
+
+    // 2. Send Supabase Auth invitation (requires service role key)
+    const adminSupabase = createAdminClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (!siteUrl) {
+        console.error('NEXT_PUBLIC_SITE_URL is not set — invite links will be broken. Set it in Vercel env vars.');
+    }
+    const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(
+        application.email,
+        {
+            data: {
+                company_name: application.company_name,
+                phone: application.phone,
+            },
+            redirectTo: `${siteUrl || 'https://www.culinaryblock.com'}/auth/callback?next=/account-setup`,
+        }
+    );
+
+    if (inviteError) {
+        console.error('Invitation error:', inviteError);
+        // We could revert the application status here, but for now we'll just return the error
+        return { error: `Application approved but failed to send invitation: ${inviteError.message}` };
     }
 
     revalidatePath('/admin/applications');
