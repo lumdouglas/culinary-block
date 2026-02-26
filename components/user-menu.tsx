@@ -206,7 +206,7 @@ export function UserMenu() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
-                            <Link href="/billing/invoices" className="flex items-center">
+                            <Link href="/billing" className="flex items-center">
                                 <Receipt className="mr-2 h-4 w-4 text-slate-500" />
                                 <span>My Billing</span>
                             </Link>
