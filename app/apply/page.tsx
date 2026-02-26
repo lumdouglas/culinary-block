@@ -13,25 +13,25 @@ import { toast } from "sonner";
 
 const applySchema = z.object({
   // Company Information
-  company_name: z.string().min(2, "Company/DBA name is required"),
-  address: z.string().min(5, "Address is required"),
+  company_name: z.string().min(1, "Company/DBA name is required").min(2, "Must be at least 2 characters"),
+  address: z.string().min(1, "Address is required").min(5, "Address must be at least 5 characters"),
 
   // Main Contact
   contact_first_name: z.string().min(1, "First name is required"),
   contact_last_name: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone number is required"),
+  email: z.string().min(1, "Email is required").email("Invalid email format"),
+  phone: z.string().min(1, "Phone number is required").min(10, "Phone number must be at least 10 characters"),
 
   // Business Details
   website: z.string().optional(),
   years_in_operation: z.string().optional(),
   social_media: z.string().optional(),
-  cuisine_type: z.string().min(2, "Please specify cuisine type"),
+  cuisine_type: z.string().min(1, "Cuisine type is required").min(2, "Must be at least 2 characters"),
 
   // Operational Requirements
-  kitchen_use_description: z.string().min(10, "Please describe your kitchen use"),
-  usage_hours: z.string().min(5, "Please specify approximate hours/days"),
-  equipment_needed: z.string().min(5, "Please list equipment needed"),
+  kitchen_use_description: z.string().min(1, "Kitchen use description is required").min(10, "Description must be at least 10 characters long"),
+  usage_hours: z.string().min(1, "Usage hours/days are required").min(5, "Must be at least 5 characters long"),
+  equipment_needed: z.string().min(1, "Equipment list is required").min(5, "Must be at least 5 characters long"),
 });
 
 export default function ApplicationPage() {
@@ -68,6 +68,18 @@ export default function ApplicationPage() {
     }
   }
 
+  function onError(errors: any) {
+    console.error('Validation errors:', errors);
+    toast.error("Please fill out all required fields correctly.");
+
+    setTimeout(() => {
+      const firstError = document.querySelector('[role="alert"], .text-red-500, .text-destructive');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
 
@@ -78,7 +90,7 @@ export default function ApplicationPage() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 bg-white p-8 border rounded-2xl">
+          <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8 bg-white p-8 border rounded-2xl">
 
             {/* Company Information */}
             <div className="space-y-4">

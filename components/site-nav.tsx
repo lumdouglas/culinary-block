@@ -72,8 +72,10 @@ export function SiteNav() {
         }
     }, [])
 
-    // Close mobile menu when route changes: handled inline or by clicking links
-
+    // Close mobile menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false)
+    }, [pathname])
     return (
         <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-sm">
             <div className="container mx-auto px-4 py-3">

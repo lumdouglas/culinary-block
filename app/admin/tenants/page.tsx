@@ -88,7 +88,7 @@ export default function AdminTenantsPage() {
                 </div>
 
                 {/* Stats & Search */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-end">
+                <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start md:items-end">
                     <div className="flex gap-4">
                         <Card className="p-4 px-6 bg-white border-slate-200">
                             <p className="text-sm text-slate-500 font-medium">Active Tenants</p>
@@ -122,9 +122,9 @@ export default function AdminTenantsPage() {
                     <div className="grid gap-4">
                         {filteredTenants.map((tenant) => (
                             <Card key={tenant.id} className="p-6 transition-all hover:shadow-md">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1">
+                                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                    <div className="flex-1 w-full flex flex-col gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <h3 className="text-xl font-bold text-slate-900">{tenant.company_name}</h3>
                                             {tenant.is_active ? (
                                                 <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -136,15 +136,15 @@ export default function AdminTenantsPage() {
                                                 </Badge>
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-4 text-sm text-slate-500">
+                                        <div className="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
                                             <p>{tenant.email}</p>
-                                            <p>•</p>
+                                            <p className="hidden md:block">•</p>
                                             <p>Join Date: {new Date(tenant.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <div className="flex flex-col items-end gap-1">
+                                        <div className="flex flex-col items-start md:items-end gap-1 w-full md:w-auto">
                                             <span className="text-sm font-medium text-slate-700">
                                                 {tenant.is_active ? 'Kiosk Access Enabled' : 'Kiosk Access Disabled'}
                                             </span>

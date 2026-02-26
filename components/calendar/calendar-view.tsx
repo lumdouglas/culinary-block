@@ -10,10 +10,10 @@ import { Station, Booking } from '@/app/actions/bookings'
 
 // Station color mapping
 const stationColors: Record<string, string> = {
-  'Hood1R': '#0d9488', // teal-600
-  'Hood1L': '#14b8a6', // teal-500
-  'Hood2R': '#2563eb', // blue-600
-  'Hood2L': '#3b82f6', // blue-500
+  'Station 1': '#0d9488', // teal-600
+  'Station 3': '#14b8a6', // teal-500
+  'Station 2': '#2563eb', // blue-600
+  'Station 4': '#3b82f6', // blue-500
   'Oven L': '#16a34a', // green-600
   'Oven M': '#22c55e', // green-500
   'Oven R': '#4ade80', // green-400
@@ -64,11 +64,14 @@ export function BookingCalendar({
     const color = stationColors[stationName] || '#6b7280'
     const isOwnBooking = currentUserId && booking.user_id === currentUserId
 
+    const equipmentInfo = station?.equipment ? ` (${station.equipment})` : ''
+    const baseTitle = isOwnBooking
+      ? `★ ${stationName} - ${booking.profile?.company_name || 'You'}`
+      : `${stationName} - ${booking.profile?.company_name || 'Reserved'}`
+
     return {
       id: booking.id,
-      title: isOwnBooking
-        ? `★ ${stationName} - ${booking.profile?.company_name || 'You'}`
-        : `${stationName} - ${booking.profile?.company_name || 'Reserved'}`,
+      title: baseTitle + equipmentInfo,
       start: booking.start_time,
       end: booking.end_time,
       backgroundColor: color,

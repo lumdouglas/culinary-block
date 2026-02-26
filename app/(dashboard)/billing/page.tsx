@@ -156,7 +156,7 @@ export default async function BillingPage() {
               {historyList.map((period: any) => {
                 const hours = period.totalMinutes / 60;
                 const cost = calculateTieredCost(hours);
-                const monthName = period.date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                const monthName = period.date.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', year: 'numeric' });
                 const isCurrentMonth = period.month === currentMonthKey;
 
                 return (
@@ -226,6 +226,11 @@ export default async function BillingPage() {
                   </TableRow>
                 );
               })}
+              {(!records || records.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-6 text-slate-500">No recent usage found.</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

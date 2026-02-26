@@ -44,6 +44,7 @@ interface BookingModalProps {
   preselectedStation?: number
   preselectedDate?: Date
   preselectedStartTime?: string
+  preselectedDuration?: string
   onSuccess?: () => void
 }
 
@@ -52,6 +53,7 @@ export function BookingForm({
   preselectedStation,
   preselectedDate,
   preselectedStartTime,
+  preselectedDuration,
   onSuccess
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -80,7 +82,7 @@ export function BookingForm({
       station_id: preselectedStation?.toString() || "",
       date: preselectedDate ? formatDate(preselectedDate) : formatDate(new Date()),
       start_time: preselectedStartTime || "09:00",
-      duration: "1",
+      duration: preselectedDuration || "1",
       notes: "",
     },
   })
@@ -147,7 +149,7 @@ export function BookingForm({
                 </FormControl>
                 <SelectContent>
                   {stations.map((station) => (
-                    <SelectItem key={station.id} value={station.id.toString()}>
+                    <SelectItem key={station.id} value={station.id.toString()} title={station.equipment}>
                       {station.name} ({station.category})
                     </SelectItem>
                   ))}

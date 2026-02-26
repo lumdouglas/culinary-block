@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -57,6 +57,17 @@ export function EditTimesheetDialog({ shiftId, currentClockIn, currentClockOut, 
             clockOut: currentClockOut ? toLocalISO(currentClockOut) : "",
         },
     })
+
+    // Reset form when dialog opens so it doesn't keep stale unsaved edits
+    // Reset form when dialog opens so it doesn't keep stale unsaved edits
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                clockIn: toLocalISO(currentClockIn),
+                clockOut: currentClockOut ? toLocalISO(currentClockOut) : "",
+            })
+        }
+    }, [open, currentClockIn, currentClockOut, form])
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {

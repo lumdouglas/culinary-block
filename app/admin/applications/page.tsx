@@ -126,8 +126,8 @@ export default function AdminApplicationsPage() {
           <div className="space-y-4">
             {applications.map((app) => (
               <Card key={app.id} className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 w-full">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-xl font-bold">{app.company_name}</h3>
                       <Badge className={statusColors[app.status]}>
@@ -161,7 +161,7 @@ export default function AdminApplicationsPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full md:w-auto">
                     <Button
                       size="sm"
                       variant="outline"

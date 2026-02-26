@@ -278,7 +278,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
               <Input
                 ref={pinInputRef}
                 id="pin"
-                type="tel"
+                type="password"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={4}
@@ -318,7 +318,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
               <Input
                 ref={pinInputRef}
                 id="pin"
-                type="tel"
+                type="password"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={4}

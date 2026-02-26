@@ -8,6 +8,7 @@ export interface Station {
   name: string;
   category: 'Hood' | 'Oven' | 'General';
   is_active: boolean;
+  equipment?: string;
 }
 
 export interface Booking {

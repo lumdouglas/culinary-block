@@ -35,8 +35,11 @@ export async function updateSession(request: NextRequest) {
     // https://supabase.com/docs/guides/auth/server-side/nextjs
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Protect dashboard routes (calendar, settings)
-    if (!user && (request.nextUrl.pathname.startsWith('/calendar') || request.nextUrl.pathname.startsWith('/settings'))) {
+    // Protect dashboard routes
+    const dashboardRoutes = ['/calendar', '/settings', '/timesheets', '/billing', '/maintenance']
+    const isDashboardRoute = dashboardRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+
+    if (!user && isDashboardRoute) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 

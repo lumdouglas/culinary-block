@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { createTicket } from "@/app/actions/maintenance";
 import { toast } from "sonner";
+import { DialogClose } from "@/components/ui/dialog";
 
 export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknown>[] }) {
     const [loading, setLoading] = useState(false);
@@ -32,9 +33,7 @@ export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknow
             toast.error(res.error);
         } else {
             toast.success("Ticket created successfully");
-            // Just reload to clear form/close dialog if user clicks outside, or we could redirect to the new ticket.
-            // Ideally we'd have state control over the dialog open status.
-            // For this MVP, let's keep it simple.
+            document.getElementById('close-dialog-btn')?.click();
         }
     };
 
@@ -84,7 +83,12 @@ export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknow
                 </Label>
                 <Textarea id="description" name="description" className="col-span-3" required />
             </div>
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end mt-4 gap-2">
+                <DialogClose asChild>
+                    <Button type="button" variant="outline" id="close-dialog-btn">
+                        Cancel
+                    </Button>
+                </DialogClose>
                 <Button type="submit" disabled={loading}>
                     {loading ? "Submitting..." : "Submit Ticket"}
                 </Button>

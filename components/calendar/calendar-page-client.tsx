@@ -11,10 +11,10 @@ import { toast } from 'sonner'
 
 // Station color mapping for legend
 const stationColors: Record<string, string> = {
-    'Hood1R': 'bg-teal-600',
-    'Hood1L': 'bg-teal-500',
-    'Hood2R': 'bg-blue-600',
-    'Hood2L': 'bg-blue-500',
+    'Station 1': 'bg-teal-600',
+    'Station 3': 'bg-teal-500',
+    'Station 2': 'bg-blue-600',
+    'Station 4': 'bg-blue-500',
     'Oven L': 'bg-green-600',
     'Oven M': 'bg-green-500',
     'Oven R': 'bg-green-400',
@@ -33,6 +33,7 @@ export default function CalendarPageClient() {
     const [loading, setLoading] = useState(true)
     const [preselectedDate, setPreselectedDate] = useState<Date | undefined>(undefined)
     const [preselectedStartTime, setPreselectedStartTime] = useState<string | undefined>(undefined)
+    const [preselectedDuration, setPreselectedDuration] = useState<string | undefined>(undefined)
 
     // Get date range for current week
     const getWeekRange = () => {
@@ -86,11 +87,31 @@ export default function CalendarPageClient() {
         loadData()
     }
 
-    const handleDateSelect = (start: Date) => {
+    const handleDateSelect = (start: Date, end?: Date) => {
         setPreselectedDate(start)
         const hours = start.getHours().toString().padStart(2, '0')
         const minutes = start.getMinutes().toString().padStart(2, '0')
         setPreselectedStartTime(`${hours}:${minutes}`)
+
+        if (end) {
+            const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+
+            // Check if diffHours is one of our valid duration options (0.5 to 12)
+            const validDurations = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12];
+
+            // Find closest valid duration, default to '1' minimum 
+            if (diffHours > 0) {
+                const closest = validDurations.reduce((prev, curr) =>
+                    Math.abs(curr - diffHours) < Math.abs(prev - diffHours) ? curr : prev
+                );
+                setPreselectedDuration(closest.toString());
+            } else {
+                setPreselectedDuration(undefined);
+            }
+        } else {
+            setPreselectedDuration(undefined);
+        }
+
         setIsDialogOpen(true)
     }
 
@@ -139,11 +160,12 @@ export default function CalendarPageClient() {
                                         <DialogTitle className="text-xl">Book Kitchen Station</DialogTitle>
                                     </DialogHeader>
                                     <BookingForm
-                                        key={`${preselectedDate?.toISOString()}-${preselectedStartTime}`}
+                                        key={`${preselectedDate?.toISOString()}-${preselectedStartTime}-${preselectedDuration}`}
                                         stations={stations}
                                         preselectedStation={selectedStations.length === 1 ? selectedStations[0] : undefined}
                                         preselectedDate={preselectedDate}
                                         preselectedStartTime={preselectedStartTime}
+                                        preselectedDuration={preselectedDuration}
                                         onSuccess={handleBookingSuccess}
                                     />
                                 </DialogContent>
@@ -199,6 +221,7 @@ export default function CalendarPageClient() {
                                     return (
                                         <button
                                             key={station.id}
+                                            title={station.equipment}
                                             onClick={() => {
                                                 if (isSelected) {
                                                     setSelectedStations(selectedStations.filter(id => id !== station.id));

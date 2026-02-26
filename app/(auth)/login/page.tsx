@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect } from "react";
 
 const loginSchema = z.object({
@@ -74,7 +75,12 @@ export default function LoginPage() {
               )} />
               <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Password</FormLabel>
+                    <Link href="/forgot-password" className="text-sm font-medium text-teal-600 hover:text-teal-500">
+                      Forgot password?
+                    </Link>
+                  </div>
                   <FormControl><Input type="password" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>

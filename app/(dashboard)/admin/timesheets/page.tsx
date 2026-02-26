@@ -49,7 +49,7 @@ export default async function AdminTimesheetsPage() {
                 </div>
             </div>
 
-            <div className="rounded-md border bg-white overflow-hidden shadow-sm">
+            <div className="rounded-md border bg-white overflow-x-auto shadow-sm">
                 <Table>
                     <TableHeader className="bg-slate-100 border-b border-slate-300">
                         <TableRow className="border-slate-300 hover:bg-transparent">
@@ -83,7 +83,7 @@ export default async function AdminTimesheetsPage() {
                                     </TableCell>
                                     <TableCell className="text-slate-900">{shift.kitchens?.name || '—'}</TableCell>
                                     <TableCell className="text-slate-700">
-                                        {shift.duration_minutes ?
+                                        {shift.duration_minutes != null ?
                                             `${Math.floor(shift.duration_minutes / 60)}h ${shift.duration_minutes % 60}m`
                                             : "Active"}
                                     </TableCell>

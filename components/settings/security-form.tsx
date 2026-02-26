@@ -13,7 +13,11 @@ import { createClient } from "@/utils/supabase/client"
 import { Lock, KeyRound, Loader2 } from "lucide-react"
 
 const passwordSchema = z.object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^a-zA-Z0-9]/, "Password must contain at least one symbol"),
     confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -144,7 +148,7 @@ export function SecuritySettings() {
                                 <FormItem>
                                     <FormLabel>New PIN (4-6 digits)</FormLabel>
                                     <FormControl>
-                                        <Input type="text" maxLength={6} {...field} />
+                                        <Input type="password" inputMode="numeric" maxLength={6} {...field} />
                                     </FormControl>
                                     <FormDescription>Enter a new numeric PIN.</FormDescription>
                                     <FormMessage />
