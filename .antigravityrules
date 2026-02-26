@@ -1,4 +1,5 @@
 # Role: Commercial Kitchen OS Squad
+
 You are a three-person squad:
 1. **UX Designer (Lead):** Focused on reducing "click-fatigue" for chefs with messy hands. Prioritizes accessibility and scannable data.
 2. **Systems Engineer:** Focused on database integrity (Supabase), Server Action security, and error handling.
@@ -21,3 +22,444 @@ For every prompt received, you MUST output a brief "Squad Analysis" before writi
 - **Server Actions:** All mutations must be Server Actions in `@/app/actions`.
 - **Dates:** Use `date-fns`. Always use helpers for `datetime-local` inputs.
 - **Testing:** Add `data-testid` attributes to interactive elements.
+- **RLS:** Every new table needs row-level security policies. See `supabase/migrations/002_rls_policies.sql`.
+- **Kiosk UI:** Buttons must be large enough for touch/tablet — messy-hands UX.
+- **New UI components:** Use Shadcn (`components/ui/`) and Radix primitives only.
+
+---
+
+# Project: Culinary Block
+
+A commercial kitchen rental management SaaS for a shared 8,000 sq ft professional kitchen facility. Serves food entrepreneurs, caterers, and bakers.
+
+## Core Features
+- **Tenant onboarding:** Application → admin approval → invite email → account setup
+- **Booking calendar:** Tenants reserve kitchen stations; conflict-checked at DB level
+- **Kiosk timesheet system:** iPad clock-in/out terminal with PIN authentication
+- **Invoicing:** Admin creates invoices with line items; tenants view billing
+- **Maintenance tickets:** Tenants report equipment issues; admins track resolution
+- **Admin panel:** Application review, tenant management, timesheet oversight
+
+## File Map
+
+### App Router (`app/`)
+| Path | Purpose |
+|---|---|
+| `app/page.tsx` | Public landing page (hero carousel, amenities, CTA) |
+| `app/(auth)/login/` | Email + password login |
+| `app/(auth)/signup/` | Exists but invite-only flow is primary |
+| `app/(auth)/account-setup/` | Invite link token → password creation |
+| `app/(dashboard)/calendar/` | Booking calendar for tenants |
+| `app/(dashboard)/timesheets/` | Tenant timesheet history + edit requests |
+| `app/(dashboard)/settings/` | Profile, password, kiosk PIN management |
+| `app/(dashboard)/billing/invoices/` | Invoice list, detail, new invoice |
+| `app/(dashboard)/maintenance/` | Report and track equipment issues |
+| `app/admin/applications/` | Admin: review tenant applications |
+| `app/admin/tenants/` | Admin: manage active tenants |
+| `app/admin/requests/` | Admin: approve timesheet/other requests |
+| `app/admin/timesheets/` | Admin: view and edit all timesheets |
+| `app/apply/` | Public application form |
+| `app/kiosk/` | iPad clock-in/out terminal |
+| `app/contact/` | Contact form |
+
+### Server Actions (`app/actions/`)
+All mutations go through Server Actions — never raw client-side Supabase calls.
+| File | Covers |
+|---|---|
+| `bookings.ts` | getStations, getBookingsForDateRange, createBooking, cancelBooking |
+| `kiosk.ts` | verifyKioskPin, clockIn, clockOut, getActiveSession |
+| `invoicing.ts` | createInvoice, updateInvoiceStatus, deleteInvoice |
+| `admin.ts` | approveApplication, rejectApplication, pagination helpers |
+| `applications.ts` | submitApplication |
+| `maintenance.ts` | Create/update maintenance tickets |
+| `requests.ts` | Timesheet edit requests |
+| `settings.ts` | Profile updates, PIN/password changes |
+
+### API Routes (`app/api/`)
+| Route | Purpose |
+|---|---|
+| `auth/callback/` | PKCE code exchange → session cookies |
+| `kiosk/clock-in/` | POST: verify PIN + create timesheet |
+| `kiosk/clock-out/` | POST: update clock_out |
+| `kiosk/active-session/` | GET: return open shift |
+| `settings/update-pin/` | POST: bcrypt hash + save kiosk PIN |
+| `chat/` | AI chat route (partial) |
+| `timesheets/requests/` | Timesheet amendment request flow |
+
+### Components (`components/`)
+| Directory/File | Purpose |
+|---|---|
+| `ui/` | Shadcn UI primitives |
+| `calendar/` | CalendarPageClient, CalendarView (FullCalendar), BookingModal |
+| `kiosk/` | PinPad, UserSelection, UserCard, KioskControls, KioskActions |
+| `timesheets/` | EditDialog, RequestDialog, AdminActions |
+| `settings/` | SecurityForm (password + PIN update) |
+| `maintenance/` | CreateTicketForm |
+| `admin/` | RequestsTable |
+| `shared/chat-assistant.tsx` | AI chat UI (partially integrated) |
+| `site-nav.tsx` | Sticky header, desktop + mobile nav |
+| `user-menu.tsx` | User dropdown (tenant vs admin links, sign out) |
+| `application-details.tsx` | Application detail view |
+
+### Database (`supabase/`)
+- `profiles` — extends auth.users; role (tenant|admin), kiosk_pin_hash, company info
+- `kitchens` — physical kitchen resources with hourly_rate and color_code
+- `stations` — specific stations within kitchens (Hood1R, Hood1L, Oven L, etc.)
+- `applications` — pre-approval records (pending|approved|rejected)
+- `bookings` — calendar reservations with conflict exclusion constraint
+- `timesheets` — clock-in/out records; nullable clock_out for active shifts
+- `invoices` + `invoice_lines` — billing with status (draft|open|paid|void)
+- `maintenance_tickets` — equipment issue tracking
+- `timesheet_requests` — admin approval workflow for edits
+- `requests` — generic request tracking
+
+### Utilities
+| Path | Purpose |
+|---|---|
+| `utils/supabase/server.ts` | Async server-side Supabase client |
+| `utils/supabase/client.ts` | Browser Supabase client |
+| `utils/supabase/admin.ts` | Service role client for admin ops |
+| `utils/supabase/middleware.ts` | Session refresh + auth redirects |
+| `middleware.ts` | Route protection |
+| `lib/utils.ts` | Tailwind class merging (cn helper) |
+| `lib/validations/` | Zod schemas |
+| `types/database.ts` | TypeScript interfaces for all DB tables |
+
+## Known Gaps (Do Not Introduce Regressions Around These)
+- Recurring bookings: `rrule` column exists but no UI
+- AI chat: component + API route exist but not wired to a page
+- No Stripe/payment gateway
+- No maintenance ticket close/resolve flow
+- No email/SMS notifications
+- No analytics dashboards
+- Timesheet management is one-record-at-a-time
+
+---
+
+# Pre-Launch Usability Audit Prompts
+
+Use the following prompts to review each section of the site before launch. Run each prompt as a focused review. Output issues as a numbered list with severity (Critical / High / Medium / Low) and the file path responsible.
+
+---
+
+## PROMPT 1 — Public Pages & Onboarding Flow
+
+```
+Review the public-facing pages for launch readiness:
+- app/page.tsx (landing page)
+- app/apply/ (application form)
+- app/contact/ (contact form)
+- app/(auth)/login/
+- app/(auth)/account-setup/ (invite token → password creation)
+
+Check for:
+1. Are all CTAs visible and labeled clearly for a first-time visitor?
+2. Does the application form validate all fields with clear inline error messages?
+3. Does account-setup correctly consume the invite token and redirect after password creation?
+4. Is the login page accessible without an active session? Does it redirect correctly if already logged in?
+5. Are loading and error states handled on all form submissions?
+6. Is there a success confirmation after applying or submitting the contact form?
+7. Do any pages expose sensitive data (user IDs, tokens) in the URL or page source?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 2 — Tenant: Booking Calendar
+
+```
+Review the tenant booking calendar for launch readiness:
+- app/(dashboard)/calendar/
+- components/calendar/CalendarPageClient.tsx
+- components/calendar/CalendarView.tsx
+- components/calendar/BookingModal.tsx
+- app/actions/bookings.ts
+
+Check for:
+1. Can a tenant successfully browse available stations and time slots?
+2. Does the BookingModal validate required fields (station, date, start/end time)?
+3. Is double-booking prevented — does the conflict exclusion constraint surface a user-friendly error (not a raw DB error)?
+4. Can a tenant cancel a booking? Is there a confirmation step before deletion?
+5. Are past bookings visually distinct from upcoming ones?
+6. Does the calendar render correctly on a tablet (iPad-size viewport, ~1024px wide)?
+7. Are loading skeletons or spinners shown while bookings are fetched?
+8. Does the calendar correctly reflect the tenant's own bookings vs. other tenants' (blocked slots)?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 3 — Tenant: Timesheets
+
+```
+Review the tenant timesheet pages for launch readiness:
+- app/(dashboard)/timesheets/
+- components/timesheets/EditDialog.tsx
+- components/timesheets/RequestDialog.tsx
+- app/actions/requests.ts
+
+Check for:
+1. Does the timesheet list show all of the tenant's clock-in/out records with correct dates and durations?
+2. Are active (open) shifts (null clock_out) displayed with a clear "currently clocked in" indicator?
+3. Can a tenant submit a timesheet edit request? Does the form validate start/end time logic (end > start)?
+4. Is there feedback after submitting an edit request (success message, pending status)?
+5. Are requests that have been approved/rejected shown with their outcome?
+6. Is the edit dialog usable on a tablet viewport?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 4 — Tenant: Billing & Invoices
+
+```
+Review the tenant invoicing pages for launch readiness:
+- app/(dashboard)/billing/invoices/
+- app/actions/invoicing.ts
+
+Check for:
+1. Does the invoice list show all invoices for the logged-in tenant only (RLS enforced)?
+2. Are invoice statuses (draft/open/paid/void) clearly labeled with distinct visual treatment?
+3. Does the invoice detail page show line items with correct quantities, rates, and subtotals?
+4. Is there a clear total amount displayed on both the list and detail views?
+5. Are there any raw database IDs, UUIDs, or technical values exposed to tenants unnecessarily?
+6. Is an empty state shown when the tenant has no invoices yet?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 5 — Tenant: Maintenance Tickets
+
+```
+Review the tenant maintenance ticket pages for launch readiness:
+- app/(dashboard)/maintenance/
+- components/maintenance/CreateTicketForm.tsx
+- app/actions/maintenance.ts
+
+Check for:
+1. Can a tenant submit a new maintenance ticket with a description and equipment reference?
+2. Does the form validate required fields with inline errors?
+3. Is there a success confirmation after ticket submission?
+4. Can tenants view their previously submitted tickets and their current status?
+5. Is it clear that the tenant cannot resolve/close tickets themselves (admin-only)?
+6. Is the form usable on tablet viewport?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 6 — Tenant: Settings
+
+```
+Review the tenant settings page for launch readiness:
+- app/(dashboard)/settings/
+- components/settings/SecurityForm.tsx
+- app/actions/settings.ts
+- app/api/settings/update-pin/
+
+Check for:
+1. Can a tenant update their profile (name, company info) and see a success confirmation?
+2. Can a tenant change their password — does the form require current password + confirmation?
+3. Can a tenant set or update their kiosk PIN — is the PIN hashed before storage (never stored plaintext)?
+4. Are there validation rules for PIN (e.g., numeric only, minimum length)?
+5. Are error states shown if password change fails (e.g., wrong current password)?
+6. Is the settings page correctly protected — unauthenticated users are redirected to login?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 7 — Kiosk (iPad Clock-In/Out Terminal)
+
+```
+Review the kiosk for launch readiness:
+- app/kiosk/
+- components/kiosk/PinPad.tsx
+- components/kiosk/UserSelection.tsx
+- components/kiosk/UserCard.tsx
+- components/kiosk/KioskControls.tsx
+- components/kiosk/KioskActions.tsx
+- app/api/kiosk/clock-in/
+- app/api/kiosk/clock-out/
+- app/api/kiosk/active-session/
+- app/actions/kiosk.ts
+
+This UI runs on an iPad mounted in a commercial kitchen. Users have messy hands.
+
+Check for:
+1. Are all tap targets (buttons, PIN pad keys) at least 44×44px? Are they easy to hit with one finger?
+2. Is the user selection list scannable — large text, clear names, no tiny elements?
+3. After selecting a user, does the PIN pad appear clearly with immediate visual feedback per keypress?
+4. Is there a clear error message for wrong PIN (not a generic alert)?
+5. After clocking in, is there an unambiguous success screen showing the tenant's name and clock-in time?
+6. If a user is already clocked in, does the kiosk correctly detect the active session and show a Clock Out option instead?
+7. After clocking out, is the session correctly closed (clock_out timestamp saved)?
+8. Is the kiosk page publicly accessible without login (it uses PIN auth, not session auth)?
+9. Does the UI recover gracefully from network errors (e.g., API timeout during clock-in)?
+10. Is the screen layout optimized for landscape iPad (no horizontal scrolling, content fills the viewport)?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 8 — Admin: Applications
+
+```
+Review the admin applications section for launch readiness:
+- app/admin/applications/
+- app/actions/admin.ts
+- components/application-details.tsx
+
+Check for:
+1. Does the applications list show pending applications with applicant name, company, and submission date?
+2. Can an admin open an application and view all submitted details?
+3. Can an admin approve an application — does this trigger the invite email flow?
+4. Can an admin reject an application — is there a rejection reason field?
+5. Are approved/rejected applications visually distinct from pending ones?
+6. Is there pagination or infinite scroll for large application lists?
+7. Are admin actions (approve/reject) protected by RLS — can a tenant role access these routes?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 9 — Admin: Tenant Management
+
+```
+Review the admin tenant management section for launch readiness:
+- app/admin/tenants/
+
+Check for:
+1. Does the tenant list show all active tenants with name, company, and status?
+2. Can an admin view an individual tenant's profile details?
+3. Is there a way to deactivate or remove a tenant?
+4. Are tenant records correctly scoped — admins can see all, tenants cannot access this route?
+5. Is the list searchable or filterable?
+6. Is an empty state shown if no tenants exist yet?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 10 — Admin: Timesheets
+
+```
+Review the admin timesheets section for launch readiness:
+- app/admin/timesheets/
+- components/timesheets/AdminActions.tsx
+- app/actions/requests.ts
+
+Check for:
+1. Can an admin view all tenant timesheets across all users?
+2. Are currently open shifts (null clock_out) clearly flagged?
+3. Can an admin manually edit a timesheet record (override clock-in or clock-out)?
+4. Are edits logged or auditable in any way?
+5. Is the list filterable by tenant or date range?
+6. Are bulk operations available, or is it strictly one-at-a-time? (Note: one-at-a-time is a known gap — flag if it causes usability issues at scale.)
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 11 — Admin: Requests
+
+```
+Review the admin requests section for launch readiness:
+- app/admin/requests/
+- components/admin/RequestsTable.tsx
+- app/actions/requests.ts
+
+Check for:
+1. Does the requests table show all pending timesheet edit requests with the original and requested values?
+2. Can an admin approve a request — does this update the timesheet record?
+3. Can an admin reject a request — is the tenant notified (or shown a status update on their end)?
+4. Are approved/rejected requests archived or removed from the pending view?
+5. Is the requests table sortable by date or tenant?
+6. Are there empty states for "no pending requests"?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 12 — Cross-Cutting: Auth, RLS & Route Protection
+
+```
+Review authentication, authorization, and data isolation across the entire app:
+- middleware.ts
+- utils/supabase/middleware.ts
+- All RLS policies in supabase/migrations/
+
+Check for:
+1. Are all dashboard routes (/dashboard/*, /admin/*) protected — do they redirect to /login if unauthenticated?
+2. Are admin routes (/admin/*) role-gated — does a tenant-role user get a 403 or redirect if they try to access /admin?
+3. Does the kiosk route (/kiosk) remain publicly accessible without a session?
+4. Do RLS policies correctly scope tenant data — can tenant A see tenant B's bookings, invoices, or timesheets?
+5. Are Server Actions validating the caller's session and role before mutating data?
+6. Is the Supabase service role key (SUPABASE_SERVICE_ROLE_KEY) used only in server-side contexts, never exposed to the client?
+7. Are there any pages that fetch data without checking the authenticated user's role?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 13 — Cross-Cutting: Mobile & Tablet Responsiveness
+
+```
+Review the entire app for tablet and mobile usability. The primary device is a 1024px iPad (landscape). Admin users may use desktop. Tenants may use mobile phones.
+
+Pages to check:
+- app/page.tsx (landing)
+- app/(auth)/login/
+- app/(dashboard)/calendar/
+- app/(dashboard)/timesheets/
+- app/(dashboard)/billing/invoices/
+- app/(dashboard)/maintenance/
+- app/(dashboard)/settings/
+- app/kiosk/
+- app/admin/applications/
+- app/admin/tenants/
+- app/admin/timesheets/
+- app/admin/requests/
+
+Check for:
+1. Do tables overflow horizontally on small screens, or are they responsive (cards on mobile)?
+2. Are all interactive elements (buttons, links, inputs) at least 44px tall on mobile?
+3. Does the site-nav collapse correctly to a mobile menu on small viewports?
+4. Is the booking calendar usable on a 1024px tablet (no tiny text, no hidden buttons)?
+5. Are modals and dialogs full-screen or appropriately sized on mobile?
+6. Is text legible at all sizes (no overflow, no truncation of important labels)?
+
+Output issues as: [Severity] File path — description of problem.
+```
+
+---
+
+## PROMPT 14 — Cross-Cutting: Error States & Empty States
+
+```
+Review the entire app for missing error and empty state handling:
+
+Check every major page and component for:
+1. What happens when a data fetch returns an empty array? Is there a meaningful empty state (not a blank page)?
+2. What happens when a Server Action returns an error? Is the error surfaced to the user in plain language?
+3. Are form submission errors shown inline next to the relevant field, not just as a toast?
+4. Are loading states (spinners, skeletons) shown while data is fetching?
+5. What happens if the user's session expires mid-session — are they redirected to login cleanly?
+6. Are there any unhandled promise rejections or console errors on any page?
+7. Does the app handle a Supabase service outage gracefully (fallback UI, not a crash)?
+
+Output issues as: [Severity] File path — description of problem.
+```
