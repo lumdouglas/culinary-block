@@ -69,7 +69,6 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         className="h-10 px-3 rounded-md border border-slate-200 bg-white"
                     >
                         <option value="all">All Types</option>
-                        <option value="maintenance">Maintenance</option>
                         <option value="rule_violation">Rule Violation</option>
                         <option value="timesheet">Timesheet</option>
                     </select>
@@ -154,17 +153,9 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                         <p className="text-xs text-slate-500">{request.profiles?.email}</p>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
-                                            ? 'bg-teal-100 text-teal-700'
-                                            : 'bg-amber-100 text-amber-700'
-                                            }`}>
-                                            {request.type === 'maintenance' ? (
-                                                <Wrench className="h-3 w-3" />
-                                            ) : (
-                                                <AlertTriangle className="h-3 w-3" />
-                                            )}
-                                            {request.type === 'maintenance' ? 'Maintenance'
-                                                : 'Rule Violation'}
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700`}>
+                                            <AlertTriangle className="h-3 w-3" />
+                                            Rule Violation
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 max-w-xs">
@@ -232,17 +223,9 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                 <span className="text-sm text-slate-500">
                                     {new Date(request.created_at).toLocaleDateString()}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${request.type === 'maintenance'
-                                    ? 'bg-teal-100 text-teal-700'
-                                    : 'bg-amber-100 text-amber-700'
-                                    }`}>
-                                    {request.type === 'maintenance' ? (
-                                        <Wrench className="h-3 w-3" />
-                                    ) : (
-                                        <AlertTriangle className="h-3 w-3" />
-                                    )}
-                                    {request.type === 'maintenance' ? 'Maintenance'
-                                        : 'Violation'}
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700`}>
+                                    <AlertTriangle className="h-3 w-3" />
+                                    Violation
                                 </span>
                             </div>
 
