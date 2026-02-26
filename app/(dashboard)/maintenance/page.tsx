@@ -76,13 +76,13 @@ export default async function MaintenancePage() {
                             <TableHead className="text-slate-900 font-bold">Priority</TableHead>
                             <TableHead className="text-slate-900 font-bold">Photo</TableHead>
                             <TableHead className="text-slate-900 font-bold">Status</TableHead>
-                            <TableHead className="text-right text-slate-900 font-bold">Actions</TableHead>
+                            {isAdmin && <TableHead className="text-right text-slate-900 font-bold">Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {tickets?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-12 text-slate-600 font-medium">
+                                <TableCell colSpan={isAdmin ? 8 : 7} className="text-center py-12 text-slate-600 font-medium">
                                     No maintenance tickets found.
                                 </TableCell>
                             </TableRow>
@@ -116,13 +116,15 @@ export default async function MaintenancePage() {
                                     <TableCell>
                                         <StatusBadge status={ticket.status} />
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                        <Link href={`/maintenance/${ticket.id}`}>
-                                            <Button variant="ghost" size="sm">
-                                                View
-                                            </Button>
-                                        </Link>
-                                    </TableCell>
+                                    {isAdmin && (
+                                        <TableCell className="text-right">
+                                            <Link href={`/maintenance/${ticket.id}`}>
+                                                <Button variant="ghost" size="sm">
+                                                    View
+                                                </Button>
+                                            </Link>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))
                         )}
