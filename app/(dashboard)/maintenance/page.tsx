@@ -30,16 +30,10 @@ export default async function MaintenancePage() {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
     const isAdmin = profile?.role === 'admin';
 
-    let query = supabase
+    const { data: tickets } = await supabase
         .from("maintenance_tickets")
         .select("*, profiles:user_id(company_name), kitchens(name)")
         .order("created_at", { ascending: false });
-
-    if (!isAdmin && user) {
-        query = query.eq("user_id", user.id);
-    }
-
-    const { data: tickets } = await query;
 
     // Get kitchens for the form
     const { data: kitchens } = await supabase.from("kitchens").select("id, name").eq("is_active", true);
@@ -49,9 +43,7 @@ export default async function MaintenancePage() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Maintenance</h1>
-                    <p className="text-slate-500">
-                        {isAdmin ? "Track facility-wide equipment issues" : "Report and track your equipment issues"}
-                    </p>
+                    <p className="text-slate-500">Report and track equipment issues</p>
                 </div>
 
                 <Dialog>
@@ -79,7 +71,7 @@ export default async function MaintenancePage() {
                         <TableRow className="border-slate-300 hover:bg-transparent">
                             <TableHead className="text-slate-900 font-bold">Issue</TableHead>
                             <TableHead className="text-slate-900 font-bold">Location</TableHead>
-                            {isAdmin && <TableHead className="text-slate-900 font-bold">Reported By</TableHead>}
+                            <TableHead className="text-slate-900 font-bold">Reported By</TableHead>
                             <TableHead className="text-slate-900 font-bold">Date</TableHead>
                             <TableHead className="text-slate-900 font-bold">Priority</TableHead>
                             <TableHead className="text-slate-900 font-bold">Status</TableHead>
@@ -89,8 +81,8 @@ export default async function MaintenancePage() {
                     <TableBody>
                         {tickets?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-12 text-slate-600 font-medium">
-                                    {isAdmin ? "No maintenance tickets found." : "You haven't reported any maintenance issues yet."}
+                                <TableCell colSpan={7} className="text-center py-12 text-slate-600 font-medium">
+                                    No maintenance tickets found.
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -102,11 +94,9 @@ export default async function MaintenancePage() {
                                     <TableCell className="text-slate-900">
                                         {ticket.kitchens?.name || "General Facility"}
                                     </TableCell>
-                                    {isAdmin && (
-                                        <TableCell className="text-slate-900">
-                                            {ticket.profiles?.company_name || "Unknown"}
-                                        </TableCell>
-                                    )}
+                                    <TableCell className="text-slate-900">
+                                        {ticket.profiles?.company_name || "Unknown"}
+                                    </TableCell>
                                     <TableCell className="text-slate-700">
                                         {format(new Date(ticket.created_at), "MMM d, yyyy")}
                                     </TableCell>
