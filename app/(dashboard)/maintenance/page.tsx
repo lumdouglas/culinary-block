@@ -42,8 +42,8 @@ export default async function MaintenancePage() {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Maintenance</h1>
-                    <p className="text-slate-500">Report and track equipment issues</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Maintenance Requests</h1>
+                    <p className="text-slate-500">View and track equipment issues</p>
                 </div>
 
                 <Dialog>
@@ -74,6 +74,7 @@ export default async function MaintenancePage() {
                             <TableHead className="text-slate-900 font-bold">Reported By</TableHead>
                             <TableHead className="text-slate-900 font-bold">Date</TableHead>
                             <TableHead className="text-slate-900 font-bold">Priority</TableHead>
+                            <TableHead className="text-slate-900 font-bold">Photo</TableHead>
                             <TableHead className="text-slate-900 font-bold">Status</TableHead>
                             <TableHead className="text-right text-slate-900 font-bold">Actions</TableHead>
                         </TableRow>
@@ -81,7 +82,7 @@ export default async function MaintenancePage() {
                     <TableBody>
                         {tickets?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-12 text-slate-600 font-medium">
+                                <TableCell colSpan={8} className="text-center py-12 text-slate-600 font-medium">
                                     No maintenance tickets found.
                                 </TableCell>
                             </TableRow>
@@ -102,6 +103,15 @@ export default async function MaintenancePage() {
                                     </TableCell>
                                     <TableCell>
                                         <PriorityBadge priority={ticket.priority} />
+                                    </TableCell>
+                                    <TableCell>
+                                        {ticket.photo_url ? (
+                                            <a href={ticket.photo_url} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 hover:underline text-sm font-medium">
+                                                View Photo
+                                            </a>
+                                        ) : (
+                                            <span className="text-slate-400 text-sm italic">None</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <StatusBadge status={ticket.status} />

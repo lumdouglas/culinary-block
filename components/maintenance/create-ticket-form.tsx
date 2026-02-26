@@ -15,6 +15,8 @@ import {
 import { createTicket } from "@/app/actions/maintenance";
 import { toast } from "sonner";
 import { DialogClose } from "@/components/ui/dialog";
+import { createClient } from "@/utils/supabase/client";
+import { Camera } from "lucide-react";
 
 export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknown>[] }) {
     const [loading, setLoading] = useState(false);
@@ -22,10 +24,41 @@ export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknow
     // Since this is inside a Dialog in a server component, closing it programmatically without context/state lift is tricky.
     // For now, valid submission will just show toast. Rerendering will happen via server action revalidatePath.
 
+    const supabase = createClient();
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         const formData = new FormData(e.currentTarget);
+
+        // 1. Upload photo if present
+        const photoFile = formData.get('photo') as File | null;
+        let photoUrl = '';
+
+        if (photoFile && photoFile.size > 0) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('request-photos')
+                    .upload(fileName, photoFile);
+
+                if (!uploadError) {
+                    const { data: urlData } = supabase.storage
+                        .from('request-photos')
+                        .getPublicUrl(fileName);
+                    photoUrl = urlData.publicUrl;
+                }
+            }
+        }
+
+        // Append the photo URL string to formData
+        if (photoUrl) {
+            formData.set('photo_url', photoUrl);
+        }
+
         const res = await createTicket(null, formData);
         setLoading(false);
 
@@ -82,6 +115,24 @@ export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknow
                     Details
                 </Label>
                 <Textarea id="description" name="description" className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="photo" className="text-right flex items-center justify-end gap-2">
+                    <Camera className="h-4 w-4" />
+                    Photo
+                </Label>
+                <div className="col-span-3 space-y-1">
+                    <Input
+                        type="file"
+                        id="photo"
+                        name="photo"
+                        accept="image/*"
+                        className="cursor-pointer"
+                    />
+                    <p className="text-xs text-slate-500">
+                        Optional: attach an image of the issue
+                    </p>
+                </div>
             </div>
             <div className="flex justify-end mt-4 gap-2">
                 <DialogClose asChild>

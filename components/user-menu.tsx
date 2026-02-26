@@ -214,7 +214,7 @@ export function UserMenu() {
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
                             <Link href="/maintenance" className="flex items-center">
                                 <Wrench className="mr-2 h-4 w-4 text-slate-500" />
-                                <span>Maintenance</span>
+                                <span>Maintenance Requests</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />

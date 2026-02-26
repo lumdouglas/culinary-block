@@ -14,6 +14,7 @@ export async function createTicket(prevState: any, formData: FormData) {
     const description = formData.get('description') as string;
     const priority = formData.get('priority') as TicketPriority;
     const kitchen_id = formData.get('kitchen_id') as string; // Optional
+    const photo_url = formData.get('photo_url') as string; // Optional
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -29,6 +30,7 @@ export async function createTicket(prevState: any, formData: FormData) {
             description,
             priority: priority || 'medium',
             kitchen_id: kitchen_id || null,
+            photo_url: photo_url || null,
             status: 'open',
         });
 
