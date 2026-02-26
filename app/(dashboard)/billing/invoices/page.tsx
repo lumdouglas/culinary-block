@@ -16,21 +16,31 @@ import { Plus } from "lucide-react";
 export default async function InvoicesPage() {
     const supabase = await createClient();
 
-    const { data: invoices } = await supabase
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
+    const isAdmin = profile?.role === 'admin';
+
+    let query = supabase
         .from("invoices")
         .select("*, profiles:tenant_id(company_name)")
         .order("created_at", { ascending: false });
 
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
-    const isAdmin = profile?.role === 'admin';
+    if (!isAdmin && user) {
+        query = query.eq("tenant_id", user.id);
+    }
+
+    const { data: invoices } = await query;
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Invoices</h1>
-                    <p className="text-slate-500">Manage billing and payments</p>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        {isAdmin ? "Invoices" : "My Billing"}
+                    </h1>
+                    <p className="text-slate-500">
+                        {isAdmin ? "Manage billing and payments" : "View and download your past invoices"}
+                    </p>
                 </div>
                 {isAdmin && (
                     <Link href="/billing/invoices/new">
@@ -47,7 +57,7 @@ export default async function InvoicesPage() {
                     <TableHeader className="bg-slate-50 [&_th]:text-slate-700">
                         <TableRow>
                             <TableHead>Invoice #</TableHead>
-                            <TableHead>Tenant</TableHead>
+                            {isAdmin && <TableHead>Tenant</TableHead>}
                             <TableHead>Amount</TableHead>
                             <TableHead>Due Date</TableHead>
                             <TableHead>Status</TableHead>
@@ -57,8 +67,8 @@ export default async function InvoicesPage() {
                     <TableBody>
                         {invoices?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
-                                    No invoices found. Create one to get started.
+                                <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-12 text-slate-500">
+                                    {isAdmin ? "No invoices found. Create one to get started." : "You have no invoices at this time."}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -67,9 +77,11 @@ export default async function InvoicesPage() {
                                     <TableCell className="font-medium text-slate-900">
                                         {invoice.invoice_number}
                                     </TableCell>
-                                    <TableCell className="text-slate-900">
-                                        {invoice.profiles?.company_name || "Unknown Tenant"}
-                                    </TableCell>
+                                    {isAdmin && (
+                                        <TableCell className="text-slate-900">
+                                            {invoice.profiles?.company_name || "Unknown Tenant"}
+                                        </TableCell>
+                                    )}
                                     <TableCell className="text-slate-700">${invoice.total.toFixed(2)}</TableCell>
                                     <TableCell className="text-slate-700">
                                         {invoice.due_date

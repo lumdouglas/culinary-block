@@ -3,8 +3,16 @@ import { redirect } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EditTimesheetDialog } from "@/components/timesheets/edit-dialog"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { startOfMonth, endOfMonth, addMonths, subMonths, format, isSameMonth } from "date-fns"
 
-export default async function TimesheetsPage() {
+export default async function TimesheetsPage({
+    searchParams,
+}: {
+    searchParams: { month?: string }
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -12,7 +20,18 @@ export default async function TimesheetsPage() {
         redirect("/login")
     }
 
-    // Fetch recent timesheets
+    // Determine current month view
+    const currentDate = new Date()
+    const viewDate = searchParams.month ? new Date(`${searchParams.month}-01T00:00:00`) : currentDate
+
+    // Date navigation logic
+    const startDate = startOfMonth(viewDate)
+    const endDate = endOfMonth(viewDate)
+    const prevMonthStr = format(subMonths(viewDate, 1), 'yyyy-MM')
+    const nextMonthStr = format(addMonths(viewDate, 1), 'yyyy-MM')
+    const isCurrentMonth = isSameMonth(viewDate, currentDate)
+
+    // Fetch timesheets for the month
     const { data: timesheets } = await supabase
         .from("timesheets")
         .select(`
@@ -20,13 +39,49 @@ export default async function TimesheetsPage() {
             kitchens (name)
         `)
         .eq("user_id", user.id)
+        .gte("clock_in", startDate.toISOString())
+        .lte("clock_in", endDate.toISOString())
         .order("clock_in", { ascending: false })
-        .limit(20)
+
+    // Calculate total hours
+    const totalMinutes = timesheets?.reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0) || 0
+    const totalHours = Math.floor(totalMinutes / 60)
+    const remainingMinutes = totalMinutes % 60
 
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2 mb-6">
-                <h2 className="text-3xl font-bold tracking-tight">Timesheets</h2>
+        <div className="flex-1 space-y-4 p-8 pt-6 max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight">Timesheets</h2>
+                    <p className="text-slate-500 mt-1">
+                        Viewing activity for {format(viewDate, 'MMMM yyyy')}
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-4 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                    <Link href={`?month=${prevMonthStr}`}>
+                        <Button variant="outline" size="icon" className="h-8 w-8">
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+
+                    <div className="text-sm font-medium px-4 text-center min-w-[120px]">
+                        <span className="text-slate-500 mr-2">Total:</span>
+                        <span className="text-slate-900 font-bold">{totalHours}h {remainingMinutes}m</span>
+                    </div>
+
+                    {isCurrentMonth ? (
+                        <Button variant="outline" size="icon" className="h-8 w-8" disabled>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <Link href={`?month=${nextMonthStr}`}>
+                            <Button variant="outline" size="icon" className="h-8 w-8">
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </Link>
+                    )}
+                </div>
             </div>
 
             <div className="rounded-md border bg-white overflow-x-auto shadow-sm">
@@ -79,7 +134,9 @@ export default async function TimesheetsPage() {
                         ))}
                         {(!timesheets || timesheets.length === 0) && (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-6 text-slate-500">No shifts found.</TableCell>
+                                <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                                    No shifts found for {format(viewDate, 'MMMM yyyy')}.
+                                </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
