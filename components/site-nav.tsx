@@ -156,7 +156,7 @@ export function SiteNav() {
                                     ) : (
                                         <>
                                             <MobileNavLink href="/timesheets">My Timesheets</MobileNavLink>
-                                            <MobileNavLink href="/billing">My Billing</MobileNavLink>
+                                            <MobileNavLink href="/billing/invoices">My Billing</MobileNavLink>
                                             <MobileNavLink href="/maintenance">Maintenance</MobileNavLink>
                                         </>
                                     )}

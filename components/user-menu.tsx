@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LogOut, Settings, Calendar, ClipboardList } from 'lucide-react'
+import { LogOut, Settings, Calendar, ClipboardList, Receipt, Wrench } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -203,6 +203,22 @@ export function UserMenu() {
                         <span>My Bookings</span>
                     </Link>
                 </DropdownMenuItem>
+                {user.role !== 'admin' && (
+                    <>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/billing/invoices" className="flex items-center">
+                                <Receipt className="mr-2 h-4 w-4 text-slate-500" />
+                                <span>My Billing</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/maintenance" className="flex items-center">
+                                <Wrench className="mr-2 h-4 w-4 text-slate-500" />
+                                <span>Maintenance</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    </>
+                )}
                 <DropdownMenuItem asChild className="cursor-pointer py-2">
                     <Link href="/settings" className="flex items-center">
                         <Settings className="mr-2 h-4 w-4 text-slate-500" />
