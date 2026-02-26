@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { createRequest, type RequestType } from '@/app/actions/requests'
+import { createTicket } from '@/app/actions/maintenance'
+import { createClient } from '@/utils/supabase/client'
 import { Wrench, AlertTriangle, Camera, Send, Loader2 } from 'lucide-react'
 
 // Rule violation categories for the dropdown
@@ -25,9 +27,11 @@ export function RequestForm() {
     const [selectedRule, setSelectedRule] = useState<string>('')
     const [isPending, startTransition] = useTransition()
 
+    const supabase = createClient()
+
     const handleSubmit = async (formData: FormData) => {
-        // Add the type to form data
-        formData.set('type', activeTab)
+        // Add the type to form data for requests branch
+        formData.set('type', 'rule_violation')
 
         // If rule violation, prepend the selected rule to description
         if (activeTab === 'rule_violation' && selectedRule) {
@@ -36,15 +40,59 @@ export function RequestForm() {
         }
 
         startTransition(async () => {
-            const result = await createRequest(formData)
-            if (result.error) {
-                toast.error(result.error)
+            if (activeTab === 'maintenance') {
+                // Handle as a maintenance ticket
+
+                // 1. Upload photo if present (since createTicket doesn't handle photos directly yet)
+                const photoFile = formData.get('photo') as File | null
+                let photoUrlStr = ''
+
+                if (photoFile && photoFile.size > 0) {
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (user) {
+                        const fileExt = photoFile.name.split('.').pop()
+                        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+                        const { error: uploadError } = await supabase.storage
+                            .from('request-photos')
+                            .upload(fileName, photoFile)
+
+                        if (!uploadError) {
+                            const { data: urlData } = supabase.storage
+                                .from('request-photos')
+                                .getPublicUrl(fileName)
+                            photoUrlStr = `\n\n[Attached Photo](${urlData.publicUrl})`
+                        }
+                    }
+                }
+
+                // 2. Format ticket data
+                const ticketData = new FormData()
+                ticketData.set('title', 'Maintenance Request (Contact Page)')
+                ticketData.set('description', (formData.get('description') as string) + photoUrlStr)
+                ticketData.set('priority', 'medium')
+                // Note: kitchen_id is left null (General Facility)
+
+                const result = await createTicket(null, ticketData)
+                if (result.error) {
+                    toast.error(result.error)
+                } else {
+                    toast.success('Maintenance ticket submitted successfully!')
+                    const form = document.getElementById('request-form') as HTMLFormElement
+                    form?.reset()
+                    setSelectedRule('')
+                }
             } else {
-                toast.success('Request submitted successfully!')
-                // Reset form
-                const form = document.getElementById('request-form') as HTMLFormElement
-                form?.reset()
-                setSelectedRule('')
+                // Handle as a rule violation request
+                const result = await createRequest(formData)
+                if (result.error) {
+                    toast.error(result.error)
+                } else {
+                    toast.success('Request submitted successfully!')
+                    const form = document.getElementById('request-form') as HTMLFormElement
+                    form?.reset()
+                    setSelectedRule('')
+                }
             }
         })
     }
