@@ -30,60 +30,67 @@ export default function AccountSetupPage() {
     const [authError, setAuthError] = useState<string | null>(null);
 
     useEffect(() => {
-        let subscription: { unsubscribe: () => void } | null = null;
-        let timeoutId: NodeJS.Timeout;
-
         async function init() {
-            // 1. Manually capture implicit tokens from URL hash (legacy magic links/invites fallback)
-            const hash = typeof window !== 'undefined' ? window.location.hash : '';
-            if (hash && hash.includes('access_token=')) {
-                const cleanUrl = typeof window !== 'undefined' ? window.location.href.split('#')[0] : '';
-                if (typeof window !== 'undefined') window.history.replaceState(null, '', cleanUrl);
+            try {
+                // 1. Manually capture implicit tokens from URL hash (legacy magic links/invites fallback)
+                const hash = typeof window !== 'undefined' ? window.location.hash : '';
+                if (hash && hash.includes('access_token=')) {
+                    console.log('AccountSetup: Found access_token in hash');
+                    const cleanUrl = typeof window !== 'undefined' ? window.location.href.split('#')[0] : '';
+                    if (typeof window !== 'undefined') window.history.replaceState(null, '', cleanUrl);
 
-                const params = new URLSearchParams(hash.substring(1));
-                const access_token = params.get('access_token');
-                const refresh_token = params.get('refresh_token');
+                    const params = new URLSearchParams(hash.substring(1));
+                    const access_token = params.get('access_token');
+                    const refresh_token = params.get('refresh_token');
 
-                if (access_token && refresh_token) {
-                    await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
-                    const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-                    if (error) {
-                        setAuthError(error.message);
+                    if (access_token && refresh_token) {
+                        await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
+                        const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+                        if (error) {
+                            console.error('AccountSetup: setSession error:', error.message);
+                            setAuthError(error.message);
+                        } else {
+                            console.log('AccountSetup: Session established from hash');
+                        }
+                        setCheckingAuth(false);
+                        return;
                     }
-                    setCheckingAuth(false);
-                    return;
                 }
-            }
 
-            // 2. Poll getSession() with retries — mobile browsers sometimes need a moment
-            // for the session cookie to become readable after being set by /auth/callback.
-            const MAX_RETRIES = 8;
-            const RETRY_DELAY_MS = 300;
-            for (let i = 0; i < MAX_RETRIES; i++) {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    setCheckingAuth(false);
-                    return;
-                }
-                // Wait before next retry (skip wait on last iteration)
-                if (i < MAX_RETRIES - 1) {
-                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
-                }
-            }
+                // 2. Poll getSession() with retries — mobile browsers sometimes need a moment
+                console.log('AccountSetup: Starting session polling...');
+                const MAX_RETRIES = 12; // Increased retries for mobile
+                const RETRY_DELAY_MS = 500; // Increased delay
+                for (let i = 0; i < MAX_RETRIES; i++) {
+                    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                    if (sessionError) {
+                        console.error(`AccountSetup: getSession error (attempt ${i + 1}):`, sessionError.message);
+                    }
 
-            // 3. Still no session after retries — show error
-            setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
-            setCheckingAuth(false);
+                    if (session) {
+                        console.log(`AccountSetup: Session found on attempt ${i + 1}`);
+                        setCheckingAuth(false);
+                        return;
+                    }
+
+                    if (i < MAX_RETRIES - 1) {
+                        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+                    }
+                }
+
+                // 3. Still no session after retries — show error
+                console.error('AccountSetup: No session found after all retries');
+                setAuthError("Your secure link could not be verified. Please try logging in or requested a new invite.");
+                setCheckingAuth(false);
+            } catch (err: any) {
+                console.error('AccountSetup: Internal error during init:', err);
+                setAuthError(`An unexpected error occurred: ${err.message || 'Unknown error'}`);
+                setCheckingAuth(false);
+            }
         }
 
         init();
-
-        return () => {
-            if (timeoutId) clearTimeout(timeoutId);
-            if (subscription) subscription.unsubscribe();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [supabase, router]);
 
     const form = useForm<z.infer<typeof accountSetupSchema>>({
         resolver: zodResolver(accountSetupSchema),

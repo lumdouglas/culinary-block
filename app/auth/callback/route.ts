@@ -33,19 +33,24 @@ export async function GET(request: Request) {
     );
 
     if (code) {
-        // PKCE authorization code flow
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) return redirectResponse;
+        if (error) {
+            console.error('Auth callback error (code exchange):', error.message);
+            return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
+        }
+        return redirectResponse;
     } else if (tokenHash) {
-        // Email OTP / invite / magic-link flow — Supabase appends token_hash as a query param
         const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: type as 'invite' | 'signup' | 'recovery' | 'magiclink' | 'email_change' | 'email',
         });
-        if (!error) return redirectResponse;
+        if (error) {
+            console.error('Auth callback error (OTP/Invite):', error.message);
+            return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
+        }
+        return redirectResponse;
     } else {
-        // No code, no token_hash = implicit flow (tokens in URL hash).
-        // Server never sees the hash, so redirect client-side to preserve it for the destination.
+        // Implicit flow fallback
         const nextEscaped = next.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
         const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting...</title></head><body><script>window.location.replace("${nextEscaped}"+window.location.hash);</script><p>Redirecting...</p></body></html>`;
         return new NextResponse(html, {
@@ -54,6 +59,5 @@ export async function GET(request: Request) {
         });
     }
 
-    // Exchange failed; redirect without session (destination page will handle).
     return redirectResponse;
 }
