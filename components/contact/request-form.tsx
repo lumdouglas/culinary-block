@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { createRequest, type RequestType } from '@/app/actions/requests'
 import { createTicket } from '@/app/actions/maintenance'
-import { createClient } from '@/utils/supabase/client'
 import {
     Select,
     SelectContent,
@@ -41,34 +40,11 @@ export function RequestForm({ kitchens }: { kitchens: Kitchen[] }) {
     const [priority, setPriority] = useState<string>('medium')
     const [isPending, startTransition] = useTransition()
 
-    const supabase = createClient()
-
     const handleSubmit = async (formData: FormData) => {
         startTransition(async () => {
             if (activeTab === 'maintenance') {
-                // Upload photo if present
-                const photoFile = formData.get('photo') as File | null
-                let photoUrlStr = ''
-
-                if (photoFile && photoFile.size > 0) {
-                    const { data: { user } } = await supabase.auth.getUser()
-                    if (user) {
-                        const fileExt = photoFile.name.split('.').pop()
-                        const fileName = `${user.id}/${Date.now()}.${fileExt}`
-
-                        const { error: uploadError } = await supabase.storage
-                            .from('request-photos')
-                            .upload(fileName, photoFile)
-
-                        if (!uploadError) {
-                            const { data: urlData } = supabase.storage
-                                .from('request-photos')
-                                .getPublicUrl(fileName)
-                            photoUrlStr = urlData.publicUrl
-                        }
-                    }
-                }
-
+                // Pass FormData (including photo file) directly to server action
+                // Photo upload is handled server-side in createTicket
                 const ticketData = new FormData()
                 ticketData.set('title', formData.get('title') as string)
                 ticketData.set('description', formData.get('description') as string)
@@ -76,8 +52,10 @@ export function RequestForm({ kitchens }: { kitchens: Kitchen[] }) {
                 if (kitchenId && kitchenId !== 'general') {
                     ticketData.set('kitchen_id', kitchenId)
                 }
-                if (photoUrlStr) {
-                    ticketData.set('photo_url', photoUrlStr)
+                // Pass the File object directly — server action handles upload
+                const photoFile = formData.get('photo') as File | null
+                if (photoFile && photoFile.size > 0) {
+                    ticketData.set('photo', photoFile)
                 }
 
                 const result = await createTicket(null, ticketData)

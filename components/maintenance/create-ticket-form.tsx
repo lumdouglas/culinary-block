@@ -15,57 +15,24 @@ import {
 import { createTicket } from "@/app/actions/maintenance";
 import { toast } from "sonner";
 import { DialogClose } from "@/components/ui/dialog";
-import { createClient } from "@/utils/supabase/client";
 import { Camera } from "lucide-react";
 
 export function CreateTicketForm({ kitchens }: { kitchens: Record<string, unknown>[] }) {
     const [loading, setLoading] = useState(false);
-    // Note: We'd typically close the dialog on success, but for simplicity we rely on page refresh/revalidate or we can use a passed prop to close.
-    // Since this is inside a Dialog in a server component, closing it programmatically without context/state lift is tricky.
-    // For now, valid submission will just show toast. Rerendering will happen via server action revalidatePath.
-
-    const supabase = createClient();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
+
+        // Pass the full FormData directly — photo upload is handled in the server action
         const formData = new FormData(e.currentTarget);
-
-        // 1. Upload photo if present
-        const photoFile = formData.get('photo') as File | null;
-        let photoUrl = '';
-
-        if (photoFile && photoFile.size > 0) {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const fileExt = photoFile.name.split('.').pop();
-                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from('request-photos')
-                    .upload(fileName, photoFile);
-
-                if (!uploadError) {
-                    const { data: urlData } = supabase.storage
-                        .from('request-photos')
-                        .getPublicUrl(fileName);
-                    photoUrl = urlData.publicUrl;
-                }
-            }
-        }
-
-        // Append the photo URL string to formData
-        if (photoUrl) {
-            formData.set('photo_url', photoUrl);
-        }
-
         const res = await createTicket(null, formData);
         setLoading(false);
 
         if (res?.error) {
             toast.error(res.error);
         } else {
-            toast.success("Ticket created successfully");
+            toast.success("Ticket submitted successfully!");
             document.getElementById('close-dialog-btn')?.click();
         }
     };
