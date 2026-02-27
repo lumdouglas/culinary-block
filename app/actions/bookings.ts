@@ -162,16 +162,47 @@ export async function createBooking(
   }
 
   // Rule: Cannot have two simultaneous confirmed bookings across different stations
+  // EXCEPTION: General stations (like Prep Kitchens) can be booked concurrently with a regular station
+
+  // 1. Get the category of the station being booked
+  const { data: targetStation } = await supabase
+    .from('stations')
+    .select('category')
+    .eq('id', stationId)
+    .single();
+
+  if (!targetStation) {
+    return { error: "Station not found." };
+  }
+
+  // 2. Query for concurrent confirmed bookings
   const { data: concurrentBookings } = await supabase
     .from('bookings')
-    .select('id')
+    .select(`
+      id,
+      station:stations(category)
+    `)
     .eq('user_id', user.id)
     .eq('status', 'confirmed')
     .lt('start_time', endTime)
     .gt('end_time', startTime);
 
+  // 3. Evaluate concurrent rules
   if (concurrentBookings && concurrentBookings.length > 0) {
-    return { error: "You already have a booking during this time. To book multiple stations simultaneously, please contact Culinary Block Management." };
+    for (const booking of concurrentBookings) {
+      // @ts-ignore - Supabase join typing
+      const existingCategory = booking.station?.category;
+
+      // If BOTH stations are NOT General, block it. (e.g. Hood + Oven)
+      if (targetStation.category !== 'General' && existingCategory !== 'General') {
+        return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
+      }
+
+      // If BOTH stations ARE General, block it. (Tenant only needs one prep table)
+      if (targetStation.category === 'General' && existingCategory === 'General') {
+        return { error: "You already have a general station booked during this time." };
+      }
+    }
   }
 
   // Check availability before booking
@@ -287,17 +318,48 @@ export async function updateBooking(
   }
 
   // Rule: Cannot have two simultaneous confirmed bookings across different stations
+  // EXCEPTION: General stations (like Prep Kitchens) can be booked concurrently with a regular station
+
+  // 1. Get the category of the target station
+  const { data: targetStation } = await supabase
+    .from('stations')
+    .select('category')
+    .eq('id', stationId)
+    .single();
+
+  if (!targetStation) {
+    return { error: "Station not found." };
+  }
+
+  // 2. Query for concurrent confirmed bookings
   const { data: concurrentBookings } = await supabase
     .from('bookings')
-    .select('id')
+    .select(`
+      id,
+      station:stations(category)
+    `)
     .eq('user_id', user.id)
     .eq('status', 'confirmed')
     .neq('id', bookingId)   // exclude the booking being edited
     .lt('start_time', endTime)
     .gt('end_time', startTime);
 
+  // 3. Evaluate concurrent rules
   if (concurrentBookings && concurrentBookings.length > 0) {
-    return { error: "You already have a booking during this time. To book multiple stations simultaneously, please contact Culinary Block Management." };
+    for (const booking of concurrentBookings) {
+      // @ts-ignore - Supabase join typing
+      const existingCategory = booking.station?.category;
+
+      // If BOTH stations are NOT General, block it.
+      if (targetStation.category !== 'General' && existingCategory !== 'General') {
+        return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
+      }
+
+      // If BOTH stations ARE General, block it.
+      if (targetStation.category === 'General' && existingCategory === 'General') {
+        return { error: "You already have a general station booked during this time." };
+      }
+    }
   }
 
   // Check availability — exclude the current booking from the overlap check

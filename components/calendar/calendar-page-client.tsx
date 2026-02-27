@@ -28,7 +28,7 @@ export default function CalendarPageClient() {
     const [bookings, setBookings] = useState<Booking[]>([])
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const [selectedStations, setSelectedStations] = useState<number[]>([])
-    const [expandedStationId, setExpandedStationId] = useState<number | null>(null)
+    const [expandedStationIds, setExpandedStationIds] = useState<number[]>([])
     const [viewMode, setViewMode] = useState<ViewMode>('schedule')
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -224,7 +224,7 @@ export default function CalendarPageClient() {
                         {viewMode === 'schedule' && (
                             <>
                                 <button
-                                    onClick={() => { setSelectedStations([]); setExpandedStationId(null); }}
+                                    onClick={() => { setSelectedStations([]); setExpandedStationIds([]); }}
                                     className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all ${selectedStations.length === 0
                                         ? 'bg-teal-600 text-white shadow-md'
                                         : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -234,7 +234,7 @@ export default function CalendarPageClient() {
                                 </button>
                                 {stations.map((station) => {
                                     const isSelected = selectedStations.includes(station.id);
-                                    const isExpanded = expandedStationId === station.id;
+                                    const isExpanded = expandedStationIds.includes(station.id);
                                     const colorClass = stationColors[station.name] || 'bg-slate-500';
 
                                     return (
@@ -247,8 +247,10 @@ export default function CalendarPageClient() {
                                                 } else {
                                                     setSelectedStations([...selectedStations, station.id]);
                                                 }
-                                                // Toggle equipment bubble
-                                                setExpandedStationId(isExpanded ? null : station.id);
+                                                // Toggle equipment bubble for this station
+                                                setExpandedStationIds(isExpanded
+                                                    ? expandedStationIds.filter(id => id !== station.id)
+                                                    : [...expandedStationIds, station.id]);
                                             }}
                                             className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isSelected
                                                 ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
@@ -266,33 +268,38 @@ export default function CalendarPageClient() {
                         )}
                     </div>
 
-                    {/* Equipment bubble — shown below filter row when a station is expanded */}
-                    {viewMode === 'schedule' && expandedStationId !== null && (() => {
-                        const station = stations.find(s => s.id === expandedStationId);
-                        if (!station || !station.equipment) return null;
-                        const items = station.equipment.split(',').map(s => s.trim()).filter(Boolean);
-                        const colorClass = stationColors[station.name] || 'bg-slate-500';
-                        return (
-                            <div className="px-3 pb-3 pt-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-                                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                                        <span className={`w-2 h-2 rounded-full ${colorClass}`} />
-                                        {station.name} — Equipment
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {items.map((item, i) => (
-                                            <span
-                                                key={i}
-                                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-700 shadow-sm"
-                                            >
-                                                {item}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })()}
+                    {/* Equipment bubbles — shown below filter row for each expanded station */}
+                    {viewMode === 'schedule' && expandedStationIds.length > 0 && (
+                        <div className="px-3 pb-3 pt-1 space-y-2">
+                            {stations
+                                .filter(s => expandedStationIds.includes(s.id) && s.equipment)
+                                .map(station => {
+                                    const items = station.equipment!.split(',').map(s => s.trim()).filter(Boolean);
+                                    const colorClass = stationColors[station.name] || 'bg-slate-500';
+                                    return (
+                                        <div key={station.id} className="animate-in fade-in slide-in-from-top-1 duration-150">
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                                                    <span className={`w-2 h-2 rounded-full ${colorClass}`} />
+                                                    {station.name} — Equipment
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {items.map((item, i) => (
+                                                        <span
+                                                            key={i}
+                                                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white border border-slate-200 text-slate-700 shadow-sm"
+                                                        >
+                                                            {item}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }
+                        </div>
+                    )}
                 </div>
 
                 {/* Calendar */}

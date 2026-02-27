@@ -15,9 +15,13 @@ import { useEffect, useState } from "react";
 
 const profileSetupSchema = z.object({
     company_name: z.string().min(2, "Company Name is required"),
+    contact_name: z.string().min(1, "Contact Name is required"),
     phone: z.string().min(10, "Valid phone number is required"),
     kiosk_pin: z.string().length(4, "Kiosk PIN must be exactly 4 digits").regex(/^\d+$/, "PIN must contain only numbers"),
-    address: z.string().optional()
+    address: z.string().optional(),
+    business_type: z.string().optional(),
+    business_description: z.string().optional(),
+    notification_email: z.string().email("Invalid email").optional().or(z.literal('')),
 });
 
 export default function ProfileSetupPage() {
@@ -30,9 +34,13 @@ export default function ProfileSetupPage() {
         resolver: zodResolver(profileSetupSchema),
         defaultValues: {
             company_name: "",
+            contact_name: "",
             phone: "",
             kiosk_pin: "",
-            address: ""
+            address: "",
+            business_type: "",
+            business_description: "",
+            notification_email: ""
         }
     });
 
@@ -50,16 +58,20 @@ export default function ProfileSetupPage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('company_name, phone')
+                .select('company_name, contact_name, phone, business_type, business_description, notification_email')
                 .eq('id', user.id)
                 .single();
 
             if (profile) {
                 form.reset({
                     company_name: profile.company_name || "",
+                    contact_name: profile.contact_name || "",
                     phone: profile.phone || "",
                     kiosk_pin: "",
-                    address: ""
+                    address: "",
+                    business_type: profile.business_type || "",
+                    business_description: profile.business_description || "",
+                    notification_email: profile.notification_email || user.email || ""
                 });
             }
 
@@ -77,9 +89,13 @@ export default function ProfileSetupPage() {
             .from('profiles')
             .update({
                 company_name: values.company_name,
+                contact_name: values.contact_name,
                 phone: values.phone,
                 kiosk_pin_hash: pinHash,
                 address: values.address || null,
+                business_type: values.business_type || null,
+                business_description: values.business_description || null,
+                notification_email: values.notification_email || null,
             })
             .eq('id', userId);
 
@@ -116,30 +132,58 @@ export default function ProfileSetupPage() {
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField control={form.control} name="company_name" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Company Name</FormLabel>
-                                    <FormControl><Input placeholder="Culinary Creators LLC" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <FormField control={form.control} name="company_name" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Company Name *</FormLabel>
+                                        <FormControl><Input placeholder="Culinary Creators LLC" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
 
-                            <FormField control={form.control} name="phone" render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Phone Number</FormLabel>
-                                    <FormControl><Input placeholder="408-555-0123" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )} />
+                                <FormField control={form.control} name="contact_name" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Contact Name *</FormLabel>
+                                        <FormControl><Input placeholder="Primary contact person" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                            </div>
 
-                            <FormField control={form.control} name="kiosk_pin" render={({ field }) => (
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <FormField control={form.control} name="phone" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Phone Number *</FormLabel>
+                                        <FormControl><Input placeholder="(408) 555-0123" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+
+                                <FormField control={form.control} name="business_type" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Business Type</FormLabel>
+                                        <FormControl><Input placeholder="e.g., Bakery, Catering" {...field} /></FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+                            </div>
+
+                            <FormField control={form.control} name="business_description" render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Timesheet Kiosk PIN</FormLabel>
+                                    <FormLabel>Business Description <span className="text-slate-400 font-normal">(Optional)</span></FormLabel>
                                     <FormControl>
-                                        <Input placeholder="1234" maxLength={4} type="tel" {...field} />
+                                        <Textarea placeholder="Brief description of your business, specialties, or products..." className="resize-none" {...field} />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+
+                            <FormField control={form.control} name="notification_email" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Notification Email</FormLabel>
+                                    <FormControl><Input type="email" placeholder="notifications@yourbusiness.com" {...field} /></FormControl>
                                     <FormDescription>
-                                        We recommend using the last 4 digits of your phone number. You'll use this to clock in at the facility.
+                                        Booking confirmations and facility updates will be sent here.
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -154,6 +198,19 @@ export default function ProfileSetupPage() {
                                             {...field}
                                         />
                                     </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+
+                            <FormField control={form.control} name="kiosk_pin" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Timesheet Kiosk PIN *</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="1234" maxLength={4} type="tel" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                        We recommend using the last 4 digits of your phone number. You'll use this to clock in at the facility.
+                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )} />

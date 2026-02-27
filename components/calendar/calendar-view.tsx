@@ -103,14 +103,14 @@ export function BookingCalendar({
     }
 
     // Calculate popup position from the event element
+    // fixed positioning uses viewport coords, so no scrollY offset needed
     const rect = (clickInfo.el as HTMLElement).getBoundingClientRect()
-    const scrollY = window.scrollY || document.documentElement.scrollTop
 
     setPopup({
       booking,
       station,
       x: rect.left + rect.width / 2,
-      y: rect.bottom + scrollY + 8,
+      y: rect.bottom + 8,
     })
   }
 
@@ -230,6 +230,14 @@ function BookingPopup({
         </div>
 
         <div className="space-y-2 text-sm">
+          {/* Tenant */}
+          <div className="flex items-center gap-2 text-slate-600">
+            <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span className="font-medium">
+              {isOwn ? 'You' : (booking.profile?.company_name || 'Reserved')}
+            </span>
+          </div>
+
           {/* Date */}
           <div className="flex items-center gap-2 text-slate-600">
             <div className="w-4 flex justify-center">
@@ -247,27 +255,19 @@ function BookingPopup({
             </span>
           </div>
 
-          {/* Tenant */}
-          <div className="flex items-center gap-2 text-slate-600">
-            <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <span className="font-medium">
-              {isOwn ? 'You' : (booking.profile?.company_name || 'Reserved')}
-            </span>
-          </div>
+          {/* Notes */}
+          {booking.notes && (
+            <div className="flex items-start gap-2 text-slate-600">
+              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+              <span className="text-slate-500 italic">{booking.notes}</span>
+            </div>
+          )}
 
           {/* Equipment */}
           {station?.equipment && (
             <div className="flex items-start gap-2 text-slate-600">
               <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
               <span className="text-slate-500">{station.equipment}</span>
-            </div>
-          )}
-
-          {/* Notes */}
-          {booking.notes && (
-            <div className="flex items-start gap-2 text-slate-600">
-              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-              <span className="text-slate-500 italic">{booking.notes}</span>
             </div>
           )}
         </div>

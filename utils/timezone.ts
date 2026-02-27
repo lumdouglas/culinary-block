@@ -95,11 +95,18 @@ export function pstLocalToUTC(dateStr: string, timeStr: string): string {
  * Use as the `value` for <input type="date"> in PST-aware forms.
  */
 export function toDateInputPST(iso: string): string {
-    return formatPST(iso, { year: 'numeric', month: '2-digit', day: '2-digit' })
-        .split('/')
-        .reduce((acc, v, i) => i === 0 ? v : i === 1 ? `${acc}-${v}` : `${v}-${acc}`, '')
-        // Intl gives M/D/Y — rearrange to Y-M-D for input[type=date]
-        .replace(/^(\d+)-(\d+)-(\d+)$/, (_, m, d, y) => `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`)
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: TZ,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).formatToParts(new Date(iso));
+
+    const y = parts.find(p => p.type === 'year')?.value;
+    const m = parts.find(p => p.type === 'month')?.value;
+    const d = parts.find(p => p.type === 'day')?.value;
+
+    return `${y}-${m}-${d}`;
 }
 
 /**
