@@ -50,3 +50,53 @@ The Culinary Block Team
 
 _Culinary Block · 8,000 sq ft professional shared kitchen facility_
 _[culinaryblock.com](https://www.culinaryblock.com) · [Contact Us](/contact)_
+
+---
+
+## 2. New Timesheet System Announcement
+
+**Subject:** New Timesheet System Starting March 1
+
+---
+
+Hi [First Name],
+
+We're rolling out a new timesheet system starting March 1 to make tracking your kitchen hours faster and more accurate.
+
+### How it works
+
+A kiosk tablet will be mounted at the kitchen entrance. When you arrive and when you leave, you'll use it to clock in and out — no more manual logging.
+
+1. Select your name from the screen
+2. Enter your 4-digit PIN
+3. That's it — your session is recorded automatically
+
+### Setting up your PIN
+
+Before March 1, please log into your tenant portal and go to **Settings → Security** to set your kiosk PIN. You'll need this to use the kiosk, so make sure to do this before your first shift.
+
+### Viewing your hours
+
+You can see all your clock-in/out records anytime under the **Timesheets** tab in your portal. If you notice an error in a record, you can submit an edit request directly from that page and we'll review it promptly.
+
+### Your billing and invoices
+
+All your invoices are available under the **Billing** tab in your portal. You can view the status of each invoice, see a full line-item breakdown of your charges, and keep a record of your payment history — all in one place. If you ever have a question about a charge, reply to this email or use the contact form in your portal.
+
+### Reporting equipment issues
+
+If you notice a problem with any equipment while you're in — ovens, hoods, refrigeration, anything — please report it through the **Maintenance** tab. Submit a quick description of the issue and our team will be notified right away. You can track the status of any ticket you've submitted from the same page.
+
+### Questions?
+
+Reply to this email or use the contact form in your portal. We'll also have someone available at the kitchen on March 1 if you need help getting set up.
+
+Thanks for being part of Culinary Block — we think this will make things a lot smoother for everyone.
+
+[Your name]
+Culinary Block Management
+
+---
+
+_Culinary Block · 8,000 sq ft professional shared kitchen facility_
+_[culinaryblock.com](https://www.culinaryblock.com) · [Contact Us](/contact)_
