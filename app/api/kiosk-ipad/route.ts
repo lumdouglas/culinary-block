@@ -95,7 +95,8 @@ export async function GET(request: NextRequest) {
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, company_name')
-    .eq('role', 'tenant');
+    .eq('role', 'tenant')
+    .eq('is_active', true);
 
   const tenantButtons = (profiles || [])
     .map((p) => `<button class="tenant-btn" onclick="selectTenant('${p.id}', '${p.company_name.replace(/'/g, "\\'")}')">${p.company_name}</button>`)
