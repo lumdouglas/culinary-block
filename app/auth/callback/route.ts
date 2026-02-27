@@ -9,10 +9,19 @@ export async function GET(request: Request) {
     const type = requestUrl.searchParams.get('type') ?? 'invite';
     const next = requestUrl.searchParams.get('next') ?? '/settings';
 
-    // Build the redirect response first so we can set cookies ON it.
-    // cookies() from next/headers does not apply to a returned NextResponse.redirect().
-    const redirectTo = new URL(next, requestUrl.origin);
-    const redirectResponse = NextResponse.redirect(redirectTo);
+    // On some mobile browsers and in-app webviews, Set-Cookie headers are dropped
+    // if attached to a 30x redirect. To guarantee the session cookies are saved,
+    // we return a 200 OK HTML page that sets the cookies and performs a JS redirect.
+    const nextEscaped = next.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Authenticating...</title></head><body><script>window.location.replace("${nextEscaped}"+window.location.hash);</script><p>Authenticating, please wait...</p></body></html>`;
+
+    const successResponse = new NextResponse(html, {
+        status: 200,
+        headers: {
+            'Content-Type': 'text/html',
+        },
+    });
+
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -25,7 +34,7 @@ export async function GET(request: Request) {
                 },
                 setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
                     cookiesToSet.forEach(({ name, value, options }) =>
-                        redirectResponse.cookies.set(name, value, options as Record<string, unknown>)
+                        successResponse.cookies.set(name, value, options as Record<string, unknown>)
                     );
                 },
             },
@@ -38,7 +47,7 @@ export async function GET(request: Request) {
             console.error('Auth callback error (code exchange):', error.message);
             return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
         }
-        return redirectResponse;
+        return successResponse;
     } else if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
@@ -48,16 +57,9 @@ export async function GET(request: Request) {
             console.error('Auth callback error (OTP/Invite):', error.message);
             return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, requestUrl.origin));
         }
-        return redirectResponse;
-    } else {
-        // Implicit flow fallback
-        const nextEscaped = next.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting...</title></head><body><script>window.location.replace("${nextEscaped}"+window.location.hash);</script><p>Redirecting...</p></body></html>`;
-        return new NextResponse(html, {
-            status: 200,
-            headers: { 'Content-Type': 'text/html' },
-        });
+        return successResponse;
     }
 
-    return redirectResponse;
+    // Implicit flow fallback
+    return successResponse;
 }
