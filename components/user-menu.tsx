@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LogOut, Settings, Calendar, ClipboardList, Clock, Receipt, Wrench } from 'lucide-react'
+import { LogOut, Settings, Calendar, ClipboardList, Clock, Receipt, Wrench, Users, Monitor } from 'lucide-react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -170,6 +170,12 @@ export function UserMenu() {
                 {user.role === 'admin' && (
                     <>
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/admin/tenants" className="flex items-center">
+                                <Users className="mr-2 h-4 w-4 text-teal-600" />
+                                <span className="text-teal-900 font-medium">Active Tenants</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
                             <Link href="/admin/requests" className="flex items-center">
                                 <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
                                 <span className="text-teal-900 font-medium">Maintenance Requests</span>
@@ -191,6 +197,12 @@ export function UserMenu() {
                             <Link href="/admin/billing" className="flex items-center">
                                 <Receipt className="mr-2 h-4 w-4 text-teal-600" />
                                 <span className="text-teal-900 font-medium">Billing</span>
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer py-2">
+                            <Link href="/kiosk" className="flex items-center">
+                                <Monitor className="mr-2 h-4 w-4 text-teal-600" />
+                                <span className="text-teal-900 font-medium">Kiosk Setup</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
