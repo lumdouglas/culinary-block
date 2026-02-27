@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Application } from "@/types/database";
-import { getApplications, approveApplication, rejectApplication } from "@/app/actions/admin";
+import { getApplications, approveApplication, rejectApplication, resendInvite } from "@/app/actions/admin";
 import { ApplicationDetails } from "@/components/application-details";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Send } from "lucide-react";
 
 export default function AdminApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -48,6 +48,17 @@ export default function AdminApplicationsPage() {
       toast.success("Application approved! Invitation email sent.");
       loadApplications();
       setSelectedApplication(null);
+    }
+    setActionLoading(false);
+  };
+
+  const handleResendInvite = async (id: string) => {
+    setActionLoading(true);
+    const result = await resendInvite(id);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Invitation resent successfully.");
     }
     setActionLoading(false);
   };
@@ -191,6 +202,18 @@ export default function AdminApplicationsPage() {
                           Reject
                         </Button>
                       </>
+                    )}
+                    {app.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleResendInvite(app.id)}
+                        disabled={actionLoading}
+                        data-testid="resend-invite-btn"
+                      >
+                        <Send className="w-4 h-4 mr-1" />
+                        Resend Invite
+                      </Button>
                     )}
                   </div>
                 </div>

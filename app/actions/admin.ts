@@ -76,6 +76,48 @@ export async function approveApplication(applicationId: string) {
     return { success: true };
 }
 
+export async function resendInvite(applicationId: string) {
+    const supabase = await createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: "Not authenticated" };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (profile?.role !== 'admin') return { error: "Not authorized" };
+
+    const { data: application, error: fetchError } = await supabase
+        .from('applications')
+        .select('*')
+        .eq('id', applicationId)
+        .eq('status', 'approved')
+        .single();
+
+    if (fetchError || !application) return { error: "Approved application not found" };
+
+    const adminSupabase = createAdminClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const { error: inviteError } = await adminSupabase.auth.admin.inviteUserByEmail(
+        application.email,
+        {
+            data: {
+                company_name: application.company_name,
+                phone: application.phone,
+            },
+            redirectTo: `${siteUrl || 'https://www.culinaryblock.com'}/auth/callback?next=/account-setup`,
+        }
+    );
+
+    if (inviteError) return { error: `Failed to resend invitation: ${inviteError.message}` };
+
+    revalidatePath('/admin/applications');
+    return { success: true };
+}
+
 export async function rejectApplication(applicationId: string, reason?: string) {
     const supabase = await createClient();
 

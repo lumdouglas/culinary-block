@@ -161,7 +161,13 @@ export default function AccountSetupPage() {
                 <div className="w-full max-w-md rounded-xl border bg-white p-8 shadow-sm text-center space-y-4">
                     <h2 className="text-xl font-bold text-red-600">Invite Link Error</h2>
                     <p className="text-slate-600 text-sm">{authError}</p>
-                    <Button variant="outline" onClick={() => router.push('/login')}>Go to Login</Button>
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left text-sm text-amber-800">
+                        <p className="font-semibold mb-1">On a phone or tablet?</p>
+                        <p>Some email apps (like Gmail on Android) automatically preview links, which can use up the single-use invite token before you tap it. Ask your administrator to resend your invite and open the new link directly in Chrome or Safari.</p>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <Button variant="outline" onClick={() => router.push('/login')}>Already have a password? Log in</Button>
+                    </div>
                 </div>
             </div>
         )
