@@ -140,9 +140,7 @@ export async function GET(request: NextRequest) {
       -webkit-box-align: center;
       -webkit-align-items: center;
       align-items: center;
-      -webkit-box-pack: center;
-      -webkit-justify-content: center;
-      justify-content: center;
+      padding-top: 60px;
     }
 
     /* ─── SCREEN 1: Tenant Select ─── */
@@ -165,6 +163,16 @@ export async function GET(request: NextRequest) {
       color: #1e293b;
       margin: 40px 0 24px;
       text-align: center;
+      flex-shrink: 0;
+    }
+    .tenant-grid-container {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 40px;
     }
     .tenant-grid {
       display: -webkit-box;
@@ -178,6 +186,7 @@ export async function GET(request: NextRequest) {
       -webkit-justify-content: center;
       justify-content: center;
       margin: -10px;
+      align-content: flex-start;
     }
     .tenant-btn {
       -webkit-box-flex: 0;
@@ -447,13 +456,15 @@ export async function GET(request: NextRequest) {
 
   <!-- SCREEN 1: Tenant Selection -->
   <div id="screen-select" class="screen active">
-    <div style="text-align:center">
+    <div style="text-align:center; flex-shrink: 0;">
       <div class="brand-title">CULINARY BLOCK</div>
       <div class="brand-subtitle">Timesheet Kiosk</div>
     </div>
     <h2 class="section-title">Select Your Company</h2>
-    <div class="tenant-grid">
-      ${tenantButtons || '<div class="empty-state">No active tenants found.</div>'}
+    <div class="tenant-grid-container">
+      <div class="tenant-grid">
+        ${tenantButtons || '<div class="empty-state">No active tenants found.</div>'}
+      </div>
     </div>
   </div>
 
