@@ -1,6 +1,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
+import { appendTimesheetLog } from '@/utils/timesheet-log';
 
 export async function PATCH(
     req: Request,
@@ -99,6 +100,29 @@ export async function PATCH(
 
         if (updateReqError) {
             return NextResponse.json({ error: updateReqError.message }, { status: 500 });
+        }
+
+        if (status === 'approved') {
+          appendTimesheetLog({
+            op: 'request_approved',
+            requestId: id,
+            type: request.type,
+            timesheetId: request.timesheet_id,
+            userId: request.user_id,
+            adminId: user.id,
+            clockIn: request.clock_in,
+            clockOut: request.clock_out,
+          });
+        } else {
+          appendTimesheetLog({
+            op: 'request_rejected',
+            requestId: id,
+            type: request.type,
+            timesheetId: request.timesheet_id,
+            userId: request.user_id,
+            adminId: user.id,
+            notes: resolutionNotes,
+          });
         }
 
         return NextResponse.json({ success: true });

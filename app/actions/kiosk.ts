@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { appendTimesheetLog } from '@/utils/timesheet-log';
 
 export async function getActiveSession(userId: string) {
   const supabase = await createClient();
@@ -50,6 +51,7 @@ export async function clockIn(userId: string, pin: string) {
 
   if (error) return { error: "Database error. Could not clock in." };
 
+  appendTimesheetLog({ op: 'clock_in', timesheetId: data.id, userId, clockIn: data.clock_in });
   revalidatePath('/kiosk');
   return { data };
 }
@@ -63,6 +65,7 @@ export async function clockOut(sessionId: string) {
 
   if (error) return { error: "Could not clock out." };
 
+  appendTimesheetLog({ op: 'clock_out', timesheetId: sessionId, userId: 'via-server-action', clockOut: new Date().toISOString() });
   revalidatePath('/kiosk');
   return { success: true };
 }
@@ -86,6 +89,13 @@ export async function updateTimesheet(sessionId: string, newClockIn: string, new
 
   if (error) return { error: "Failed to update timesheet." };
 
+  appendTimesheetLog({
+    op: 'timesheet_edit',
+    timesheetId: sessionId,
+    userId: 'via-server-action',
+    clockIn: updateData.clock_in,
+    clockOut: updateData.clock_out ?? null,
+  });
   revalidatePath('/timesheets');
   revalidatePath('/admin/timesheets');
   return { success: true };

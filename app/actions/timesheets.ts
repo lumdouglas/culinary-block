@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { appendTimesheetLog } from "@/utils/timesheet-log";
 
 export async function verifyTimesheets(timesheetIds: string[]) {
     const supabase = await createClient();
@@ -37,6 +38,7 @@ export async function verifyTimesheets(timesheetIds: string[]) {
         return { error: "Failed to verify timesheets" };
     }
 
+    appendTimesheetLog({ op: 'timesheets_verified', timesheetIds, adminId: user.id });
     revalidatePath('/admin/timesheets');
     revalidatePath('/timesheets');
     revalidatePath('/billing');

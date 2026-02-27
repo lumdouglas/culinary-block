@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/utils/supabase/admin';
 import { NextResponse } from 'next/server';
 import { compare } from 'bcrypt-ts';
+import { appendTimesheetLog } from '@/utils/timesheet-log';
 
 export async function POST(req: Request) {
   try {
@@ -62,6 +63,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    appendTimesheetLog({ op: 'clock_out', timesheetId: sessionId, userId, clockOut: new Date().toISOString() });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Clock-out exception:', err);

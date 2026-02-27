@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# timesheet audit log (sensitive, keep on server only)
+/logs/

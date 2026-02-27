@@ -1,11 +1,18 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
-import { format, startOfDay, parseISO } from "date-fns"
 import { Calendar, Clock, MapPin } from "lucide-react"
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button"
 import { EditBookingButton } from "@/components/bookings/edit-booking-button"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import {
+    formatTimePST,
+    formatMonthAbbrevPST,
+    formatDayPST,
+    formatWeekdayAbbrevPST,
+    monthGroupKeyPST,
+    durationLabel,
+} from "@/utils/timezone"
 
 export default async function MyBookingsPage() {
     const supabase = await createClient()
@@ -15,7 +22,7 @@ export default async function MyBookingsPage() {
         redirect("/login")
     }
 
-    const now = startOfDay(new Date()).toISOString()
+    const now = new Date().toISOString()
 
     // Fetch bookings and stations in parallel
     const [{ data: bookings, error }, { data: stationsRaw }] = await Promise.all([
@@ -44,10 +51,10 @@ export default async function MyBookingsPage() {
         console.error("Error fetching bookings:", error)
     }
 
-    // Group bookings by "Month Year"
+    // Group bookings by "Month Year" in PST
     const grouped: Record<string, typeof bookings> = {}
     for (const booking of bookings ?? []) {
-        const key = format(parseISO(booking.start_time), "MMMM yyyy")
+        const key = monthGroupKeyPST(booking.start_time)
         if (!grouped[key]) grouped[key] = []
         grouped[key]!.push(booking)
     }
@@ -101,33 +108,24 @@ export default async function MyBookingsPage() {
                             {/* Booking cards */}
                             <div className="space-y-3">
                                 {grouped[month]!.map((booking) => {
-                                    const start = parseISO(booking.start_time)
-                                    const end = parseISO(booking.end_time)
-                                    const durationMins = Math.round((end.getTime() - start.getTime()) / 60000)
-                                    const hrs = Math.floor(durationMins / 60)
-                                    const mins = durationMins % 60
-                                    const durationLabel = hrs > 0
-                                        ? mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`
-                                        : `${mins}m`
-
-                                    // @ts-ignore
-                                    const station = booking.station as { id: number; name: string; category: string } | null
+                                    const duration = durationLabel(booking.start_time, booking.end_time)
+                                    const station = booking.station as unknown as { id: number; name: string; category: string } | null
 
                                     return (
                                         <div
                                             key={booking.id}
                                             className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4"
                                         >
-                                            {/* Date badge */}
+                                            {/* Date badge — formatted in PST */}
                                             <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-xl bg-teal-50 border border-teal-100 text-teal-700">
                                                 <span className="text-xs font-semibold uppercase tracking-wide leading-none">
-                                                    {format(start, "MMM")}
+                                                    {formatMonthAbbrevPST(booking.start_time)}
                                                 </span>
                                                 <span className="text-2xl font-bold leading-tight">
-                                                    {format(start, "d")}
+                                                    {formatDayPST(booking.start_time)}
                                                 </span>
                                                 <span className="text-xs font-medium leading-none">
-                                                    {format(start, "EEE")}
+                                                    {formatWeekdayAbbrevPST(booking.start_time)}
                                                 </span>
                                             </div>
 
@@ -139,8 +137,8 @@ export default async function MyBookingsPage() {
                                                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
                                                     <span className="flex items-center gap-1 text-sm text-slate-500">
                                                         <Clock className="w-3.5 h-3.5" />
-                                                        {format(start, "h:mm a")} – {format(end, "h:mm a")}
-                                                        <span className="text-slate-400 ml-1">({durationLabel})</span>
+                                                        {formatTimePST(booking.start_time)} – {formatTimePST(booking.end_time)}
+                                                        <span className="text-slate-400 ml-1">({duration})</span>
                                                     </span>
                                                     {station?.category && (
                                                         <span className="flex items-center gap-1 text-sm text-slate-500">

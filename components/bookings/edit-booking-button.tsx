@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Pencil, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toDateInputPST, toTimeInputPST } from "@/utils/timezone"
 
 const durationOptions = [
     { label: "30 minutes", value: 0.5 },
@@ -66,22 +67,16 @@ interface EditBookingButtonProps {
     stations: Station[]
 }
 
-function toLocalDateStr(iso: string) {
-    // Returns "yyyy-MM-dd" in local time so the date input pre-fills correctly
-    const d = new Date(iso)
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-}
-
-const todayStr = (() => toLocalDateStr(new Date().toISOString()))()
+// todayStr and maxDateStr are module-level constants (safe — static dates)
+const todayStr = toDateInputPST(new Date().toISOString())
 const maxDateStr = (() => {
     const d = new Date()
     d.setMonth(d.getMonth() + 6)
-    return toLocalDateStr(d.toISOString())
+    return toDateInputPST(d.toISOString())
 })()
 
 function toLocalTimeStr(iso: string) {
-    const d = new Date(iso)
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+    return toTimeInputPST(iso)
 }
 
 function calcDuration(startIso: string, endIso: string): string {
@@ -110,7 +105,7 @@ export function EditBookingButton({
         resolver: zodResolver(editSchema),
         defaultValues: {
             station_id: currentStationId.toString(),
-            date: toLocalDateStr(currentStartTime),
+            date: toDateInputPST(currentStartTime),
             start_time: toLocalTimeStr(currentStartTime),
             duration: calcDuration(currentStartTime, currentEndTime),
             notes: currentNotes ?? "",
@@ -122,7 +117,7 @@ export function EditBookingButton({
         if (next) {
             form.reset({
                 station_id: currentStationId.toString(),
-                date: toLocalDateStr(currentStartTime),
+                date: toDateInputPST(currentStartTime),
                 start_time: toLocalTimeStr(currentStartTime),
                 duration: calcDuration(currentStartTime, currentEndTime),
                 notes: currentNotes ?? "",

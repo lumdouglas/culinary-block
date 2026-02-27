@@ -7,7 +7,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { Station, Booking } from '@/app/actions/bookings'
-import { format, parseISO } from 'date-fns'
+import { formatTimePST, formatLongDatePST, formatDayPST, durationLabel } from '@/utils/timezone'
 import { X, Clock, MapPin, User, FileText } from 'lucide-react'
 
 // Station color mapping
@@ -197,12 +197,7 @@ function BookingPopup({
 }) {
   const { booking, station, x, y } = popup
   const isOwn = currentUserId && booking.user_id === currentUserId
-  const start = parseISO(booking.start_time)
-  const end = parseISO(booking.end_time)
-  const durationMins = Math.round((end.getTime() - start.getTime()) / 60000)
-  const hrs = Math.floor(durationMins / 60)
-  const mins = durationMins % 60
-  const duration = hrs > 0 ? (mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`) : `${mins}m`
+  const duration = durationLabel(booking.start_time, booking.end_time)
   const color = stationColors[station?.name || ''] || '#6b7280'
 
   // Clamp horizontally so popup stays within viewport
@@ -238,16 +233,16 @@ function BookingPopup({
           {/* Date */}
           <div className="flex items-center gap-2 text-slate-600">
             <div className="w-4 flex justify-center">
-              <span className="text-xs font-bold text-slate-400">{format(start, 'd')}</span>
+              <span className="text-xs font-bold text-slate-400">{formatDayPST(booking.start_time)}</span>
             </div>
-            <span>{format(start, 'EEEE, MMMM d, yyyy')}</span>
+            <span>{formatLongDatePST(booking.start_time)}</span>
           </div>
 
           {/* Time */}
           <div className="flex items-center gap-2 text-slate-600">
             <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
             <span>
-              {format(start, 'h:mm a')} – {format(end, 'h:mm a')}
+              {formatTimePST(booking.start_time)} – {formatTimePST(booking.end_time)}
               <span className="text-slate-400 ml-1">({duration})</span>
             </span>
           </div>
