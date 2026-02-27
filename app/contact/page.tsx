@@ -16,8 +16,8 @@ export default async function ContactPage() {
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold text-slate-900 mb-4">Contact Us</h1>
                     <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                        Have a maintenance issue or need to report a rule violation?
-                        Submit a request below and we'll get back to you as soon as possible.
+                        Have a maintenance issue, a rule violation to report, or just a general question or recommendation?
+                        Submit a message below and we&apos;ll get back to you as soon as possible.
                     </p>
                 </div>
 

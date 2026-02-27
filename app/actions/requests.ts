@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
-export type RequestType = 'maintenance' | 'rule_violation'
+export type RequestType = 'maintenance' | 'rule_violation' | 'general_question'
 export type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'approved' | 'rejected' | 'open' | 'closed'
 export type RequestPriority = 'low' | 'medium' | 'high' | 'critical'
 export type RequestSource = 'requests' | 'maintenance_tickets'

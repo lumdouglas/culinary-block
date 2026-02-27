@@ -52,8 +52,8 @@ export default function CalendarPageClient() {
         }
     }
 
-    const loadData = async (startIso?: string, endIso?: string) => {
-        setLoading(true)
+    const loadData = async (startIso?: string, endIso?: string, showSpinner = true) => {
+        if (showSpinner) setLoading(true)
         try {
             // Use the provided range, or fall back to the initial 2-week window
             const range = (startIso && endIso)
@@ -83,12 +83,14 @@ export default function CalendarPageClient() {
         } catch {
             toast.error('Failed to load calendar data')
         } finally {
-            setLoading(false)
+            if (showSpinner) setLoading(false)
         }
     }
 
+    // Called by FullCalendar whenever the visible date range changes.
+    // showSpinner=false keeps FullCalendar mounted so datesSet doesn't re-fire (infinite loop).
     const handleDatesSet = (start: string, end: string) => {
-        loadData(start, end)
+        loadData(start, end, false)
     }
 
     useEffect(() => {
