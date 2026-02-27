@@ -2,6 +2,12 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+    // Intercept Supabase Auth PKCE codes from invite links that land on the homepage
+    if (request.nextUrl.pathname === '/' && request.nextUrl.searchParams.has('code')) {
+        const code = request.nextUrl.searchParams.get('code');
+        return NextResponse.redirect(new URL(`/auth/callback?code=${code}&next=/account-setup`, request.url));
+    }
+
     let response = NextResponse.next({
         request: {
             headers: request.headers,

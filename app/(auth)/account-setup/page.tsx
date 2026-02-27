@@ -31,13 +31,10 @@ export default function AccountSetupPage() {
 
     useEffect(() => {
         let subscription: { unsubscribe: () => void } | null = null;
-
         let timeoutId: NodeJS.Timeout;
 
         async function init() {
-            // Manually capture implicit tokens from URL hash FIRST.
-            // This ensures that hitting a fresh invite link overwrites any orphaned or 
-            // "zombie" sessions stuck in local storage from previous tests.
+            // 1. Manually capture implicit tokens from URL hash (legacy magic links/invites fallback)
             const hash = typeof window !== 'undefined' ? window.location.hash : '';
             if (hash && hash.includes('access_token=')) {
                 // Immediately remove hash to prevent infinite loops if component remounts
@@ -49,56 +46,54 @@ export default function AccountSetupPage() {
                 const refresh_token = params.get('refresh_token');
 
                 if (access_token && refresh_token) {
-                    // Sign out of any local session first just to be completely sure
                     await supabase.auth.signOut({ scope: 'local' }).catch(() => { });
-
                     const { error } = await supabase.auth.setSession({ access_token, refresh_token });
                     if (error) {
                         setAuthError(error.message);
-                        setCheckingAuth(false);
-                    } else {
-                        setCheckingAuth(false);
                     }
-                    return; // Skip standard listener
+                    setCheckingAuth(false);
+                    return;
                 }
             }
 
-            // If no token hash was present, gracefully check for an existing active session
-            const { data: { session } } = await supabase.auth.getSession();
+            // 2. Main check: We should ALREADY have a session if they came through /auth/callback
+            // We use getSession() directly as the source of truth, which is more reliable
+            // on mobile browsers than waiting for the onAuthStateChange listener to fire.
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
             if (session) {
-                // If they are already signed in correctly, show the password form
                 setCheckingAuth(false);
                 return;
             }
 
-            // If no immediate session, wait for the auth listener to pick up
+            // 3. Fallback: If no session immediately, listen for it just in case it's delayed
             const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-                if (event === 'INITIAL_SESSION') {
+                if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
                     if (currentSession) {
-                        setCheckingAuth(false);
-                    } else {
-                        // Check again after a delay, avoiding stale closure variables
-                        timeoutId = setTimeout(async () => {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            if (!session) {
-                                setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
-                            }
-                            setCheckingAuth(false);
-                        }, 2500);
-                    }
-                } else if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
-                    if (currentSession) {
+                        if (timeoutId) clearTimeout(timeoutId);
                         setCheckingAuth(false);
                     }
                 }
             });
             subscription = data.subscription;
+
+            // 4. Timeout: If nothing happens after 2.5 seconds, show error
+            timeoutId = setTimeout(async () => {
+                // Double check one last time before giving up
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    setCheckingAuth(false);
+                } else {
+                    setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
+                    setCheckingAuth(false);
+                }
+            }, 2500);
         }
 
         init();
 
         return () => {
+            if (timeoutId) clearTimeout(timeoutId);
             if (subscription) subscription.unsubscribe();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
