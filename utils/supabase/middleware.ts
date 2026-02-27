@@ -49,18 +49,16 @@ export async function updateSession(request: NextRequest) {
             return NextResponse.redirect(new URL('/login', request.url))
         }
 
-        // Optional: Check for admin role if needed, but basic auth first
-        /*
+        // Check for admin role
         const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-          
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+
         if (profile?.role !== 'admin') {
-          return NextResponse.redirect(new URL('/', request.url))
+            return NextResponse.redirect(new URL('/', request.url))
         }
-        */
     }
 
     return response

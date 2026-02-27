@@ -1,3 +1,5 @@
+import { ChatAssistant } from "@/components/shared/chat-assistant";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -8,6 +10,7 @@ export default function DashboardLayout({
       <main className="flex-1 w-full mx-auto p-4 sm:p-8">
         {children}
       </main>
+      <ChatAssistant />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { appendTimesheetLog } from '@/utils/timesheet-log';
 
 export async function POST(req: Request) {
   try {
-    const { userId, pin } = await req.json();
+    const { userId, pin, companyName } = await req.json();
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    appendTimesheetLog({ op: 'clock_in', timesheetId: data.id, userId, clockIn: data.clock_in });
+    appendTimesheetLog({ op: 'clock_in', timesheetId: data.id, userId, companyName, clockIn: data.clock_in });
     return NextResponse.json(data);
   } catch (err) {
     console.error('Clock-in exception:', err);

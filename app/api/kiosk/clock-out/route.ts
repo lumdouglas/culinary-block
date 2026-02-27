@@ -5,7 +5,7 @@ import { appendTimesheetLog } from '@/utils/timesheet-log';
 
 export async function POST(req: Request) {
   try {
-    const { sessionId, userId, pin } = await req.json();
+    const { sessionId, userId, pin, companyName } = await req.json();
 
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    appendTimesheetLog({ op: 'clock_out', timesheetId: sessionId, userId, clockOut: new Date().toISOString() });
+    appendTimesheetLog({ op: 'clock_out', timesheetId: sessionId, userId, companyName, clockOut: new Date().toISOString() });
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Clock-out exception:', err);

@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import { Play, Square, Timer, Loader2, CheckCircle, Clock } from "lucide-react";
 
 // Local API wrappers
-async function clockIn(userId: string, pin: string) {
+async function clockIn(userId: string, pin: string, companyName: string) {
   try {
     const res = await fetch("/api/kiosk/clock-in", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, pin }),
+      body: JSON.stringify({ userId, pin, companyName }),
     });
     const payload = await res.json();
     if (!res.ok) return { error: payload?.error || "Failed to clock in" };
@@ -22,12 +22,12 @@ async function clockIn(userId: string, pin: string) {
   }
 }
 
-async function clockOut(sessionId: string, userId: string, pin: string) {
+async function clockOut(sessionId: string, userId: string, pin: string, companyName: string) {
   try {
     const res = await fetch("/api/kiosk/clock-out", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId, userId, pin }),
+      body: JSON.stringify({ sessionId, userId, pin, companyName }),
     });
     const payload = await res.json();
     if (!res.ok) return { error: payload?.error || "Failed to clock out" };
@@ -137,7 +137,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     }
 
     setIsProcessing(true);
-    const result = await clockIn(userId, pin);
+    const result = await clockIn(userId, pin, companyName);
     if (result.error) {
       toast.error("Wrong PIN", { description: "Please try again" });
       triggerErrorAnimation();
@@ -161,7 +161,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     if (!activeSession) return;
 
     setIsProcessing(true);
-    const result = await clockOut(String(activeSession.id), userId, pin);
+    const result = await clockOut(String(activeSession.id), userId, pin, companyName);
     if (result.error) {
       toast.error("Wrong PIN", { description: "Please try again" });
       triggerErrorAnimation();
