@@ -37,7 +37,6 @@ export default function AccountSetupPage() {
             // 1. Manually capture implicit tokens from URL hash (legacy magic links/invites fallback)
             const hash = typeof window !== 'undefined' ? window.location.hash : '';
             if (hash && hash.includes('access_token=')) {
-                // Immediately remove hash to prevent infinite loops if component remounts
                 const cleanUrl = typeof window !== 'undefined' ? window.location.href.split('#')[0] : '';
                 if (typeof window !== 'undefined') window.history.replaceState(null, '', cleanUrl);
 
@@ -56,38 +55,25 @@ export default function AccountSetupPage() {
                 }
             }
 
-            // 2. Main check: We should ALREADY have a session if they came through /auth/callback
-            // We use getSession() directly as the source of truth, which is more reliable
-            // on mobile browsers than waiting for the onAuthStateChange listener to fire.
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-            if (session) {
-                setCheckingAuth(false);
-                return;
-            }
-
-            // 3. Fallback: If no session immediately, listen for it just in case it's delayed
-            const { data } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-                if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
-                    if (currentSession) {
-                        if (timeoutId) clearTimeout(timeoutId);
-                        setCheckingAuth(false);
-                    }
-                }
-            });
-            subscription = data.subscription;
-
-            // 4. Timeout: If nothing happens after 2.5 seconds, show error
-            timeoutId = setTimeout(async () => {
-                // Double check one last time before giving up
+            // 2. Poll getSession() with retries — mobile browsers sometimes need a moment
+            // for the session cookie to become readable after being set by /auth/callback.
+            const MAX_RETRIES = 8;
+            const RETRY_DELAY_MS = 300;
+            for (let i = 0; i < MAX_RETRIES; i++) {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     setCheckingAuth(false);
-                } else {
-                    setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
-                    setCheckingAuth(false);
+                    return;
                 }
-            }, 2500);
+                // Wait before next retry (skip wait on last iteration)
+                if (i < MAX_RETRIES - 1) {
+                    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+                }
+            }
+
+            // 3. Still no session after retries — show error
+            setAuthError("Your invite link has expired or is invalid. Please contact your administrator.");
+            setCheckingAuth(false);
         }
 
         init();
