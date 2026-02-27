@@ -2,8 +2,6 @@ import { createClient } from '@/utils/supabase/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 
 // Local algorithm to handle your specific 50/40/30 pricing tiers
 function calculateTieredCost(totalHours: number): number {
@@ -30,6 +28,19 @@ function calculateTieredCost(totalHours: number): number {
   return cost;
 }
 
+function StatusBadge({ status }: { status: string }) {
+  if (status === 'in_progress') {
+    return <Badge variant="outline" className="border-blue-400 text-blue-700 bg-blue-50">In Progress</Badge>;
+  }
+  if (status === 'pending') {
+    return <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>;
+  }
+  if (status === 'invoiced') {
+    return <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Invoiced</Badge>;
+  }
+  return <Badge variant="outline">{status}</Badge>;
+}
+
 export default async function BillingPage() {
   const supabase = await createClient();
 
@@ -45,6 +56,7 @@ export default async function BillingPage() {
       clock_in,
       clock_out,
       duration_minutes,
+      status,
       kitchens(name)
     `)
     .eq('user_id', user.id)
@@ -53,7 +65,6 @@ export default async function BillingPage() {
   const records = timesheets || [];
 
   // Calculate cumulative stats for the current month (PST)
-  // We identify "current month" relative to PST
   const nowPST = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
   const currentMonthKey = new Date(nowPST).toISOString().slice(0, 7); // YYYY-MM
 
@@ -69,16 +80,13 @@ export default async function BillingPage() {
   const history = records.reduce((acc: any, record: any) => {
     if (!record.clock_in) return acc;
 
-    // Convert to PST string then parse back to get correct bucket
     const pstDate = getPSTDate(record.clock_in);
-
-    // Key format: YYYY-MM
     const key = `${pstDate.getFullYear()}-${String(pstDate.getMonth() + 1).padStart(2, '0')}`;
 
     if (!acc[key]) {
       acc[key] = {
         month: key,
-        date: pstDate, // Keep a date object for formatting
+        date: pstDate,
         totalMinutes: 0,
         recordCount: 0
       };
@@ -87,7 +95,6 @@ export default async function BillingPage() {
     if (record.duration_minutes) {
       acc[key].totalMinutes += record.duration_minutes;
 
-      // Add to current month total if keys match
       if (key === currentMonthKey) {
         totalMinutes += record.duration_minutes;
       }
@@ -102,16 +109,22 @@ export default async function BillingPage() {
 
   const historyList = Object.values(history || {}).sort((a: any, b: any) => b.month.localeCompare(a.month));
 
+  // Fetch billing period statuses for this tenant
+  const { data: billingPeriods } = await supabase
+    .from('billing_periods')
+    .select('period_month, status')
+    .eq('tenant_id', user.id);
+
+  const billingStatusMap: Record<string, string> = {};
+  (billingPeriods || []).forEach((bp: any) => {
+    billingStatusMap[bp.period_month] = bp.status;
+  });
+
   return (
     <div className="p-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing & Usage</h1>
-          <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
-        </div>
-        <Link href="/billing/invoices">
-          <Button variant="outline">View Invoices</Button>
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Billing &amp; Usage</h1>
+        <p className="text-slate-500">Your rates adjust automatically as you use more hours.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -159,6 +172,13 @@ export default async function BillingPage() {
                 const monthName = period.date.toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'long', year: 'numeric' });
                 const isCurrentMonth = period.month === currentMonthKey;
 
+                // Determine status: check billing_periods table first,
+                // then fall back to defaults based on whether month is current or past.
+                let status = billingStatusMap[period.month];
+                if (!status) {
+                  status = isCurrentMonth ? 'in_progress' : 'pending';
+                }
+
                 return (
                   <TableRow key={period.month} className="border-b border-slate-200">
                     <TableCell className="font-medium text-slate-900">{monthName}</TableCell>
@@ -166,9 +186,7 @@ export default async function BillingPage() {
                     <TableCell className="text-slate-900">{period.recordCount}</TableCell>
                     <TableCell className="text-slate-900">${cost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell>
-                      <Badge variant={isCurrentMonth ? "outline" : "default"}>
-                        {isCurrentMonth ? "In Progress" : "Invoiced"}
-                      </Badge>
+                      <StatusBadge status={status} />
                     </TableCell>
                   </TableRow>
                 );
@@ -181,6 +199,9 @@ export default async function BillingPage() {
             </TableBody>
           </Table>
         </div>
+        <p className="text-xs text-slate-500 mt-2">
+          Invoices are sent via QuickBooks at the end of each billing period.
+        </p>
       </div>
 
       {/* Usage Table */}
@@ -199,10 +220,8 @@ export default async function BillingPage() {
             </TableHeader>
             <TableBody>
               {records?.slice(0, 50).map((record: any) => {
-                // Determine PST Date
                 const datePST = new Date(record.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles" });
 
-                // Format Time Range in PST
                 const startPST = new Date(record.clock_in).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute: '2-digit' });
                 const endPST = record.clock_out
                   ? new Date(record.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: '2-digit', minute: '2-digit' })
@@ -219,9 +238,13 @@ export default async function BillingPage() {
                         : "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={record.clock_out ? "default" : "secondary"}>
-                        {record.clock_out ? "Verified" : "In Progress"}
-                      </Badge>
+                      {!record.clock_out ? (
+                        <Badge variant="default">In Progress</Badge>
+                      ) : record.status === 'pending' ? (
+                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>
+                      ) : (
+                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Verified</Badge>
+                      )}
                     </TableCell>
                   </TableRow>
                 );

@@ -188,9 +188,9 @@ export function UserMenu() {
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild className="cursor-pointer py-2">
-                            <Link href="/billing/invoices" className="flex items-center">
-                                <ClipboardList className="mr-2 h-4 w-4 text-teal-600" />
-                                <span className="text-teal-900 font-medium">All Invoices</span>
+                            <Link href="/admin/billing" className="flex items-center">
+                                <Receipt className="mr-2 h-4 w-4 text-teal-600" />
+                                <span className="text-teal-900 font-medium">Billing</span>
                             </Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />

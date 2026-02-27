@@ -16,7 +16,7 @@ export default async function AdminRequestsPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Tenant Requests</h1>
                         <p className="text-slate-500">
-                            Manage rule violation and timesheet requests
+                            Manage maintenance and rule violation requests from tenants
                         </p>
                     </div>
                 </div>

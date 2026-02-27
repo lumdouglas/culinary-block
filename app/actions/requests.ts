@@ -5,20 +5,22 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export type RequestType = 'maintenance' | 'rule_violation'
-export type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'approved' | 'rejected'
-export type RequestPriority = 'low' | 'medium' | 'high'
+export type RequestStatus = 'pending' | 'in_progress' | 'resolved' | 'approved' | 'rejected' | 'open' | 'closed'
+export type RequestPriority = 'low' | 'medium' | 'high' | 'critical'
+export type RequestSource = 'requests' | 'maintenance_tickets'
 
 export interface Request {
     id: string
     user_id: string
     type: RequestType
+    title?: string
     description: string
     photo_url: string | null
     status: RequestStatus
     priority: RequestPriority
     created_at: string
     updated_at: string
-    source: 'requests'
+    source: RequestSource
     profiles?: {
         company_name: string
         email: string
@@ -88,7 +90,7 @@ export async function createRequest(formData: FormData): Promise<{ success?: boo
     return { success: true }
 }
 
-// Get all requests (admin only)
+// Get all requests (admin only) — merges maintenance_tickets + requests tables
 export async function getRequests(filters?: {
     type?: RequestType
     status?: RequestStatus
@@ -117,7 +119,7 @@ export async function getRequests(filters?: {
     // 3. Proceed with Admin Client (Service Role)
     const adminClient = createAdminClient()
 
-    // Fetch Standard Requests
+    // --- Fetch from `requests` table (rule violations) ---
     let requestsQuery = adminClient
         .from('requests')
         .select(`
@@ -129,34 +131,69 @@ export async function getRequests(filters?: {
     `)
         .order('created_at', { ascending: false })
 
-    if (filters?.type) {
+    if (filters?.type && filters.type !== 'maintenance') {
         requestsQuery = requestsQuery.eq('type', filters.type)
     }
     if (filters?.status) {
-        // Map approved/rejected to resolved/in_progress if needed? 
-        // Or just filter exact match. Standard requests use pending/in_progress/resolved
         requestsQuery = requestsQuery.eq('status', filters.status)
     }
 
     const { data: standardRequestsData, error: requestsError } = await requestsQuery
-
     if (requestsError) {
         console.error('Error fetching requests:', requestsError)
     }
 
     const standardRequests: Request[] = (standardRequestsData || []).map((r: any) => ({
         ...r,
-        source: 'requests'
+        source: 'requests' as RequestSource,
     }))
 
-    let allRequests = [...standardRequests]
+    // --- Fetch from `maintenance_tickets` table ---
+    let ticketsQuery = adminClient
+        .from('maintenance_tickets')
+        .select(`
+      *,
+      profiles:user_id (
+        company_name,
+        email
+      )
+    `)
+        .order('created_at', { ascending: false })
 
-    // Apply filters in memory
+    if (filters?.status) {
+        // Map statuses: maintenance_tickets uses open/in_progress/resolved/closed
+        // requests uses pending/in_progress/resolved
+        ticketsQuery = ticketsQuery.eq('status', filters.status)
+    }
+
+    const { data: ticketsData, error: ticketsError } = await ticketsQuery
+    if (ticketsError) {
+        console.error('Error fetching maintenance_tickets:', ticketsError)
+    }
+
+    // Normalize maintenance_tickets to the Request interface
+    const maintenanceRequests: Request[] = (ticketsData || []).map((t: any) => ({
+        id: t.id,
+        user_id: t.user_id,
+        type: 'maintenance' as RequestType,
+        title: t.title,
+        description: t.title ? `**${t.title}**\n\n${t.description}` : t.description,
+        photo_url: t.photo_url || null,
+        // Map ticket statuses to request statuses
+        status: (t.status === 'open' ? 'pending' : t.status) as RequestStatus,
+        priority: (t.priority || 'medium') as RequestPriority,
+        created_at: t.created_at,
+        updated_at: t.updated_at || t.created_at,
+        source: 'maintenance_tickets' as RequestSource,
+        profiles: t.profiles,
+    }))
+
+    // --- Combine, filter, sort ---
+    let allRequests = [...standardRequests, ...maintenanceRequests]
+
+    // Apply type filter across combined list
     if (filters?.type) {
         allRequests = allRequests.filter(r => r.type === filters.type)
-    }
-    if (filters?.status) {
-        allRequests = allRequests.filter(r => r.status === filters.status)
     }
 
     // Sort by date desc
@@ -167,7 +204,7 @@ export async function getRequests(filters?: {
 
 // Update request status or priority (admin only)
 export async function updateRequest(
-    req: Request, // Pass full request object instead of just ID to know source
+    req: Request,
     updates: { status?: RequestStatus; priority?: RequestPriority }
 ): Promise<{ success?: boolean; error?: string }> {
     const supabase = await createClient()
@@ -192,22 +229,38 @@ export async function updateRequest(
     // 3. Proceed with Admin Client
     const adminClient = createAdminClient()
 
-    // Standard Requests
-    const { error } = await adminClient
-        .from('requests')
-        .update({
-            ...updates,
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', req.id)
+    if (req.source === 'maintenance_tickets') {
+        // Map request statuses back to ticket statuses
+        const ticketUpdates: any = { ...updates }
+        if (updates.status === 'pending') ticketUpdates.status = 'open'
+        if (updates.status === 'resolved') ticketUpdates.resolved_at = new Date().toISOString()
 
-    if (error) {
-        console.error('Error updating request:', error)
-        return { error: 'Failed to update request' }
+        const { error } = await adminClient
+            .from('maintenance_tickets')
+            .update(ticketUpdates)
+            .eq('id', req.id)
+
+        if (error) {
+            console.error('Error updating maintenance_ticket:', error)
+            return { error: 'Failed to update ticket' }
+        }
+    } else {
+        // Standard requests table
+        const { error } = await adminClient
+            .from('requests')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', req.id)
+
+        if (error) {
+            console.error('Error updating request:', error)
+            return { error: 'Failed to update request' }
+        }
     }
 
     revalidatePath('/admin/requests')
+    revalidatePath('/maintenance')
     return { success: true }
 }
-
-

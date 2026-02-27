@@ -35,7 +35,7 @@ export default async function TimesheetsPage({
     const { data: timesheets } = await supabase
         .from("timesheets")
         .select(`
-            id, clock_in, clock_out, duration_minutes, is_edited,
+            id, clock_in, clock_out, duration_minutes, is_edited, status,
             kitchens (name)
         `)
         .eq("user_id", user.id)
@@ -118,9 +118,13 @@ export default async function TimesheetsPage({
                                         : "Active"}
                                 </TableCell>
                                 <TableCell>
-                                    <Badge variant={shift.clock_out ? "secondary" : "default"}>
-                                        {shift.clock_out ? "Completed" : "Active"}
-                                    </Badge>
+                                    {!shift.clock_out ? (
+                                        <Badge variant="default">Active</Badge>
+                                    ) : shift.status === 'pending' ? (
+                                        <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending</Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Verified</Badge>
+                                    )}
                                 </TableCell>
                                 <TableCell>
                                     <EditTimesheetDialog

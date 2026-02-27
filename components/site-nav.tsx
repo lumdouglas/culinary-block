@@ -97,7 +97,7 @@ export function SiteNav() {
                         <NavLink href="/">HOME</NavLink>
                         {isLoggedIn && (
                             <>
-                                <NavLink href="/calendar">DASHBOARD</NavLink>
+                                <NavLink href="/calendar">CALENDAR</NavLink>
                                 <NavLink href="/contact">CONTACT</NavLink>
                             </>
                         )}
@@ -140,7 +140,7 @@ export function SiteNav() {
                         <MobileNavLink href="/">HOME</MobileNavLink>
                         {isLoggedIn && (
                             <>
-                                <MobileNavLink href="/calendar">DASHBOARD</MobileNavLink>
+                                <MobileNavLink href="/calendar">CALENDAR</MobileNavLink>
                                 <MobileNavLink href="/contact">CONTACT</MobileNavLink>
                                 <div className="py-2 border-t border-slate-100 my-2">
                                     <p className="px-3 text-xs font-semibold text-slate-500 mb-1">ACCOUNT</p>
@@ -152,7 +152,7 @@ export function SiteNav() {
                                             <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
                                             <MobileNavLink href="/admin/requests">Tenant Requests</MobileNavLink>
                                             <MobileNavLink href="/admin/timesheets">Timesheet Log</MobileNavLink>
-                                            <MobileNavLink href="/billing/invoices">All Invoices</MobileNavLink>
+                                            <MobileNavLink href="/admin/billing">Billing</MobileNavLink>
                                             <MobileNavLink href="/kiosk">Kiosk Setup</MobileNavLink>
                                         </>
                                     ) : (

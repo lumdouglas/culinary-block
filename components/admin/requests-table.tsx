@@ -5,6 +5,23 @@ import { toast } from 'sonner'
 import { updateRequest, type Request, type RequestStatus, type RequestPriority } from '@/app/actions/requests'
 import { Wrench, AlertTriangle, Clock, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react'
 
+function TypeBadge({ type }: { type: string }) {
+    if (type === 'maintenance') {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                <Wrench className="h-3 w-3" />
+                Maintenance
+            </span>
+        )
+    }
+    return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+            <AlertTriangle className="h-3 w-3" />
+            Rule Violation
+        </span>
+    )
+}
+
 interface RequestsTableProps {
     requests: Request[]
 }
@@ -14,13 +31,16 @@ const statusColors: Record<RequestStatus, string> = {
     in_progress: 'bg-blue-100 text-blue-700 border-blue-200',
     resolved: 'bg-green-100 text-green-700 border-green-200',
     approved: 'bg-green-100 text-green-700 border-green-200',
-    rejected: 'bg-red-100 text-red-700 border-red-200'
+    rejected: 'bg-red-100 text-red-700 border-red-200',
+    open: 'bg-amber-100 text-amber-700 border-amber-200',
+    closed: 'bg-slate-100 text-slate-700 border-slate-200',
 }
 
 const priorityColors: Record<RequestPriority, string> = {
     low: 'bg-slate-100 text-slate-600',
     medium: 'bg-amber-100 text-amber-700',
-    high: 'bg-red-100 text-red-700'
+    high: 'bg-red-100 text-red-700',
+    critical: 'bg-red-200 text-red-800',
 }
 
 export function RequestsTable({ requests }: RequestsTableProps) {
@@ -69,8 +89,8 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         className="h-10 px-3 rounded-md border border-slate-200 bg-white"
                     >
                         <option value="all">All Types</option>
+                        <option value="maintenance">Maintenance</option>
                         <option value="rule_violation">Rule Violation</option>
-                        <option value="timesheet">Timesheet</option>
                     </select>
                 </div>
                 <div>
@@ -153,12 +173,12 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                         <p className="text-xs text-slate-500">{request.profiles?.email}</p>
                                     </td>
                                     <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700`}>
-                                            <AlertTriangle className="h-3 w-3" />
-                                            Rule Violation
-                                        </span>
+                                        <TypeBadge type={request.type} />
                                     </td>
                                     <td className="px-4 py-3 max-w-xs">
+                                        {request.title && (
+                                            <p className="text-xs font-semibold text-slate-800 mb-1">{request.title}</p>
+                                        )}
                                         <div className="text-sm text-slate-700 whitespace-pre-wrap max-h-20 overflow-y-auto" title={request.description}>
                                             {request.description}
                                         </div>
@@ -223,10 +243,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                 <span className="text-sm text-slate-500">
                                     {new Date(request.created_at).toLocaleDateString()}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700`}>
-                                    <AlertTriangle className="h-3 w-3" />
-                                    Violation
-                                </span>
+                                <TypeBadge type={request.type} />
                             </div>
 
                             {/* Tenant Info */}
@@ -237,7 +254,10 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                                 <p className="text-xs text-slate-500">{request.profiles?.email}</p>
                             </div>
 
-                            {/* Description */}
+                            {/* Title + Description */}
+                            {request.title && (
+                                <p className="text-xs font-semibold text-slate-800 mb-1">{request.title}</p>
+                            )}
                             <div className="mb-4 bg-slate-50 p-3 rounded-lg text-sm text-slate-700 whitespace-pre-wrap max-h-32 overflow-y-auto">
                                 {request.description}
                             </div>

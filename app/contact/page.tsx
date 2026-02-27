@@ -1,7 +1,14 @@
+import { createClient } from '@/utils/supabase/server'
 import { RequestForm } from '@/components/contact/request-form'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
-export default function ContactPage() {
+export default async function ContactPage() {
+    const supabase = await createClient()
+    const { data: kitchens } = await supabase
+        .from('kitchens')
+        .select('id, name')
+        .eq('is_active', true)
+
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
             <div className="max-w-6xl mx-auto px-4 py-12">
@@ -17,7 +24,7 @@ export default function ContactPage() {
                 <div className="grid md:grid-cols-3 gap-8">
                     {/* Request Form - Takes up 2 columns */}
                     <div className="md:col-span-2">
-                        <RequestForm />
+                        <RequestForm kitchens={kitchens || []} />
                     </div>
 
                     {/* Contact Info Sidebar */}
@@ -34,8 +41,8 @@ export default function ContactPage() {
                                     </div>
                                     <div>
                                         <p className="font-medium text-slate-900">Phone</p>
-                                        <a href="tel:+1234567890" className="text-teal-600 hover:underline">
-                                            (123) 456-7890
+                                        <a href="tel:+14156994397" className="text-teal-600 hover:underline">
+                                            (415) 699-4397
                                         </a>
                                     </div>
                                 </div>
@@ -74,7 +81,7 @@ export default function ContactPage() {
                                 For urgent issues like gas leaks, fire, or flooding, call immediately:
                             </p>
                             <a
-                                href="tel:+1234567890"
+                                href="tel:+14156994397"
                                 className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
                             >
                                 <Phone className="h-4 w-4" />
