@@ -253,7 +253,7 @@ export default function CalendarPageClient() {
                                                     : [...expandedStationIds, station.id]);
                                             }}
                                             className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isSelected
-                                                ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
+                                                ? `${colorClass} text-white shadow-md`
                                                 : isExpanded
                                                     ? 'bg-slate-100 text-slate-800 border border-slate-300'
                                                     : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
