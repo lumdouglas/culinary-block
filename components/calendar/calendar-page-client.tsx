@@ -18,7 +18,7 @@ const stationColors: Record<string, string> = {
     'Oven L': 'bg-green-600',
     'Oven M': 'bg-green-500',
     'Oven R': 'bg-green-400',
-    'General Kitchen': 'bg-amber-500',
+    'Prep Kitchen': 'bg-amber-500',
 }
 
 type ViewMode = 'schedule' | 'my-bookings'

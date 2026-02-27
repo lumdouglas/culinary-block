@@ -83,7 +83,7 @@ export function BookingForm({
     return { value: time, label: displayTime }
   })
 
-  const generalKitchen = stations.find(s => s.name === 'General Kitchen')
+  const generalKitchen = stations.find(s => s.name === 'Prep Kitchen')
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),

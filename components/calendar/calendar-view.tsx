@@ -19,7 +19,7 @@ const stationColors: Record<string, string> = {
   'Oven L': '#16a34a',
   'Oven M': '#22c55e',
   'Oven R': '#4ade80',
-  'General Kitchen': '#f59e0b',
+  'Prep Kitchen': '#f59e0b',
 }
 
 interface BookingCalendarProps {

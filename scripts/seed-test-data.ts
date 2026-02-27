@@ -46,7 +46,7 @@ const testTenants = [
 ]
 
 // Bookings for week of Feb 8-14, 2026
-// Station IDs: 1-4 = Hoods, 5-7 = Ovens, 8 = General Kitchen
+// Station IDs: 1-4 = Hoods, 5-7 = Ovens, 8 = Prep Kitchen
 function getBookingsForTenant(userId: string, tenantIndex: number) {
     const baseDate = '2026-02-'
 
