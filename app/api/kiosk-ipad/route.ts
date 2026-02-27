@@ -1,7 +1,96 @@
 import { createAdminClient } from '@/utils/supabase/admin';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-export async function GET() {
+const COOKIE_NAME = 'kiosk_auth';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 10; // 10 years
+
+function blockedPage(message: string) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Restricted</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 32px;
+    }
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 40px;
+      max-width: 420px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .icon { font-size: 64px; margin-bottom: 16px; }
+    h1 { font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+    p { font-size: 16px; color: #64748b; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">🔒</div>
+    <h1>Device Not Authorised</h1>
+    <p>${message}</p>
+  </div>
+</body>
+</html>`;
+}
+
+export async function GET(request: NextRequest) {
+  const secret = process.env.KIOSK_SECRET;
+
+  // Fail secure — if the env var is not set, block all access
+  if (!secret) {
+    return new NextResponse(
+      blockedPage('KIOSK_SECRET is not configured. Contact your administrator.'),
+      { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
+  }
+
+  // ── One-time device setup ──────────────────────────────────────────
+  // Admin visits /api/kiosk-ipad?setup=<KIOSK_SECRET> once on the iPad.
+  // This sets a long-lived cookie and redirects to the clean kiosk URL.
+  const setupParam = request.nextUrl.searchParams.get('setup');
+  if (setupParam !== null) {
+    if (setupParam === secret) {
+      const response = NextResponse.redirect(new URL('/api/kiosk-ipad', request.url));
+      response.cookies.set(COOKIE_NAME, secret, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: COOKIE_MAX_AGE,
+      });
+      return response;
+    }
+    // Wrong token — show 403 without hinting what the correct value is
+    return new NextResponse(
+      blockedPage('Invalid setup token. Please check the URL and try again.'),
+      { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
+  }
+
+  // ── Cookie check ──────────────────────────────────────────────────
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  if (token !== secret) {
+    return new NextResponse(
+      blockedPage('This device is not authorised to use the kiosk. Ask an administrator to set it up.'),
+      { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    );
+  }
+
+  // ── Authorised — serve kiosk ──────────────────────────────────────
   const supabase = createAdminClient();
   const { data: profiles } = await supabase
     .from('profiles')

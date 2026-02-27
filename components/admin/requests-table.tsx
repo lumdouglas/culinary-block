@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { updateRequest, type Request, type RequestStatus, type RequestPriority } from '@/app/actions/requests'
-import { Wrench, AlertTriangle, Clock, CheckCircle, AlertCircle, Image as ImageIcon, X } from 'lucide-react'
+import { Wrench, AlertTriangle, Clock, CheckCircle, AlertCircle, Image as ImageIcon, X, MessageCircleQuestion } from 'lucide-react'
 
 function TypeBadge({ type }: { type: string }) {
     if (type === 'maintenance') {
@@ -11,6 +11,14 @@ function TypeBadge({ type }: { type: string }) {
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                 <Wrench className="h-3 w-3" />
                 Maintenance
+            </span>
+        )
+    }
+    if (type === 'general_question') {
+        return (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+                <MessageCircleQuestion className="h-3 w-3" />
+                General Question
             </span>
         )
     }
@@ -91,6 +99,7 @@ export function RequestsTable({ requests }: RequestsTableProps) {
                         <option value="all">All Types</option>
                         <option value="maintenance">Maintenance</option>
                         <option value="rule_violation">Rule Violation</option>
+                        <option value="general_question">General Question</option>
                     </select>
                 </div>
                 <div>

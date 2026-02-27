@@ -202,7 +202,8 @@ export async function toggleTenantActive(tenantId: string, isActive: boolean) {
         return { error: "Not authorized" };
     }
 
-    const { error: updateError } = await supabase
+    const adminClient = createAdminClient();
+    const { error: updateError } = await adminClient
         .from('profiles')
         .update({ is_active: isActive })
         .eq('id', tenantId);
