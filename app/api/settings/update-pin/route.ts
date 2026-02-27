@@ -1,7 +1,7 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
-import { hash } from 'bcrypt-ts';
+import { hash, compare } from 'bcrypt-ts';
 
 export async function POST(req: Request) {
     const supabase = await createClient();
@@ -13,13 +13,33 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { pin } = body;
+        const { currentPin, pin } = body;
 
-        if (!pin || pin.length < 4 || pin.length > 6) {
-            return NextResponse.json({ error: 'PIN must be 4-6 digits' }, { status: 400 });
+        if (!pin || pin.length !== 4 || !/^\d+$/.test(pin)) {
+            return NextResponse.json({ error: 'PIN must be exactly 4 digits' }, { status: 400 });
         }
 
-        // Hash the PIN
+        if (!currentPin || currentPin.length !== 4) {
+            return NextResponse.json({ error: 'Current PIN is required' }, { status: 400 });
+        }
+
+        // Fetch existing PIN hash to verify current PIN
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('kiosk_pin_hash')
+            .eq('id', user.id)
+            .single();
+
+        if (profileError || !profile?.kiosk_pin_hash) {
+            return NextResponse.json({ error: 'Could not verify current PIN' }, { status: 500 });
+        }
+
+        const pinMatches = await compare(currentPin, profile.kiosk_pin_hash);
+        if (!pinMatches) {
+            return NextResponse.json({ error: 'Incorrect current PIN' }, { status: 403 });
+        }
+
+        // Hash the new PIN
         const pinHash = await hash(pin, 10);
 
         const { error } = await supabase

@@ -222,7 +222,7 @@ export function UserMenu() {
                 )}
 
                 <DropdownMenuItem asChild className="cursor-pointer py-2">
-                    <Link href="/calendar" className="flex items-center">
+                    <Link href="/my-bookings" className="flex items-center">
                         <Calendar className="mr-2 h-4 w-4 text-slate-500" />
                         <span>My Bookings</span>
                     </Link>

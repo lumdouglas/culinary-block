@@ -232,6 +232,7 @@ export async function cancelBooking(bookingId: string) {
   }
 
   revalidatePath('/calendar');
+  revalidatePath('/my-bookings');
   return { success: true };
 }
 

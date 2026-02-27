@@ -290,7 +290,7 @@ export default function SettingsPage() {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-slate-900 hover:bg-slate-800 px-8"
+              className="bg-teal-600 hover:bg-teal-700 text-white px-8"
               size="lg"
             >
               {saving ? (

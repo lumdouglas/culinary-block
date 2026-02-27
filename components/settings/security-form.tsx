@@ -13,6 +13,7 @@ import { createClient } from "@/utils/supabase/client"
 import { Lock, KeyRound, Loader2 } from "lucide-react"
 
 const passwordSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required"),
     password: z
         .string()
         .min(8, "Password must be at least 8 characters")
@@ -25,7 +26,8 @@ const passwordSchema = z.object({
 })
 
 const pinSchema = z.object({
-    pin: z.string().min(4, "PIN must be 4-6 digits").max(6, "PIN must be 4-6 digits").regex(/^\d+$/, "PIN must contain only numbers"),
+    currentPin: z.string().length(4, "Current PIN must be 4 digits").regex(/^\d+$/, "PIN must contain only numbers"),
+    pin: z.string().length(4, "New PIN must be exactly 4 digits").regex(/^\d+$/, "PIN must contain only numbers"),
 })
 
 export function SecuritySettings() {
@@ -35,17 +37,31 @@ export function SecuritySettings() {
 
     const passwordForm = useForm<z.infer<typeof passwordSchema>>({
         resolver: zodResolver(passwordSchema),
-        defaultValues: { password: "", confirmPassword: "" },
+        defaultValues: { currentPassword: "", password: "", confirmPassword: "" },
     })
 
     const pinForm = useForm<z.infer<typeof pinSchema>>({
         resolver: zodResolver(pinSchema),
-        defaultValues: { pin: "" },
+        defaultValues: { currentPin: "", pin: "" },
     })
 
     async function onPasswordSubmit(values: z.infer<typeof passwordSchema>) {
         setSavingPwd(true)
         try {
+            // First verify the current password
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user?.email) throw new Error("Not authenticated")
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: values.currentPassword,
+            })
+            if (signInError) {
+                passwordForm.setError("currentPassword", { message: "Incorrect current password" })
+                return
+            }
+
+            // Now update to the new password
             const { error } = await supabase.auth.updateUser({ password: values.password })
             if (error) throw error
             toast.success("Password updated successfully")
@@ -63,15 +79,24 @@ export function SecuritySettings() {
             const res = await fetch("/api/settings/update-pin", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
+                body: JSON.stringify({ currentPin: values.currentPin, pin: values.pin }),
             })
 
-            if (!res.ok) throw new Error("Failed to update PIN")
+            const data = await res.json()
+
+            if (!res.ok) {
+                if (res.status === 403) {
+                    pinForm.setError("currentPin", { message: "Incorrect current PIN" })
+                } else {
+                    throw new Error(data.error || "Failed to update PIN")
+                }
+                return
+            }
 
             toast.success("Kiosk PIN updated successfully")
             pinForm.reset()
-        } catch {
-            toast.error("Failed to update PIN")
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to update PIN")
         } finally {
             setSavingPin(false)
         }
@@ -93,6 +118,19 @@ export function SecuritySettings() {
 
                 <Form {...passwordForm}>
                     <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 max-w-md">
+                        <FormField
+                            control={passwordForm.control}
+                            name="currentPassword"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Current Password</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" placeholder="Enter your current password" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={passwordForm.control}
                             name="password"
@@ -143,14 +181,27 @@ export function SecuritySettings() {
                     <form onSubmit={pinForm.handleSubmit(onPinSubmit)} className="space-y-4 max-w-md">
                         <FormField
                             control={pinForm.control}
+                            name="currentPin"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Current PIN (4 digits)</FormLabel>
+                                    <FormControl>
+                                        <Input type="password" inputMode="numeric" maxLength={4} placeholder="Enter your current PIN" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={pinForm.control}
                             name="pin"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>New PIN (4-6 digits)</FormLabel>
+                                    <FormLabel>New PIN (4 digits)</FormLabel>
                                     <FormControl>
-                                        <Input type="password" inputMode="numeric" maxLength={6} {...field} />
+                                        <Input type="password" inputMode="numeric" maxLength={4} {...field} />
                                     </FormControl>
-                                    <FormDescription>Enter a new numeric PIN.</FormDescription>
+                                    <FormDescription>Enter a new 4-digit numeric PIN.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
