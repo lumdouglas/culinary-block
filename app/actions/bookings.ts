@@ -154,6 +154,26 @@ export async function createBooking(
     return { error: "Your account is currently inactive. Please contact the administrator to restore booking privileges." };
   }
 
+  // Rule: Cannot book more than 6 months in advance
+  const sixMonthsFromNow = new Date();
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+  if (new Date(startTime) > sixMonthsFromNow) {
+    return { error: "Bookings cannot be made more than 6 months in advance. To request a booking beyond this window, please contact Culinary Block Management." };
+  }
+
+  // Rule: Cannot have two simultaneous confirmed bookings across different stations
+  const { data: concurrentBookings } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('status', 'confirmed')
+    .lt('start_time', endTime)
+    .gt('end_time', startTime);
+
+  if (concurrentBookings && concurrentBookings.length > 0) {
+    return { error: "You already have a booking during this time. To book multiple stations simultaneously, please contact Culinary Block Management." };
+  }
+
   // Check availability before booking
   const availability = await checkAvailability(stationId, startTime, endTime);
   if (availability.error) {
@@ -235,6 +255,77 @@ export async function cancelBooking(bookingId: string) {
   revalidatePath('/my-bookings');
   return { success: true };
 }
+
+// Update an existing booking
+export async function updateBooking(
+  bookingId: string,
+  stationId: number,
+  startTime: string,
+  endTime: string,
+  notes?: string
+) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Verify ownership
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('user_id')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: "Booking not found" };
+  if (booking.user_id !== user.id) return { error: "You can only edit your own bookings" };
+
+  // Rule: Cannot book more than 6 months in advance
+  const sixMonthsFromNow = new Date();
+  sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
+  if (new Date(startTime) > sixMonthsFromNow) {
+    return { error: "Bookings cannot be made more than 6 months in advance. To request a booking beyond this window, please contact Culinary Block Management." };
+  }
+
+  // Rule: Cannot have two simultaneous confirmed bookings across different stations
+  const { data: concurrentBookings } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('status', 'confirmed')
+    .neq('id', bookingId)   // exclude the booking being edited
+    .lt('start_time', endTime)
+    .gt('end_time', startTime);
+
+  if (concurrentBookings && concurrentBookings.length > 0) {
+    return { error: "You already have a booking during this time. To book multiple stations simultaneously, please contact Culinary Block Management." };
+  }
+
+  // Check availability — exclude the current booking from the overlap check
+  const { data: overlapping } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('station_id', stationId)
+    .eq('status', 'confirmed')
+    .neq('id', bookingId)
+    .lt('start_time', endTime)
+    .gt('end_time', startTime);
+
+  if (overlapping && overlapping.length > 0) {
+    return { error: "This time slot conflicts with another booking. Please choose a different time." };
+  }
+
+  const { error } = await supabase
+    .from('bookings')
+    .update({ station_id: stationId, start_time: startTime, end_time: endTime, notes })
+    .eq('id', bookingId);
+
+  if (error) return { error: "Failed to update booking. Please try again." };
+
+  revalidatePath('/calendar');
+  revalidatePath('/my-bookings');
+  return { success: true };
+}
+
 
 // Get user's own bookings
 export async function getUserBookings() {

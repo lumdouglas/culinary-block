@@ -63,6 +63,13 @@ export function BookingForm({
     return date.toISOString().split('T')[0]
   }
 
+  // Max bookable date = 6 months from today
+  const maxBookingDate = (() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() + 6)
+    return formatDate(d)
+  })()
+
   // Generate time slots (30-minute increments)
   const timeSlots = Array.from({ length: 48 }, (_, i) => {
     const hours = Math.floor(i / 2)
@@ -76,10 +83,12 @@ export function BookingForm({
     return { value: time, label: displayTime }
   })
 
+  const generalKitchen = stations.find(s => s.name === 'General Kitchen')
+
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      station_id: preselectedStation?.toString() || "",
+      station_id: preselectedStation?.toString() || generalKitchen?.id.toString() || "",
       date: preselectedDate ? formatDate(preselectedDate) : formatDate(new Date()),
       start_time: preselectedStartTime || "09:00",
       duration: preselectedDuration || "1",
@@ -167,7 +176,12 @@ export function BookingForm({
             <FormItem>
               <FormLabel>Date</FormLabel>
               <FormControl>
-                <Input type="date" {...field} />
+                <Input
+                  type="date"
+                  min={formatDate(new Date())}
+                  max={maxBookingDate}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -258,6 +272,11 @@ export function BookingForm({
             {isSubmitting ? "Booking..." : "Confirm Booking"}
           </Button>
         </div>
+
+        <p className="text-xs text-slate-400 text-center pt-1">
+          Bookings are limited to 6 months in advance and one station at a time.{" "}
+          <span className="text-slate-500 font-medium">Need more? Contact Culinary Block Management.</span>
+        </p>
       </form>
     </Form>
   )

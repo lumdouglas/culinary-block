@@ -52,12 +52,17 @@ export default function CalendarPageClient() {
         }
     }
 
-    const loadData = async () => {
+    const loadData = async (startIso?: string, endIso?: string) => {
         setLoading(true)
         try {
+            // Use the provided range, or fall back to the initial 2-week window
+            const range = (startIso && endIso)
+                ? { start: startIso, end: endIso }
+                : getWeekRange()
+
             const [stationsResult, bookingsResult] = await Promise.all([
                 getStations(),
-                getBookingsForDateRange(getWeekRange().start, getWeekRange().end)
+                getBookingsForDateRange(range.start, range.end)
             ])
 
             if (stationsResult.data) {
@@ -82,6 +87,10 @@ export default function CalendarPageClient() {
         }
     }
 
+    const handleDatesSet = (start: string, end: string) => {
+        loadData(start, end)
+    }
+
     useEffect(() => {
         loadData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,7 +100,7 @@ export default function CalendarPageClient() {
         setIsDialogOpen(false)
         setPreselectedDate(undefined)
         setPreselectedStartTime(undefined)
-        loadData()
+        loadData() // reload current view range via datesSet instead
     }
 
     const handleDateSelect = (start: Date, end?: Date) => {
@@ -150,7 +159,7 @@ export default function CalendarPageClient() {
                         </div>
 
                         <div className="flex gap-3">
-                            <Button variant="outline" onClick={loadData} disabled={loading} size="lg">
+                            <Button variant="outline" onClick={() => loadData()} disabled={loading} size="lg">
                                 <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
                                 Refresh
                             </Button>
@@ -240,10 +249,10 @@ export default function CalendarPageClient() {
                                                 setExpandedStationId(isExpanded ? null : station.id);
                                             }}
                                             className={`flex-none px-3 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isSelected
-                                                    ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
-                                                    : isExpanded
-                                                        ? 'bg-slate-100 text-slate-800 border border-slate-300'
-                                                        : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                                                ? 'bg-slate-900 text-white shadow-md ring-1 ring-slate-900'
+                                                : isExpanded
+                                                    ? 'bg-slate-100 text-slate-800 border border-slate-300'
+                                                    : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                                 }`}
                                         >
                                             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isSelected ? 'bg-white' : colorClass}`} />
@@ -298,6 +307,7 @@ export default function CalendarPageClient() {
                             selectedStations={selectedStations}
                             currentUserId={currentUserId}
                             onDateSelect={handleDateSelect}
+                            onDatesSet={handleDatesSet}
                         />
                     )}
                 </div>

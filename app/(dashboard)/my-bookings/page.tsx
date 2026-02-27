@@ -1,8 +1,9 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { format, startOfDay, parseISO } from "date-fns"
-import { Calendar, Clock, MapPin, ChevronRight } from "lucide-react"
+import { Calendar, Clock, MapPin } from "lucide-react"
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button"
+import { EditBookingButton } from "@/components/bookings/edit-booking-button"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -16,20 +17,28 @@ export default async function MyBookingsPage() {
 
     const now = startOfDay(new Date()).toISOString()
 
-    const { data: bookings, error } = await supabase
-        .from("bookings")
-        .select(`
-            id,
-            start_time,
-            end_time,
-            notes,
-            status,
-            station:stations(id, name, category)
-        `)
-        .eq("user_id", user.id)
-        .eq("status", "confirmed")
-        .gte("end_time", now)
-        .order("start_time", { ascending: true })
+    // Fetch bookings and stations in parallel
+    const [{ data: bookings, error }, { data: stationsRaw }] = await Promise.all([
+        supabase
+            .from("bookings")
+            .select(`id, start_time, end_time, notes, status, station:stations(id, name, category)`)
+            .eq("user_id", user.id)
+            .eq("status", "confirmed")
+            .gte("end_time", now)
+            .order("start_time", { ascending: true }),
+        supabase
+            .from("stations")
+            .select("id, name, category, equipment")
+            .eq("is_active", true)
+            .order("id"),
+    ])
+
+    // Sort stations 1→4
+    const stations = (stationsRaw ?? []).sort((a, b) => {
+        const numA = parseInt(a.name.replace(/\D/g, ""), 10)
+        const numB = parseInt(b.name.replace(/\D/g, ""), 10)
+        return (isNaN(numA) ? 999 : numA) - (isNaN(numB) ? 999 : numB)
+    })
 
     if (error) {
         console.error("Error fetching bookings:", error)
@@ -147,6 +156,14 @@ export default async function MyBookingsPage() {
 
                                             {/* Actions */}
                                             <div className="flex-shrink-0 flex items-center gap-2">
+                                                <EditBookingButton
+                                                    bookingId={booking.id}
+                                                    currentStationId={station?.id ?? 0}
+                                                    currentStartTime={booking.start_time}
+                                                    currentEndTime={booking.end_time}
+                                                    currentNotes={booking.notes ?? ""}
+                                                    stations={stations}
+                                                />
                                                 <CancelBookingButton bookingId={booking.id} />
                                             </div>
                                         </div>
