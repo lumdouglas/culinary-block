@@ -47,49 +47,6 @@ function blockedPage(message: string) {
 }
 
 export async function GET(request: NextRequest) {
-  const secret = process.env.KIOSK_SECRET;
-
-  // Fail secure — if the env var is not set, block all access
-  if (!secret) {
-    return new NextResponse(
-      blockedPage('KIOSK_SECRET is not configured. Contact your administrator.'),
-      { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
-  }
-
-  // ── One-time device setup ──────────────────────────────────────────
-  // Admin visits /api/kiosk-ipad?setup=<KIOSK_SECRET> once on the iPad.
-  // This sets a long-lived cookie and redirects to the clean kiosk URL.
-  const setupParam = request.nextUrl.searchParams.get('setup');
-  if (setupParam !== null) {
-    if (setupParam === secret) {
-      const response = NextResponse.redirect(new URL('/api/kiosk-ipad', request.url));
-      response.cookies.set(COOKIE_NAME, secret, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: COOKIE_MAX_AGE,
-      });
-      return response;
-    }
-    // Wrong token — show 403 without hinting what the correct value is
-    return new NextResponse(
-      blockedPage('Invalid setup token. Please check the URL and try again.'),
-      { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
-  }
-
-  // ── Cookie check ──────────────────────────────────────────────────
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (token !== secret) {
-    return new NextResponse(
-      blockedPage('This device is not authorised to use the kiosk. Ask an administrator to set it up.'),
-      { status: 403, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
-    );
-  }
-
   // ── Authorised — serve kiosk ──────────────────────────────────────
   const supabase = createAdminClient();
   const { data: profiles } = await supabase
