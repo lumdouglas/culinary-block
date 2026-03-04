@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catering Permit Assistant – Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .chat-user { justify-content: flex-end; }
+    .chat-assistant { justify-content: flex-start; }
+    .bubble-user { background: #059669; color: white; }
+    .bubble-assistant { background: #e2e8f0; color: #0f172a; }
+    .btn-lang.active { background: #0f172a; color: white; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-slate-900">
+        Santa Clara County Catering Permit Assistant
+      </h1>
+      <p class="text-slate-600 mt-1">
+        We'll fill out your application step by step. Speak or type in your language.
+      </p>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <span class="text-slate-700 font-medium">Language:</span>
+        <div class="flex gap-2">
+          <button type="button" class="btn-lang active px-4 py-2 rounded-md border border-slate-300 text-sm font-medium" data-lang="en">English</button>
+          <button type="button" class="btn-lang px-4 py-2 rounded-md border border-slate-300 text-sm font-medium" data-lang="es">Español</button>
+          <button type="button" class="btn-lang px-4 py-2 rounded-md border border-slate-300 text-sm font-medium" data-lang="zh">中文</button>
+          <button type="button" class="btn-lang px-4 py-2 rounded-md border border-slate-300 text-sm font-medium" data-lang="vi">Tiếng Việt</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Chat column -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="rounded-2xl border bg-white min-h-[320px] max-h-[480px] overflow-y-auto p-4 flex flex-col">
+          <div id="chat-messages" class="flex-1 space-y-4">
+            <!-- Demo messages -->
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                Hi! I'll help you fill out the Santa Clara County catering permit. Your kitchen will be <strong>Culinary Block</strong> in San Jose. What's the name of your catering business (DBA)?
+              </div>
+            </div>
+            <div class="flex chat-user">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">
+                Maria's Kitchen
+              </div>
+            </div>
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                Got it — Maria's Kitchen. What's your full name as the owner?
+              </div>
+            </div>
+            <div class="flex chat-user">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">
+                Maria Garcia
+              </div>
+            </div>
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                Thanks, Maria. What phone number and email should we put on the application?
+              </div>
+            </div>
+            <div class="flex chat-user">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">
+                408-555-1234, maria@mariaskitchen.com
+              </div>
+            </div>
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                Perfect. Now list the food or beverage items you'll prepare at Culinary Block and what you'll do at the event (e.g. "Dispensing, cold holding"). You can say several at once or one by one.
+              </div>
+            </div>
+            <div class="flex chat-user">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">
+                Caesar salad — dispensing, portioning, cold holding. Rice and beans — hot holding. Chicken — hot holding.
+              </div>
+            </div>
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                I've added those to your menu. How will you transport food to the event? (Cambro, refrigerated truck, coolers, or other?)
+              </div>
+            </div>
+            <div class="flex chat-user">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">
+                Cambros and coolers
+              </div>
+            </div>
+            <div class="flex chat-assistant">
+              <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-assistant">
+                Got it. I've recorded transport and temperature options. When you're ready we'll do handwashing, sanitizing, and host locations — or you can type <strong>download</strong> to get your filled PDF now. (This is a demo; the real page will generate the PDF.)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input row -->
+        <form id="chat-form" class="flex gap-2">
+          <button type="button" class="p-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50" title="Voice input (demo)" aria-label="Voice input">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+          </button>
+          <input type="text" id="chat-input" placeholder="Type or speak your answer..." class="flex-1 px-4 py-2 rounded-md border border-slate-300 text-sm" />
+          <button type="submit" class="px-4 py-2 rounded-md bg-slate-900 text-white text-sm font-medium hover:bg-slate-800">
+            Send
+          </button>
+        </form>
+      </div>
+
+      <!-- Summary panel -->
+      <div class="space-y-4">
+        <div class="rounded-2xl border bg-slate-50 p-4">
+          <h2 class="font-semibold text-slate-900 mb-3">Your application so far</h2>
+          <dl class="space-y-2 text-sm">
+            <div>
+              <dt class="text-slate-500">Catering name (DBA)</dt>
+              <dd class="font-medium text-slate-900">Maria's Kitchen</dd>
+            </div>
+            <div>
+              <dt class="text-slate-500">Owner</dt>
+              <dd class="font-medium text-slate-900">Maria Garcia</dd>
+            </div>
+            <div>
+              <dt class="text-slate-500">Phone / Email</dt>
+              <dd class="font-medium text-slate-900">408-555-1234 / maria@mariaskitchen.com</dd>
+            </div>
+            <div>
+              <dt class="text-slate-500">Menu items</dt>
+              <dd class="font-medium text-slate-900">Caesar salad, Rice and beans, Chicken</dd>
+            </div>
+            <div>
+              <dt class="text-slate-500">Transport</dt>
+              <dd class="font-medium text-slate-900">Cambro, Coolers</dd>
+            </div>
+            <div>
+              <dt class="text-slate-500">Host facility</dt>
+              <dd class="font-medium text-slate-900">Culinary Block, 1901 Las Plumas Ave, San Jose, CA 95133</dd>
+            </div>
+          </dl>
+        </div>
+
+        <button type="button" class="w-full px-4 py-3 rounded-md bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download filled PDF
+        </button>
+        <p class="text-xs text-slate-500">
+          Complete the chat to collect all required fields, then download. Submit the PDF and $446 fee to the county. Culinary Block permit-assist service ($100) can be added at checkout when you book.
+        </p>
+      </div>
+    </div>
+
+    <p class="mt-8 text-center text-slate-500 text-sm">
+      This is a <strong>demo</strong> of the permit assistant UI. The live app at <code class="bg-slate-200 px-1 rounded">/apply/catering-permit</code> uses AI and generates a real PDF.
+    </p>
+  </div>
+
+  <script>
+    // Language buttons
+    document.querySelectorAll('.btn-lang').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Add a message when user "sends" (demo)
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const text = (input.value || '').trim();
+      if (!text) return;
+      input.value = '';
+      const container = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = 'flex chat-user';
+      div.innerHTML = '<div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm bubble-user">' + escapeHtml(text) + '</div>';
+      container.appendChild(div);
+      container.parentElement.scrollTop = container.parentElement.scrollHeight;
+    });
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
