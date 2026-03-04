@@ -37,6 +37,7 @@ export function PermitWizard() {
   const [language, setLanguage] = useState<PermitLanguageCode>("en");
   const [permitData, setPermitData] = useState<CateringPermitData>(DEFAULT_PERMIT_DATA);
   const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef(language);
   languageRef.current = language;
@@ -61,6 +62,10 @@ export function PermitWizard() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    setSpeechSupported("webkitSpeechRecognition" in window);
+  }, []);
+
   const [inputValue, setInputValue] = useState("");
 
   const handleSubmit = useCallback(
@@ -74,8 +79,6 @@ export function PermitWizard() {
     [inputValue, isLoading, sendMessage]
   );
 
-  const speechSupported =
-    typeof window !== "undefined" && "webkitSpeechRecognition" in window;
   const langMap: Record<PermitLanguageCode, string> = {
     en: "en-US",
     es: "es-US",
