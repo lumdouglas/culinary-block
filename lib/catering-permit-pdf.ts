@@ -1,7 +1,5 @@
-// pdf-lib is loaded dynamically to avoid Turbopack static-analysis failures.
-// fs/path are Node.js built-ins and load fine statically.
-import { readFileSync } from "fs";
-import { join } from "path";
+// Client-side PDF generation: pdf-lib runs in the browser, no Node.js APIs needed.
+// The blank DEH form is fetched from /assets/catering-permit-blank.pdf.
 import type { CateringPermitData } from "./catering-permit";
 
 function getInitials(name: string): string {
@@ -45,11 +43,15 @@ const INITIAL_FIELD_NAMES: Record<number, string> = {
 };
 
 export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8Array> {
-  // Dynamic import: resolved at Node.js runtime, not at Turbopack build time
+  // Dynamic import keeps pdf-lib out of Turbopack's server-side bundle.
+  // In the browser it resolves from the esm/cjs build inside node_modules.
   const { PDFDocument } = await import("pdf-lib");
 
-  const pdfPath = join(process.cwd(), "public/assets/catering-permit-blank.pdf");
-  const pdfBytes = readFileSync(pdfPath);
+  // Fetch the blank DEH PDF from the public folder (works in any browser)
+  const res = await fetch("/assets/catering-permit-blank.pdf");
+  if (!res.ok) throw new Error("Could not load blank permit PDF");
+  const pdfBytes = new Uint8Array(await res.arrayBuffer());
+
   const doc = await PDFDocument.load(pdfBytes);
   const form = doc.getForm();
 
@@ -101,7 +103,7 @@ export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8
   cb("Coolers", data.transport_coolers);
   const hasOtherTransport = Boolean(data.transport_other?.trim());
   cb("Other temperature log will be required", hasOtherTransport);
-  tf("undefined", data.transport_other ?? ""); // text field for "Other" transport description
+  tf("undefined", data.transport_other ?? "");
 
   // ── Page 3, Q2b: Temperature Maintenance ──────────────────────────────────
   cb("Temperature control 135F or above OR 41F or below", data.temp_control);
@@ -155,7 +157,6 @@ export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8
   }
 
   // ── Page 4: Agreement — 20 Initials ───────────────────────────────────────
-  // Uses owner's initials (e.g., "Maria Garcia" → "MG")
   const initials = getInitials(data.signature_name || data.owner_name);
   if (data.agreement_initialed && initials) {
     for (let n = 1; n <= 20; n++) {
@@ -165,17 +166,14 @@ export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8
   }
 
   // ── Page 4: Signature Block ────────────────────────────────────────────────
-  // PDFSignature field ("Owner / Authorized Agent Signature") cannot be filled
-  // programmatically — the applicant must sign the printed copy by hand.
+  // PDFSignature field cannot be filled programmatically — applicant signs by hand.
   const printedNameTitle = data.signature_title
     ? `${data.signature_name} / ${data.signature_title}`
     : data.signature_name;
   tf("Printed Name  Title", printedNameTitle);
   tf("Date1_af_date", todayFormatted());
 
-  // Flatten fields so the PDF looks clean and is ready to print
   form.flatten();
-
   const saved = await doc.save();
   return new Uint8Array(saved);
 }

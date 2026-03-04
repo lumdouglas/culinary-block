@@ -14,6 +14,7 @@ import {
   type PermitLanguageCode,
   type UpdatePermitData,
 } from "@/lib/catering-permit";
+import { generatePermitPdf } from "@/lib/catering-permit-pdf";
 import { cn } from "@/lib/utils";
 import { Mic, MicOff, Send, Download, Loader2 } from "lucide-react";
 
@@ -290,13 +291,8 @@ export function PermitWizard() {
             data-testid="permit-download-pdf"
             onClick={async () => {
               if (!canDownload) return;
-              const res = await fetch("/api/catering-permit/pdf", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(permitData),
-              });
-              if (!res.ok) return;
-              const blob = await res.blob();
+              const bytes = await generatePermitPdf(permitData);
+              const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
               const url = URL.createObjectURL(blob);
               const a = document.createElement("a");
               a.href = url;
