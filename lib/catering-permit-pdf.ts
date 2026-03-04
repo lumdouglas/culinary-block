@@ -18,6 +18,48 @@ function todayFormatted(): string {
   });
 }
 
+// Minimal shape of the PDFLib global we use when loaded from CDN.
+interface PdfLibModule {
+  PDFDocument: {
+    load(bytes: Uint8Array): Promise<{
+      getForm(): {
+        getTextField(name: string): { setText(value: string): void };
+        getCheckBox(name: string): { check(): void; uncheck(): void };
+        getRadioGroup(name: string): { select(value: string): void };
+        flatten(): void;
+      };
+      save(): Promise<Uint8Array>;
+    }>;
+  };
+}
+
+async function loadPdfLibFromCdn(): Promise<PdfLibModule> {
+  if (typeof window === "undefined") {
+    throw new Error("PDF generation is browser-only");
+  }
+
+  const globalAny = window as unknown as { PDFLib?: PdfLibModule };
+
+  if (globalAny.PDFLib) {
+    return globalAny.PDFLib;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load pdf-lib from CDN"));
+    document.head.appendChild(script);
+  });
+
+  if (!globalAny.PDFLib) {
+    throw new Error("pdf-lib global did not initialize");
+  }
+
+  return globalAny.PDFLib;
+}
+
 // Exact AcroForm field names from the Santa Clara DEH Catering Application PDF (8.27.2025)
 const INITIAL_FIELD_NAMES: Record<number, string> = {
   1: "Initial1 All food prior to the host facility shall be stored and prepared at the permanent food facilitycatering kitchen Home preparation of food is prohibited",
@@ -43,9 +85,9 @@ const INITIAL_FIELD_NAMES: Record<number, string> = {
 };
 
 export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8Array> {
-  // Dynamic import keeps pdf-lib out of Turbopack's server-side bundle.
-  // In the browser it resolves from the esm/cjs build inside node_modules.
-  const { PDFDocument } = await import("pdf-lib");
+  // Load pdf-lib from a browser-only CDN script so Turbopack / Vercel never
+  // has to resolve the "pdf-lib" package at build time.
+  const { PDFDocument } = await loadPdfLibFromCdn();
 
   // Fetch the blank DEH PDF from the public folder (works in any browser)
   const res = await fetch("/assets/catering-permit-blank.pdf");
