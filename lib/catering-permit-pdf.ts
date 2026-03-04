@@ -1,4 +1,5 @@
-import { PDFDocument } from "pdf-lib";
+// pdf-lib is loaded dynamically to avoid Turbopack static-analysis failures.
+// fs/path are Node.js built-ins and load fine statically.
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { CateringPermitData } from "./catering-permit";
@@ -44,6 +45,9 @@ const INITIAL_FIELD_NAMES: Record<number, string> = {
 };
 
 export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8Array> {
+  // Dynamic import: resolved at Node.js runtime, not at Turbopack build time
+  const { PDFDocument } = await import("pdf-lib");
+
   const pdfPath = join(process.cwd(), "public/assets/catering-permit-blank.pdf");
   const pdfBytes = readFileSync(pdfPath);
   const doc = await PDFDocument.load(pdfBytes);

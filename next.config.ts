@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // pdf-lib uses Node.js internals (Buffer, etc.) that Turbopack can't bundle.
-  // Marking it external tells Next.js to use it directly from node_modules.
-  serverExternalPackages: ["pdf-lib"],
   /*
     headers: async () => {
       return [
