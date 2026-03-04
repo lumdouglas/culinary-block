@@ -1,10 +1,5 @@
 import { google } from "@ai-sdk/google";
-import {
-  convertToModelMessages,
-  stepCountIs,
-  streamText,
-  tool,
-} from "ai";
+import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import {
   updatePermitDataSchema,
@@ -212,10 +207,19 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse();
   } catch (err) {
     console.error("Catering permit chat error:", err);
-    return new Response(
-      JSON.stringify({ error: "Chat failed. Please try again." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    const message = err instanceof Error ? err.message : String(err);
+    const isQuota =
+      message.includes("quota") ||
+      message.includes("RESOURCE_EXHAUSTED") ||
+      message.includes("rate limit") ||
+      (err as { status?: string })?.status === "RESOURCE_EXHAUSTED";
+    const userMessage = isQuota
+      ? "The AI service has reached its rate limit. Please wait a minute and try again, or check your Google AI plan: https://ai.google.dev/gemini-api/docs/rate-limits"
+      : "Chat failed. Please try again.";
+    return new Response(JSON.stringify({ error: userMessage }), {
+      status: isQuota ? 429 : 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 

@@ -20,7 +20,7 @@ AI-guided form wizard that fills the Santa Clara DEH "Catering Operations at a H
 **Files:**
 - `app/apply/catering-permit/page.tsx` — page entry point
 - `components/catering-permit/permit-wizard.tsx` — full UI (chat, voice, language selector, PDF download)
-- `app/api/catering-permit/chat/route.ts` — Gemini 2.5 Flash streaming chat, `runtime = "edge"`
+- `app/api/catering-permit/chat/route.ts` — Gemini 2.5 Flash streaming chat, `runtime = "edge"`. Free tier has a low request limit (~20/min); quota errors return 429 and a user-friendly message in the UI.
 - `lib/catering-permit.ts` — Zod schemas, `CateringPermitData`, `DEFAULT_PERMIT_DATA`, `mergePermitData`
 - `lib/catering-permit-pdf.ts` — **client-only** PDF generation via `fetch("/assets/catering-permit-blank.pdf")`, loading `pdf-lib` from a browser-only CDN script (`https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js`) at runtime. Must be loaded only via **dynamic** `import("@/lib/catering-permit-pdf")` (e.g. in the download button handler), never static import, or Turbopack will try to resolve `pdf-lib` at build time and the Vercel build will fail.
 - `public/assets/catering-permit-blank.pdf` — real DEH AcroForm PDF (96 fields, 4 pages)

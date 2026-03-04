@@ -132,6 +132,30 @@ export function PermitWizard() {
 
   const isLoading = status === "streaming" || status === "submitted";
 
+  // Log chat status in production only so we can debug stalls without
+  // interfering with dev HMR behavior.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") return;
+    // #region agent log
+    fetch("http://127.0.0.1:7533/ingest/483f0db5-e7b2-4169-b067-3108112155bc", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Debug-Session-Id": "034496",
+      },
+      body: JSON.stringify({
+        sessionId: "034496",
+        runId: "pre-fix-2",
+        hypothesisId: "D",
+        location: "components/catering-permit/permit-wizard.tsx:status",
+        message: "Permit wizard status update",
+        data: { status, messagesLength: messages.length },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+  }, [status, messages.length]);
+
   // ── Derive permit data from AI tool calls ──────────────────────────────────
   useEffect(() => {
     const next = extractPermitUpdatesFromMessages(messages);
@@ -168,7 +192,16 @@ export function PermitWizard() {
   // ── Surface API errors from useChat ───────────────────────────────────────
   useEffect(() => {
     if (chatApiError) {
-      setChatError(chatApiError.message || "Something went wrong. Please try again.");
+      const raw = chatApiError.message || "Something went wrong. Please try again.";
+      const isQuota =
+        raw.includes("quota") ||
+        raw.includes("rate limit") ||
+        raw.includes("RESOURCE_EXHAUSTED");
+      setChatError(
+        isQuota
+          ? "The AI service has reached its rate limit. Please wait a minute and try again, or check your Google AI plan."
+          : raw
+      );
     }
   }, [chatApiError]);
 
