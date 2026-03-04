@@ -14,7 +14,6 @@ import {
   type PermitLanguageCode,
   type UpdatePermitData,
 } from "@/lib/catering-permit";
-import { generatePermitPdf } from "@/lib/catering-permit-pdf";
 import { cn } from "@/lib/utils";
 import { Mic, MicOff, Send, Download, Loader2 } from "lucide-react";
 
@@ -38,6 +37,7 @@ export function PermitWizard() {
   const [language, setLanguage] = useState<PermitLanguageCode>("en");
   const [permitData, setPermitData] = useState<CateringPermitData>(DEFAULT_PERMIT_DATA);
   const [isListening, setIsListening] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const languageRef = useRef(language);
@@ -286,22 +286,32 @@ export function PermitWizard() {
           </div>
 
           <Button
-            disabled={!canDownload}
+            disabled={!canDownload || isDownloading}
             className="w-full bg-emerald-600 hover:bg-emerald-700"
             data-testid="permit-download-pdf"
             onClick={async () => {
               if (!canDownload) return;
-              const bytes = await generatePermitPdf(permitData);
-              const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "catering-permit-application.pdf";
-              a.click();
-              URL.revokeObjectURL(url);
+              setIsDownloading(true);
+              try {
+                const { generatePermitPdf } = await import("@/lib/catering-permit-pdf");
+                const bytes = await generatePermitPdf(permitData);
+                const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "catering-permit-application.pdf";
+                a.click();
+                URL.revokeObjectURL(url);
+              } finally {
+                setIsDownloading(false);
+              }
             }}
           >
-            <Download className="mr-2 h-4 w-4" />
+            {isDownloading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
             Download filled PDF
           </Button>
           <p className="text-xs text-slate-500">
