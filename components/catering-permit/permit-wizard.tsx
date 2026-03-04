@@ -15,8 +15,23 @@ import {
   type UpdatePermitData,
 } from "@/lib/catering-permit";
 import { cn } from "@/lib/utils";
-import { Mic, MicOff, Send, Download, Loader2 } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Send,
+  Download,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Trash2,
+  ChevronDown,
+} from "lucide-react";
 
+// ─── constants ──────────────────────────────────────────────────────────────
+const FORM_DATA_KEY = "permit-wizard-form-v1";
+const STREAM_TIMEOUT_MS = 60_000;
+
+// ─── helpers ────────────────────────────────────────────────────────────────
 function extractPermitUpdatesFromMessages(
   messages: Array<{ id: string; role: string; parts?: Array<{ type: string; input?: unknown }> }>
 ): CateringPermitData {
@@ -33,15 +48,63 @@ function extractPermitUpdatesFromMessages(
   return data;
 }
 
+function messagesHaveToolUpdates(
+  messages: Array<{ role: string; parts?: Array<{ type: string }> }>
+) {
+  return messages.some(
+    (m) =>
+      m.role === "assistant" &&
+      m.parts?.some((p) => p.type === "tool-update_permit_data")
+  );
+}
+
+function loadSavedFormData(): CateringPermitData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(FORM_DATA_KEY);
+    return raw ? (JSON.parse(raw) as CateringPermitData) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveFormData(data: CateringPermitData) {
+  try {
+    if (JSON.stringify(data) !== JSON.stringify(DEFAULT_PERMIT_DATA)) {
+      localStorage.setItem(FORM_DATA_KEY, JSON.stringify(data));
+    }
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+}
+
+function clearFormData() {
+  try {
+    localStorage.removeItem(FORM_DATA_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+// ─── component ──────────────────────────────────────────────────────────────
 export function PermitWizard() {
   const [language, setLanguage] = useState<PermitLanguageCode>("en");
   const [permitData, setPermitData] = useState<CateringPermitData>(DEFAULT_PERMIT_DATA);
   const [isListening, setIsListening] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
+
+  // Error / feedback states
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
+  const [lastUserText, setLastUserText] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const languageRef = useRef(language);
   languageRef.current = language;
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -50,23 +113,91 @@ export function PermitWizard() {
       }),
     []
   );
-  const { messages, sendMessage, status } = useChat({ transport });
+
+  // Destructure error + stop in addition to the existing fields.
+  // "stop" aborts an in-flight stream; "error" surfaces API failures.
+  const {
+    messages,
+    sendMessage,
+    status,
+    error: chatApiError,
+    stop,
+  } = useChat({ transport }) as {
+    messages: Array<{ id: string; role: string; parts?: Array<{ type: string; text?: string; input?: unknown }> }>;
+    sendMessage: (msg: { text: string }) => void;
+    status: "idle" | "submitted" | "streaming" | "error";
+    error?: Error;
+    stop?: () => void;
+  };
 
   const isLoading = status === "streaming" || status === "submitted";
 
+  // ── Derive permit data from AI tool calls ──────────────────────────────────
   useEffect(() => {
     const next = extractPermitUpdatesFromMessages(messages);
     setPermitData(next);
   }, [messages]);
 
+  // ── Restore saved form data on first mount (no messages yet = fresh session) ──
+  // Runs after the messages effect above, so it wins when messages are empty.
+  // This avoids SSR hydration issues (we never read localStorage during SSR).
+  useEffect(() => {
+    if (messagesHaveToolUpdates(messages)) return; // AI data takes priority
+    const saved = loadSavedFormData();
+    if (saved) setPermitData(saved);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally runs only once on mount
+
+  // ── Persist form data whenever it changes ─────────────────────────────────
+  useEffect(() => {
+    saveFormData(permitData);
+  }, [permitData]);
+
+  // ── Auto-scroll chat to bottom ────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // ── Detect browser speech support ─────────────────────────────────────────
   useEffect(() => {
-    setSpeechSupported("webkitSpeechRecognition" in window);
+    setSpeechSupported(
+      "webkitSpeechRecognition" in window || "SpeechRecognition" in window
+    );
   }, []);
 
+  // ── Surface API errors from useChat ───────────────────────────────────────
+  useEffect(() => {
+    if (chatApiError) {
+      setChatError(chatApiError.message || "Something went wrong. Please try again.");
+    }
+  }, [chatApiError]);
+
+  // ── Clear chat error when a new stream starts ─────────────────────────────
+  useEffect(() => {
+    if (status === "streaming") setChatError(null);
+  }, [status]);
+
+  // ── Streaming timeout: abort + show error if AI takes > 60 s ─────────────
+  useEffect(() => {
+    if (isLoading) {
+      streamTimeoutRef.current = setTimeout(() => {
+        stop?.();
+        setChatError(
+          "The AI is taking too long to respond. Please try sending your message again."
+        );
+      }, STREAM_TIMEOUT_MS);
+    } else {
+      if (streamTimeoutRef.current) {
+        clearTimeout(streamTimeoutRef.current);
+        streamTimeoutRef.current = null;
+      }
+    }
+    return () => {
+      if (streamTimeoutRef.current) clearTimeout(streamTimeoutRef.current);
+    };
+  }, [isLoading, stop]);
+
+  // ── Input state ───────────────────────────────────────────────────────────
   const [inputValue, setInputValue] = useState("");
 
   const handleSubmit = useCallback(
@@ -74,25 +205,40 @@ export function PermitWizard() {
       e?.preventDefault();
       const text = inputValue.trim();
       if (!text || isLoading) return;
+      setLastUserText(text);
+      setChatError(null);
       setInputValue("");
       sendMessage({ text });
     },
     [inputValue, isLoading, sendMessage]
   );
 
+  const handleRetry = useCallback(() => {
+    if (!lastUserText || isLoading) return;
+    setChatError(null);
+    sendMessage({ text: lastUserText });
+  }, [lastUserText, isLoading, sendMessage]);
+
+  const handleStartOver = useCallback(() => {
+    clearFormData();
+    window.location.reload();
+  }, []);
+
+  // ── Voice input ───────────────────────────────────────────────────────────
   const langMap: Record<PermitLanguageCode, string> = {
     en: "en-US",
     es: "es-US",
     zh: "zh-CN",
     vi: "vi-VN",
   };
+
   type SpeechRecognitionInstance = {
     continuous: boolean;
     interimResults: boolean;
     lang: string;
     onresult: (event: { results: Iterable<{ 0: { transcript: string }; length: number }> }) => void;
     onend: () => void;
-    onerror: () => void;
+    onerror: (event: { error: string }) => void;
     start: () => void;
     stop: () => void;
   };
@@ -100,51 +246,103 @@ export function PermitWizard() {
 
   const toggleMic = useCallback(() => {
     if (!speechSupported) return;
+    setMicError(null);
+
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
       return;
     }
+
     const Win = window as unknown as {
       SpeechRecognition?: new () => SpeechRecognitionInstance;
       webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
     };
     const SpeechRecognition = Win.SpeechRecognition ?? Win.webkitSpeechRecognition;
     if (!SpeechRecognition) return;
+
     const rec = new SpeechRecognition();
     rec.continuous = false;
     rec.interimResults = false;
     rec.lang = langMap[language];
-    rec.onresult = (event: { results: Iterable<{ 0: { transcript: string }; length: number }> }) => {
+
+    rec.onresult = (event) => {
       const transcript = Array.from(event.results)
         .map((r) => r[0].transcript)
         .join("");
       setInputValue((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      setMicError(null);
     };
+
     rec.onend = () => setIsListening(false);
-    rec.onerror = () => setIsListening(false);
+
+    rec.onerror = (event) => {
+      setIsListening(false);
+      const code = event.error;
+      if (code === "not-allowed" || code === "permission-denied") {
+        setMicError(
+          "Microphone access was denied. Please allow microphone access in your browser settings and try again."
+        );
+      } else if (code === "no-speech") {
+        setMicError("No speech was detected. Please try again or type your answer.");
+      } else if (code === "network") {
+        setMicError("Voice recognition requires an internet connection.");
+      } else {
+        setMicError("Voice input stopped unexpectedly. Please type your answer.");
+      }
+    };
+
     recognitionRef.current = rec;
-    rec.start();
-    setIsListening(true);
+
+    try {
+      rec.start();
+      setIsListening(true);
+    } catch {
+      setMicError("Could not start microphone. Please type your answer instead.");
+    }
   }, [language, isListening, speechSupported]);
 
-  const hasRequiredContact =
-    permitData.catering_dba &&
-    permitData.owner_name &&
-    permitData.owner_phone &&
-    permitData.owner_email;
-  const hasMenu = permitData.menu_items.length > 0;
-  const canDownload = hasRequiredContact && hasMenu;
+  // ── Derived: can the user download? What's missing? ───────────────────────
+  const missingFields: string[] = [];
+  if (!permitData.catering_dba) missingFields.push("business name");
+  if (!permitData.owner_name) missingFields.push("owner name");
+  if (!permitData.owner_phone) missingFields.push("phone number");
+  if (!permitData.owner_email) missingFields.push("email address");
+  if (permitData.menu_items.length === 0) missingFields.push("at least one menu item");
 
+  const canDownload = missingFields.length === 0;
+  const hasAnyData =
+    JSON.stringify(permitData) !== JSON.stringify(DEFAULT_PERMIT_DATA);
+
+  // ─── render ───────────────────────────────────────────────────────────────
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">
-          Santa Clara County Catering Permit Assistant
-        </h1>
-        <p className="text-slate-600 mt-1">
-          We’ll fill out your application step by step. Speak or type in your language.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              Santa Clara County Catering Permit Assistant
+            </h1>
+            <p className="text-slate-600 mt-1">
+              We&apos;ll fill out your application step by step. Speak or type in your language.
+            </p>
+          </div>
+          {(messages.length > 0 || hasAnyData) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleStartOver}
+              className="text-slate-400 hover:text-red-500 flex items-center gap-1.5 shrink-0 mt-1"
+              title="Clear session and start over"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Start over
+            </Button>
+          )}
+        </div>
+
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Label className="text-slate-700 font-medium">Language:</Label>
           <div className="flex gap-2">
@@ -165,18 +363,36 @@ export function PermitWizard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          <div
-            className={cn(
-              "rounded-2xl border bg-white min-h-[320px] max-h-[480px] overflow-y-auto p-4 flex flex-col"
-            )}
-          >
+        {/* Chat area */}
+        <div className="lg:col-span-2 space-y-3">
+          <div className="rounded-2xl border bg-white min-h-[320px] max-h-[480px] overflow-y-auto p-4 flex flex-col">
             <div className="flex-1 space-y-4">
+
+              {/* Welcome message — shown only before first exchange */}
               {messages.length === 0 && (
-                <p className="text-slate-500 text-sm">
-                  Say or type something like: “My business is called Maria’s Kitchen and I’m the owner.”
-                </p>
+                <div className="flex justify-start">
+                  <div className="max-w-[88%] rounded-2xl px-4 py-3 text-sm bg-slate-100 text-slate-900 space-y-2">
+                    <p className="font-semibold">
+                      👋 Welcome to the Culinary Block Permit Assistant!
+                    </p>
+                    <p>
+                      I&apos;ll guide you through the Santa Clara County DEH catering
+                      permit application — step by step, in about 10–15 minutes.
+                    </p>
+                    <p>
+                      To start:{" "}
+                      <strong>What is the name of your catering business?</strong>{" "}
+                      (This is your DBA — &quot;Doing Business As&quot; — name.)
+                    </p>
+                    <p className="text-slate-500 text-xs flex items-center gap-1">
+                      <ChevronDown className="h-3 w-3" />
+                      Type below, or tap the mic to speak
+                    </p>
+                  </div>
+                </div>
               )}
+
+              {/* Chat messages */}
               {messages.map((m) => (
                 <div
                   key={m.id}
@@ -196,13 +412,19 @@ export function PermitWizard() {
                     {m.parts?.map((part, i) => {
                       const p = part as { type: string; text?: string };
                       if (p.type === "text" && p.text) {
-                        return <p key={i} className="whitespace-pre-wrap">{p.text}</p>;
+                        return (
+                          <p key={i} className="whitespace-pre-wrap">
+                            {p.text}
+                          </p>
+                        );
                       }
                       return null;
                     })}
                   </div>
                 </div>
               ))}
+
+              {/* Loading indicator */}
               {isLoading && (
                 <div className="flex justify-start">
                   <div className="bg-slate-100 rounded-2xl px-4 py-2">
@@ -210,10 +432,43 @@ export function PermitWizard() {
                   </div>
                 </div>
               )}
+
+              {/* Error message with retry */}
+              {chatError && !isLoading && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm bg-red-50 border border-red-200 text-red-800 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>{chatError}</span>
+                    </div>
+                    {lastUserText && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleRetry}
+                        className="border-red-300 text-red-700 hover:bg-red-100 h-7 flex items-center gap-1.5"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Try again
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Mic error banner */}
+          {micError && (
+            <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{micError}</span>
+            </div>
+          )}
+
+          {/* Input row */}
           <form onSubmit={handleSubmit} className="flex gap-2">
             {speechSupported && (
               <Button
@@ -240,12 +495,17 @@ export function PermitWizard() {
               disabled={isLoading}
               data-testid="permit-chat-input"
             />
-            <Button type="submit" disabled={isLoading || !inputValue.trim()} data-testid="permit-chat-send">
+            <Button
+              type="submit"
+              disabled={isLoading || !inputValue.trim()}
+              data-testid="permit-chat-send"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </form>
         </div>
 
+        {/* Sidebar: form summary + download */}
         <div className="space-y-4">
           <div className="rounded-2xl border bg-slate-50 p-4">
             <h2 className="font-semibold text-slate-900 mb-3">Your application so far</h2>
@@ -285,23 +545,35 @@ export function PermitWizard() {
             </dl>
           </div>
 
+          {/* Download button */}
           <Button
             disabled={!canDownload || isDownloading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60"
             data-testid="permit-download-pdf"
             onClick={async () => {
               if (!canDownload) return;
+              setDownloadError(null);
               setIsDownloading(true);
               try {
-                const { generatePermitPdf } = await import("@/lib/catering-permit-pdf");
+                const { generatePermitPdf } = await import(
+                  "@/lib/catering-permit-pdf"
+                );
                 const bytes = await generatePermitPdf(permitData);
-                const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+                const blob = new Blob([bytes.buffer as ArrayBuffer], {
+                  type: "application/pdf",
+                });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = "catering-permit-application.pdf";
                 a.click();
                 URL.revokeObjectURL(url);
+              } catch (err) {
+                setDownloadError(
+                  err instanceof Error
+                    ? `PDF error: ${err.message}`
+                    : "Could not generate the PDF. Please try again."
+                );
               } finally {
                 setIsDownloading(false);
               }
@@ -314,8 +586,31 @@ export function PermitWizard() {
             )}
             Download filled PDF
           </Button>
+
+          {/* Missing fields hint — shown when button is disabled */}
+          {!canDownload && missingFields.length > 0 && (
+            <div className="text-xs text-slate-500 bg-slate-100 rounded-xl px-3 py-2 space-y-1">
+              <p className="font-medium text-slate-600">Still needed:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {missingFields.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Download error */}
+          {downloadError && (
+            <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <span>{downloadError}</span>
+            </div>
+          )}
+
           <p className="text-xs text-slate-500">
-            Complete the chat to collect all required fields, then download. Submit the PDF and $446 fee to the county. Culinary Block permit-assist service ($100) can be added at checkout when you book.
+            Complete the chat to collect all required fields, then download. Submit
+            the PDF and $446 fee to the county. Culinary Block permit-assist service
+            ($100) can be added at checkout when you book.
           </p>
         </div>
       </div>
