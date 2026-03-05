@@ -72,11 +72,13 @@ export async function getBookingsForDateRange(startDate: string, endDate: string
 
   if (error) {
     console.error('Error fetching bookings:', error);
-    return { error: error.message, data: [], currentUserId };
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUserId).single();
+    return { error: error.message, data: [], currentUserId, isAdmin: profile?.role === 'admin' };
   }
 
   if (!bookings || bookings.length === 0) {
-    return { data: [], currentUserId };
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUserId).single();
+    return { data: [], currentUserId, isAdmin: profile?.role === 'admin' };
   }
 
   // Get unique user IDs from bookings
@@ -97,13 +99,32 @@ export async function getBookingsForDateRange(startDate: string, endDate: string
     profile: profileMap.get(booking.user_id) || { company_name: 'Unknown' }
   }));
 
-  return { data: bookingsWithProfiles as Booking[], currentUserId };
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user?.id)
+    .single();
+
+  const isAdmin = profile?.role === 'admin';
+
+  return { data: bookingsWithProfiles as Booking[], currentUserId, isAdmin };
 }
 
 
 // Check if a time slot is available
 export async function checkAvailability(stationId: number, startTime: string, endTime: string) {
   const supabase = await createClient();
+
+  // Get the category of the station. If it's a General station, it allows concurrent bookings, so we don't check for overlaps.
+  const { data: station } = await supabase
+    .from('stations')
+    .select('category')
+    .eq('id', stationId)
+    .single();
+
+  if (station?.category === 'General') {
+    return { available: true };
+  }
 
   // Check for overlapping confirmed bookings
   const { data, error } = await supabase
@@ -198,10 +219,7 @@ export async function createBooking(
         return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
       }
 
-      // If BOTH stations ARE General, block it. (Tenant only needs one prep table)
-      if (targetStation.category === 'General' && existingCategory === 'General') {
-        return { error: "You already have a general station booked during this time." };
-      }
+      // We removed the block where BOTH stations are General, meaning a user can book multiple Prep Kitchens
     }
   }
 
@@ -355,10 +373,7 @@ export async function updateBooking(
         return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
       }
 
-      // If BOTH stations ARE General, block it.
-      if (targetStation.category === 'General' && existingCategory === 'General') {
-        return { error: "You already have a general station booked during this time." };
-      }
+      // We removed the block where BOTH stations are General, meaning a user can book multiple Prep Kitchens
     }
   }
 
@@ -415,4 +430,67 @@ export async function getUserBookings() {
   }
 
   return { data: data as Booking[] };
+}
+
+// Create new bookings across multiple stations at once (ADMIN ONLY)
+export async function createAdminBookings(
+  stationIds: number[],
+  startTime: string,
+  endTime: string,
+  notes?: string
+) {
+  const supabase = await createClient();
+
+  // Verify user is authenticated
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Not authenticated. Please log in to make a booking." };
+  }
+
+  // Verify caller is an admin
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') {
+    return { error: "Only administrators can book multiple stations simultaneously." };
+  }
+
+  // Check availability for all requested stations first
+  for (const stationId of stationIds) {
+    const availability = await checkAvailability(stationId, startTime, endTime);
+    if (availability.error) {
+      return { error: availability.error };
+    }
+    if (!availability.available) {
+      // Find the specific station name to give a better error message
+      const { data: station } = await supabase.from('stations').select('name').eq('id', stationId).single();
+      return { error: `The time slot is no longer available for ${station?.name || 'one of the selected stations'}. Please select a different time.` };
+    }
+  }
+
+  // All stations are available; proceed with insertions
+  const bookingsToInsert = stationIds.map(stationId => ({
+    station_id: stationId,
+    user_id: user.id, // Admin booking for themselves, or adjust if booking on behalf of others is needed (out of scope for now)
+    start_time: startTime,
+    end_time: endTime,
+    notes,
+    status: 'confirmed'
+  }));
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .insert(bookingsToInsert)
+    .select();
+
+  if (error) {
+    console.error('Error creating admin bookings:', error);
+    return { error: "Failed to create one or more bookings. Please try again." };
+  }
+
+  revalidatePath('/calendar');
+  return { data };
 }

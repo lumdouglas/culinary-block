@@ -21,7 +21,7 @@ export default function ThankYouPage() {
                         Your application has been submitted successfully.
                     </p>
                     <p className="text-slate-500 mb-8">
-                        We'll review your application and get back to you within 2-3 business days.
+                        We'll review your application and get back to you within 5-7 business days.
                     </p>
 
                     <div className="space-y-4">

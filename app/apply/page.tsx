@@ -87,6 +87,15 @@ export default function ApplicationPage() {
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold">Book a Tour / Apply for Kitchen Space</h1>
           <p className="text-slate-500 mt-2">Tell us about your business and kitchen needs</p>
+          <p className="mt-4">
+            <a
+              href="/apply/catering-permit"
+              className="text-emerald-600 font-medium hover:underline"
+              data-testid="link-catering-permit"
+            >
+              Need help with your Santa Clara County catering permit? Use our AI assistant →
+            </a>
+          </p>
         </div>
 
         <Form {...form}>

@@ -28,6 +28,7 @@ export default function CalendarPageClient() {
     const [stations, setStations] = useState<Station[]>([])
     const [bookings, setBookings] = useState<Booking[]>([])
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+    const [isAdmin, setIsAdmin] = useState<boolean>(false)
     const [selectedStations, setSelectedStations] = useState<number[]>([])
     const [expandedStationIds, setExpandedStationIds] = useState<number[]>([])
     const [viewMode, setViewMode] = useState<ViewMode>('schedule')
@@ -80,6 +81,9 @@ export default function CalendarPageClient() {
             }
             if (bookingsResult.currentUserId) {
                 setCurrentUserId(bookingsResult.currentUserId)
+            }
+            if (bookingsResult.isAdmin !== undefined) {
+                setIsAdmin(bookingsResult.isAdmin)
             }
         } catch {
             toast.error('Failed to load calendar data')
@@ -186,6 +190,7 @@ export default function CalendarPageClient() {
                                         preselectedStartTime={preselectedStartTime}
                                         preselectedDuration={preselectedDuration}
                                         onSuccess={handleBookingSuccess}
+                                        isAdmin={isAdmin}
                                     />
                                 </DialogContent>
                             </Dialog>

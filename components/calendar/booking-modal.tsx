@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { createBooking, Station } from "@/app/actions/bookings"
+import { createBooking, createAdminBookings, Station } from "@/app/actions/bookings"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,8 @@ const durationOptions = [
 ]
 
 const bookingFormSchema = z.object({
-  station_id: z.string().min(1, "Please select a station"),
+  station_id: z.string().optional(), // Used for single select
+  station_ids: z.array(z.string()).min(1, "Please select at least one station"),
   date: z.string().min(1, "Please select a date"),
   start_time: z.string().min(1, "Please select a start time"),
   duration: z.string().min(1, "Please select a duration"),
@@ -45,6 +46,7 @@ interface BookingModalProps {
   preselectedDate?: Date
   preselectedStartTime?: string
   preselectedDuration?: string
+  isAdmin?: boolean
   onSuccess?: () => void
 }
 
@@ -54,6 +56,7 @@ export function BookingForm({
   preselectedDate,
   preselectedStartTime,
   preselectedDuration,
+  isAdmin = false,
   onSuccess
 }: BookingModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -84,11 +87,13 @@ export function BookingForm({
   })
 
   const generalKitchen = stations.find(s => s.name === 'Prep Kitchen')
+  const defaultStationId = preselectedStation?.toString() || generalKitchen?.id.toString() || ""
 
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
-      station_id: preselectedStation?.toString() || generalKitchen?.id.toString() || "",
+      station_id: defaultStationId,
+      station_ids: defaultStationId ? [defaultStationId] : [],
       date: preselectedDate ? formatDate(preselectedDate) : formatDate(new Date()),
       start_time: preselectedStartTime || "09:00",
       duration: preselectedDuration || "1",
@@ -104,17 +109,35 @@ export function BookingForm({
       const durationHours = parseFloat(values.duration)
       const endDateTime = new Date(startDateTime.getTime() + durationHours * 60 * 60 * 1000)
 
-      const result = await createBooking(
-        parseInt(values.station_id),
-        startDateTime.toISOString(),
-        endDateTime.toISOString(),
-        values.notes
-      )
+      let result;
 
-      if (result.error) {
+      if (isAdmin && values.station_ids.length > 0) {
+        // Admin multiple booking
+        const stationIds = values.station_ids.map(id => parseInt(id))
+        result = await createAdminBookings(
+          stationIds,
+          startDateTime.toISOString(),
+          endDateTime.toISOString(),
+          values.notes
+        )
+      } else if (values.station_id) {
+        // Standard single booking
+        result = await createBooking(
+          parseInt(values.station_id),
+          startDateTime.toISOString(),
+          endDateTime.toISOString(),
+          values.notes
+        )
+      } else {
+        toast.error("Please select a station")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success("Booking created successfully!")
+        toast.success(isAdmin ? "Bookings created successfully!" : "Booking created successfully!")
         form.reset()
         onSuccess?.()
       }
@@ -144,30 +167,68 @@ export function BookingForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="station_id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Select Station</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a station" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
+        {isAdmin ? (
+          <FormField
+            control={form.control}
+            name="station_ids"
+            render={({ field }) => (
+              <FormItem className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                <FormLabel className="text-base">Select Stations</FormLabel>
+                <div className="grid grid-cols-2 gap-3 mt-2 max-h-48 overflow-y-auto pr-2">
                   {stations.map((station) => (
-                    <SelectItem key={station.id} value={station.id.toString()} title={station.equipment}>
-                      {station.name} ({station.category})
-                    </SelectItem>
+                    <div key={station.id} className="flex items-start space-x-2">
+                      <input
+                        type="checkbox"
+                        className="mt-1 flex-shrink-0"
+                        id={`station-${station.id}`}
+                        checked={field.value?.includes(station.id.toString())}
+                        onChange={(e) => {
+                          const currentValues = field.value || []
+                          if (e.target.checked) {
+                            field.onChange([...currentValues, station.id.toString()])
+                          } else {
+                            field.onChange(currentValues.filter(v => v !== station.id.toString()))
+                          }
+                        }}
+                      />
+                      <label htmlFor={`station-${station.id}`} className="text-sm cursor-pointer block leading-none pt-0.5">
+                        <span className="font-medium text-slate-900">{station.name}</span>
+                        <br />
+                        <span className="text-xs text-slate-500">{station.category}</span>
+                      </label>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name="station_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Select Station</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a station" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {stations.map((station) => (
+                      <SelectItem key={station.id} value={station.id.toString()} title={station.equipment}>
+                        {station.name} ({station.category})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
@@ -274,8 +335,10 @@ export function BookingForm({
         </div>
 
         <p className="text-xs text-slate-400 text-center pt-1">
-          Bookings are limited to 6 months in advance and one station at a time.{" "}
-          <span className="text-slate-500 font-medium">Need more? Contact Culinary Block Management.</span>
+          {isAdmin
+            ? "Admin privileges: Concurrency limits disabled. You may book multiple stations simultaneously."
+            : <>Bookings are limited to 6 months in advance and one station at a time. <span className="text-slate-500 font-medium">Need more? Contact Culinary Block Management.</span></>
+          }
         </p>
       </form>
     </Form>

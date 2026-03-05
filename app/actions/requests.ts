@@ -180,7 +180,7 @@ export async function getRequests(filters?: {
         description: t.title ? `**${t.title}**\n\n${t.description}` : t.description,
         photo_url: t.photo_url || null,
         // Map ticket statuses to request statuses
-        status: (t.status === 'open' ? 'pending' : t.status) as RequestStatus,
+        status: (t.status === 'open' ? 'pending' : t.status === 'closed' ? 'rejected' : t.status) as RequestStatus,
         priority: (t.priority || 'medium') as RequestPriority,
         created_at: t.created_at,
         updated_at: t.updated_at || t.created_at,
@@ -233,7 +233,11 @@ export async function updateRequest(
         // Map request statuses back to ticket statuses
         const ticketUpdates: any = { ...updates }
         if (updates.status === 'pending') ticketUpdates.status = 'open'
-        if (updates.status === 'resolved') ticketUpdates.resolved_at = new Date().toISOString()
+        if (updates.status === 'resolved' || updates.status === 'approved') {
+            ticketUpdates.status = 'resolved'
+            ticketUpdates.resolved_at = new Date().toISOString()
+        }
+        if (updates.status === 'rejected') ticketUpdates.status = 'closed'
 
         const { error } = await adminClient
             .from('maintenance_tickets')
