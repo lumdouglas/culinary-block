@@ -188,7 +188,7 @@ export async function createBooking(
   // 1. Get the category of the station being booked
   const { data: targetStation } = await supabase
     .from('stations')
-    .select('category')
+    .select('category, name') // Also select name for the new rule
     .eq('id', stationId)
     .single();
 
@@ -201,7 +201,7 @@ export async function createBooking(
     .from('bookings')
     .select(`
       id,
-      station:stations(category)
+      station:stations(category, name)
     `)
     .eq('user_id', user.id)
     .eq('status', 'confirmed')
@@ -214,12 +214,19 @@ export async function createBooking(
       // @ts-ignore - Supabase join typing
       const existingCategory = booking.station?.category;
 
-      // If BOTH stations are NOT General, block it. (e.g. Hood + Oven)
-      if (targetStation.category !== 'General' && existingCategory !== 'General') {
-        return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
+      // If BOTH stations are NOT General AND neither is 'Oven (M)', block it.
+      // E.g., two Hoods, or a Hood and Oven L
+      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)';
+      // @ts-ignore - Supabase join typing returns an array for one-to-many, even if it's meant to be a single object
+      const existingStationName = Array.isArray(booking.station) ? booking.station[0]?.name : (booking.station as any)?.name;
+      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)';
+
+      if (!targetIsSecondary && !existingIsSecondary) {
+        return { error: "You already have a primary station booked during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
       }
 
-      // We removed the block where BOTH stations are General, meaning a user can book multiple Prep Kitchens
+      // We removed the block where BOTH stations are secondary, meaning a user can theoretically book multiple Prep Kitchens
+      // However, checkAvailability and DB triggers will enforce that Oven (M) cannot be overlapping within ITSELF across tenants.
     }
   }
 
@@ -341,7 +348,7 @@ export async function updateBooking(
   // 1. Get the category of the target station
   const { data: targetStation } = await supabase
     .from('stations')
-    .select('category')
+    .select('category, name') // Also select name for the new rule
     .eq('id', stationId)
     .single();
 
@@ -354,7 +361,7 @@ export async function updateBooking(
     .from('bookings')
     .select(`
       id,
-      station:stations(category)
+      station:stations(category, name)
     `)
     .eq('user_id', user.id)
     .eq('status', 'confirmed')
@@ -368,12 +375,18 @@ export async function updateBooking(
       // @ts-ignore - Supabase join typing
       const existingCategory = booking.station?.category;
 
-      // If BOTH stations are NOT General, block it.
-      if (targetStation.category !== 'General' && existingCategory !== 'General') {
-        return { error: "You already have a booking during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
+      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)';
+
+      // @ts-ignore - Supabase join typing returns an array for one-to-many, even if it's meant to be a single object
+      const existingStationName = Array.isArray(booking.station) ? booking.station[0]?.name : (booking.station as any)?.name;
+      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)';
+
+      // If BOTH stations are NOT General AND neither is 'Oven (M)', block it.
+      if (!targetIsSecondary && !existingIsSecondary) {
+        return { error: "You already have a primary station booked during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
       }
 
-      // We removed the block where BOTH stations are General, meaning a user can book multiple Prep Kitchens
+      // We removed the block where BOTH stations are secondary, meaning a user can book multiple Prep Kitchens
     }
   }
 
