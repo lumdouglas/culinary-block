@@ -1,5 +1,5 @@
 // Client-side PDF generation: pdf-lib runs in the browser, no Node.js APIs needed.
-// The blank DEH form is fetched from /assets/catering-permit-blank.pdf.
+// The blank DEH form is fetched from /assets/catering-packet-2025-08-25.pdf.
 import type { CateringPermitData } from "./catering-permit";
 
 function getInitials(name: string): string {
@@ -22,15 +22,17 @@ function todayFormatted(): string {
 interface PdfLibModule {
   PDFDocument: {
     load(bytes: Uint8Array): Promise<{
-      getForm(): {
-        getTextField(name: string): { setText(value: string): void };
-        getCheckBox(name: string): { check(): void; uncheck(): void };
-        getRadioGroup(name: string): { select(value: string): void };
-        flatten(): void;
-      };
+      getPages(): Array<{
+        drawText(text: string, options: any): void;
+      }>;
       save(): Promise<Uint8Array>;
+      embedFont(font: any): Promise<any>;
     }>;
   };
+  StandardFonts: {
+    Helvetica: any;
+  };
+  rgb(r: number, g: number, b: number): any;
 }
 
 async function loadPdfLibFromCdn(): Promise<PdfLibModule> {
@@ -60,162 +62,202 @@ async function loadPdfLibFromCdn(): Promise<PdfLibModule> {
   return globalAny.PDFLib;
 }
 
-// Exact AcroForm field names from the Santa Clara DEH Catering Application PDF (8.27.2025)
-const INITIAL_FIELD_NAMES: Record<number, string> = {
-  1: "Initial1 All food prior to the host facility shall be stored and prepared at the permanent food facilitycatering kitchen Home preparation of food is prohibited",
-  2: "Initial2 The Catering Operation shall conduct only limited food preparation as defined by CRFC section 113818",
-  3: "Initial3 A catering operation may only operate for up to 4 hours in any one 12hour period unless otherwise approved by the enforcement agency",
-  4: "Initial4 The Catering Operation shall post a sign with the name of the catering operation name of the operator permanent food facility address and the hours of operation at the Host Facility The most recent inspection report shall be made available to any consumer or enforcement agency upon request",
-  5: "Initial5 Catering Operations records shall be maintained and kept for 90 days after the event that includes location date time customer contact information menu and food transportation temperature logs",
-  6: "Initial6 Provide copies of food handler cards and food safety certification upon request at the Host Facility",
-  7: "Initial7 Potentially hazardous foods PHFs shall be discarded at the end of the catering event unless PHFs was held at required temperature and protected from contamination at all times If Time is used as a Public Health Control TPHC and approved prior by the enforcement agency all food shall be discarded at the end of food service",
-  8: "Initial8 Food will be discarded when it has been contaminated or was subject to improper holdingcooking temperatures",
-  9: "Initial9 Food and utensils shall be protected from contamination at all times",
-  10: "Initial10 Contaminated utensils shall be replaced with an adequate supply of clean utensils",
-  11: "Initial11 Consumers shall use a clean plate if returning to the selfservice line",
-  12: "Initial12 Utensils and equipment are certified or ANSI equivalent",
-  13: "Initial13 The interior of the vehicle used to transport food shall be constructed of smooth visible impervious material and maintained clean and free from debris",
-  14: "Initial14 Potable water is available and an adequate supply is provided at the catering operation",
-  15: "Initial15 A handwashing sink shall be unobstructed and supplied with warm water soap and paper towels and is located within the food service area",
-  16: "Initial16 Restrooms are available within 200 feet of the food service area",
-  17: "Initial17 Garbage and refuse are disposed of in an approved manner",
-  18: "Initial18 Liquid waste are disposed of in an approved plumbing system",
-  19: "Initial19 Food beverages equipment and utensils are not stored in a private home",
-  20: "Initial20 Overhead protection shall be provided at the food service area",
-};
-
 export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8Array> {
-  // Load pdf-lib from a browser-only CDN script so Turbopack / Vercel never
-  // has to resolve the "pdf-lib" package at build time.
-  const { PDFDocument } = await loadPdfLibFromCdn();
+  const PDFLib = await loadPdfLibFromCdn();
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-  // Fetch the blank DEH PDF from the public folder (works in any browser)
-  const res = await fetch("/assets/catering-permit-blank.pdf");
+  const res = await fetch("/assets/catering-packet-2025-08-25.pdf");
   if (!res.ok) throw new Error("Could not load blank permit PDF");
   const pdfBytes = new Uint8Array(await res.arrayBuffer());
 
   const doc = await PDFDocument.load(pdfBytes);
-  const form = doc.getForm();
+  const pages = doc.getPages();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const color = rgb(0.1, 0.1, 0.4); // Dark blue pen color
 
-  const tf = (name: string, value: string) => {
-    try {
-      form.getTextField(name).setText(value || "");
-    } catch {
-      // Field may not exist or be read-only; skip silently
-    }
+  const drawText = (pageIdx: number, text: string, x: number, y: number, size = 10) => {
+    if (!text) return;
+    pages[pageIdx].drawText(text, { x, y, size, font, color });
+  };
+  const drawCheck = (pageIdx: number, x: number, y: number, checked: boolean) => {
+    if (!checked) return;
+    pages[pageIdx].drawText("X", { x, y, size: 12, font, color });
   };
 
-  const cb = (name: string, checked: boolean) => {
-    try {
-      const field = form.getCheckBox(name);
-      if (checked) field.check();
-      else field.uncheck();
-    } catch {
-      // skip
-    }
-  };
+  // ── Page 2: Permit Application Page 1 ───────────────────────────────────────────
+  drawText(1, data.catering_dba, 40, 680);
+  drawText(1, data.owner_name, 40, 642);
+  drawText(1, data.owner_address, 40, 608);
+  drawText(1, data.owner_city, 40, 574);
+  drawText(1, data.owner_state || "CA", 400, 574);
+  drawText(1, data.owner_zip, 450, 574);
+  drawText(1, data.owner_phone, 40, 538);
+  drawText(1, data.owner_email, 250, 538);
 
-  const radio = (name: string, value: string) => {
-    try {
-      form.getRadioGroup(name).select(value);
-    } catch {
-      // skip
-    }
-  };
+  drawText(1, data.pff_name, 40, 470);
+  drawText(1, data.pff_address, 40, 435);
+  // PFF address is combined typically, let's just dump it in address
+  drawText(1, data.pff_county, 40, 365);
+  drawCheck(1, 40, 246, true); // Always check "Owner" for billing
 
-  // ── Page 1: Contact Information ────────────────────────────────────────────
-  tf("Name of Catering Operation DBA", data.catering_dba);
-  tf("Owner Name", data.owner_name);
-  tf("Owner Phone Number", data.owner_phone);
-  tf("Owner Email", data.owner_email);
-  tf("Name", data.pff_name);
-  tf("Address", data.pff_address);
-  tf("County", data.pff_county);
+  // ── Page 3: Permit Application Page 2 ───────────────────────────────────────────
+  // Signature Block
+  const ownerOrAgent = data.signature_name || data.owner_name;
+  drawText(2, ownerOrAgent, 60, 115);
+  drawText(2, data.owner_phone, 350, 115);
+  drawText(2, todayFormatted(), 450, 60);
 
-  // ── Page 2: Menu Items (up to 15 rows) ────────────────────────────────────
-  const maxItems = Math.min(data.menu_items.length, 15);
-  for (let i = 0; i < maxItems; i++) {
-    tf(`Food Item ${i + 1}`, data.menu_items[i].food);
-    tf(`Food Item ${i + 1}P`, data.menu_items[i].procedures);
-  }
+  // ── Page 5: Rental Kitchen Agreement ────────────────────────────────────────────
+  drawText(4, data.catering_dba, 70, 655);
+  drawText(4, data.owner_name, 70, 630);
+  drawText(4, data.owner_address, 70, 605);
+  const fullOwnerCity = [data.owner_city, data.owner_state, data.owner_zip].filter(Boolean).join(", ");
+  drawText(4, fullOwnerCity, 70, 580);
+  drawText(4, data.owner_email, 70, 555);
+  drawText(4, data.owner_phone, 320, 555);
 
-  // ── Page 3, Q2a: Food Transport ────────────────────────────────────────────
-  cb("Cambro", data.transport_cambro);
-  cb("Refrigerated Truck", data.transport_refrigerated_truck);
-  cb("Coolers", data.transport_coolers);
-  const hasOtherTransport = Boolean(data.transport_other?.trim());
-  cb("Other temperature log will be required", hasOtherTransport);
-  tf("undefined", data.transport_other ?? "");
+  drawText(4, data.pff_name, 70, 480);
+  drawText(4, data.pff_address, 300, 480);
 
-  // ── Page 3, Q2b: Temperature Maintenance ──────────────────────────────────
-  cb("Temperature control 135F or above OR 41F or below", data.temp_control);
-  tf("Equipment", data.temp_equipment ?? "");
-  cb(
-    "Time TPHC Time as a Public Health Control Written procedures are required for TPHC",
-    data.tphc
-  );
-  tf("Equipment time logs timers stickers etc", data.tphc_equipment ?? "");
+  // Operating days checkboxes (M-Su)
+  const days = data.operating_days || [];
+  const dayStr = days.join(" ").toLowerCase();
+  drawCheck(4, 98, 458, dayStr.includes("mon"));
+  drawCheck(4, 137, 458, dayStr.includes("tue"));
+  drawCheck(4, 187, 458, dayStr.includes("wed"));
+  drawCheck(4, 230, 458, dayStr.includes("thu"));
+  drawCheck(4, 280, 458, dayStr.includes("fri"));
+  drawCheck(4, 323, 458, dayStr.includes("sat"));
+  drawCheck(4, 360, 458, dayStr.includes("sun"));
+  drawText(4, data.operating_times || "", 60, 435);
 
-  // ── Page 3, Q3: Handwashing ────────────────────────────────────────────────
-  cb("Portable Handwash", data.handwash_portable);
-  cb("Host Facility handwashing sink", data.handwash_host);
-
-  // ── Page 3, Q4a: Sanitizing Location ──────────────────────────────────────
-  cb("Host Facility", data.sanitize_at_host);
-  cb("Permanent Food Facility", data.sanitize_at_pff);
-  radio(
-    "Does the Host Facility have a 3-compartment ware washing sink",
-    data.host_3_compartment ? "Yes" : "No"
-  );
-  radio(
-    "Will extra supplies utensilsequipment be brought into Host Facility",
-    data.extra_supplies_brought ? "Yes" : "No"
-  );
-
-  // ── Page 3, Q4b: Sanitizer Type ───────────────────────────────────────────
-  cb(
-    "Contact with a solution of 100 parts per million ppm available chlorine for at least 30 sec",
-    data.sanitizer_chlorine
-  );
-  cb(
-    "Contact with a solution of 200 ppm of available quaternary ammonia for at least 1 min",
-    data.sanitizer_quat
-  );
-  cb(
-    "Contact with a solution of 25 ppm available iodine for at least 1 min",
-    data.sanitizer_iodine
-  );
-
-  // ── Page 3, Q5: Refuse Disposal ───────────────────────────────────────────
-  cb("At permanent food facility", data.refuse_at_pff);
-  cb("At Host Facility", data.refuse_at_host);
-
-  // ── Page 3, Q6: Host Facility Locations (up to 5 rows) ────────────────────
-  const maxFacilities = Math.min(data.host_facilities.length, 5);
-  for (let i = 0; i < maxFacilities; i++) {
-    tf(`Host Facility NameRow${i + 1}`, data.host_facilities[i].name);
-    tf(`Street AddressRow${i + 1}`, data.host_facilities[i].street);
-    tf(`CityRow${i + 1}`, data.host_facilities[i].city);
-  }
-
-  // ── Page 4: Agreement — 20 Initials ───────────────────────────────────────
-  const initials = getInitials(data.signature_name || data.owner_name);
+  const initials = getInitials(ownerOrAgent);
   if (data.agreement_initialed && initials) {
-    for (let n = 1; n <= 20; n++) {
-      const fieldName = INITIAL_FIELD_NAMES[n];
-      if (fieldName) tf(fieldName, initials);
-    }
+    drawText(4, initials, 80, 375, 12);
+    drawText(4, initials, 80, 350, 12);
+    drawText(4, initials, 80, 325, 12);
+    drawText(4, initials, 80, 300, 12);
+    drawText(4, initials, 80, 275, 12);
+    drawText(4, initials, 80, 250, 12);
   }
 
-  // ── Page 4: Signature Block ────────────────────────────────────────────────
-  // PDFSignature field cannot be filled programmatically — applicant signs by hand.
-  const printedNameTitle = data.signature_title
-    ? `${data.signature_name} / ${data.signature_title}`
-    : data.signature_name;
-  tf("Printed Name  Title", printedNameTitle);
-  tf("Date1_af_date", todayFormatted());
+  // ── Page 6: WOPS Section A ──────────────────────────────────────────────────────
+  drawText(5, data.catering_dba, 240, 642);
+  drawText(5, data.owner_name, 150, 622);
+  drawText(5, data.owner_phone, 410, 622);
+  drawText(5, data.owner_email, 150, 602);
+  drawText(5, data.pff_name, 210, 560);
+  drawText(5, data.pff_address, 220, 540); // Address row 1
 
-  form.flatten();
+  // Target Customers
+  const cust = data.customer_types || [];
+  const custStr = cust.join(" ").toLowerCase();
+  drawCheck(5, 76, 474, custStr.includes("corporate"));
+  drawCheck(5, 76, 460, custStr.includes("event") || custStr.includes("party"));
+  drawCheck(5, 230, 474, custStr.includes("individual"));
+  const isOtherCust = !custStr.includes("corporate") && !custStr.includes("event") && !custStr.includes("party") && !custStr.includes("individual") && cust.length > 0;
+  drawCheck(5, 230, 460, isOtherCust);
+  if (isOtherCust) drawText(5, cust.join(", "), 270, 460);
+
+  // Order received by
+  const ord = data.order_methods || [];
+  const ordStr = ord.join(" ").toLowerCase();
+  drawCheck(5, 76, 405, ordStr.includes("phone"));
+  drawCheck(5, 203, 405, ordStr.includes("internet") || ordStr.includes("web") || ordStr.includes("online"));
+
+  drawText(5, (data.employee_count || 1).toString(), 310, 290);
+
+  // ── Page 7: WOPS Section B.1 to B.4 (Menu Items) ────────────────────────────────
+  let b1Y = 560;
+  let noCookY = 222;
+  let cookToServeY = 150;
+  let complexY = 72;
+
+  data.menu_items.slice(0, 10).forEach((item, i) => {
+    // Table
+    drawText(6, item.food, 80, b1Y - (i * 25));
+    // Ingredients text can be long, so we take a substring
+    const ingr = item.ingredients || "";
+    drawText(6, ingr.substring(0, 65) + (ingr.length > 65 ? "..." : ""), 300, b1Y - (i * 25), 8);
+
+    // Categorize
+    if (item.category === "no-cook" && noCookY > 180) {
+      drawText(6, item.food, 80, noCookY);
+      noCookY -= 15;
+    } else if (item.category === "cook-to-serve" && cookToServeY > 100) {
+      drawText(6, item.food, 80, cookToServeY);
+      cookToServeY -= 15;
+    } else if (item.category === "complex" && complexY > 30) {
+      drawText(6, item.food, 80, complexY);
+      complexY -= 15;
+    }
+  });
+
+  // ── Pages 8-12: WOPS Procedures per Item ────────────────────────────────────────
+  // The original packet gave us 4 blank procedure pages (Indices 7, 8, 9, 10, 11)
+  const procPages = [7, 8, 9, 10, 11];
+  const itemsWithProcs = data.menu_items.filter(i => i.procedures && i.procedures.length > 10);
+  itemsWithProcs.slice(0, 5).forEach((item, i) => {
+    const pageIdx = procPages[i];
+    drawText(pageIdx, item.food, 150, 680, 12);
+    // Break the "procedures" text block into chunks manually if needed, or just dump it into Prep if unspecified
+    // Since we don't know the exact 6 step split from the single string, we will approximate or put it all in Prep.
+    // The instructions tell the AI to formulate 6 steps. 
+    // For now we will just put the whole text block in the Prep area, word-wrapped if possible.
+    // Or we split by newlines and print a few lines starting at the Prep box.
+    const lines = item.procedures.split("\n");
+    let y = 520; // Start at prep
+    lines.slice(0, 15).forEach(line => {
+      // Super basic wrapping hack
+      const str = line.substring(0, 100);
+      drawText(pageIdx, str, 100, y, 9);
+      y -= 12;
+    });
+  });
+
+  // ── Page 13: WOPS Section C & D ─────────────────────────────────────────────────
+  // Sanitize Method
+  const sm = data.sanitize_method;
+  drawCheck(12, 102, 575, sm === "manual");
+  drawCheck(12, 102, 546, sm === "chemical-dw");
+  drawCheck(12, 102, 532, sm === "high-temp-dw");
+
+  drawCheck(12, 102, 517, data.sanitizer_chlorine);
+  drawCheck(12, 102, 502, data.sanitizer_quat);
+  drawCheck(12, 102, 487, data.sanitizer_iodine);
+
+  // Delivery Method & Transport
+  const dm = data.delivery_method;
+  drawCheck(12, 98, 253, dm === "pick-up");
+  drawCheck(12, 98, 224, dm === "delivery");
+  drawCheck(12, 98, 209, dm === "on-site");
+
+  const transportTypes = [];
+  if (data.transport_cambro) transportTypes.push("Cambro insulated boxes");
+  if (data.transport_refrigerated_truck) transportTypes.push("Refrigerated Truck");
+  if (data.transport_coolers) transportTypes.push("Coolers");
+  if (data.transport_other) transportTypes.push(data.transport_other);
+  drawText(12, transportTypes.join(", "), 100, 312);
+
+  if (data.agreement_initialed && initials) {
+    drawText(12, initials, 300, 155, 12);
+    drawText(12, initials, 300, 125, 12);
+    drawText(12, initials, 300, 95, 12);
+    drawText(12, initials, 300, 70, 12);
+    drawText(12, initials, 300, 40, 12);
+  }
+
+  // ── Page 14: WOPS Section E (Initials & Sig) ────────────────────────────────────
+  if (data.agreement_initialed && initials) {
+    drawText(13, initials, 300, 672, 12);
+    drawText(13, initials, 300, 650, 12);
+    drawText(13, initials, 300, 620, 12);
+    drawText(13, initials, 300, 590, 12);
+  }
+
+  drawText(13, ownerOrAgent, 50, 490);
+  drawText(13, todayFormatted(), 450, 490);
+
   const saved = await doc.save();
   return new Uint8Array(saved);
 }

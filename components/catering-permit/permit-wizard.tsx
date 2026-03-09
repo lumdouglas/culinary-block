@@ -152,7 +152,7 @@ export function PermitWizard() {
         data: { status, messagesLength: messages.length },
         timestamp: Date.now(),
       }),
-    }).catch(() => {});
+    }).catch(() => { });
     // #endregion
   }, [status, messages.length]);
 
@@ -409,13 +409,15 @@ export function PermitWizard() {
                       👋 Welcome to the Culinary Block Permit Assistant!
                     </p>
                     <p>
-                      I&apos;ll guide you through the Santa Clara County DEH catering
-                      permit application — step by step, in about 10–15 minutes.
+                      I&apos;ll help you with the Santa Clara County DEH catering
+                      permit application.
                     </p>
                     <p>
-                      To start:{" "}
-                      <strong>What is the name of your catering business?</strong>{" "}
-                      (This is your DBA — &quot;Doing Business As&quot; — name.)
+                      Before we begin:{" "}
+                      <strong>What do you want to focus on today?</strong>{" "}
+                      We can start with the basics (business name, address), or jump
+                      straight to the tricky parts (menu items, safety procedures, transport).
+                      Which would you prefer?
                     </p>
                     <p className="text-slate-500 text-xs flex items-center gap-1">
                       <ChevronDown className="h-3 w-3" />

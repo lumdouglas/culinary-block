@@ -14,6 +14,8 @@ export type PermitLanguageCode = (typeof PERMIT_LANGUAGES)[number]["code"];
 export const menuItemSchema = z.object({
   food: z.string(),
   procedures: z.string(),
+  ingredients: z.string(),
+  category: z.enum(["no-cook", "cook-to-serve", "complex", ""]),
 });
 
 // --- Host facility row ---
@@ -27,12 +29,24 @@ export const hostFacilitySchema = z.object({
 export const updatePermitDataSchema = z.object({
   catering_dba: z.string().optional(),
   owner_name: z.string().optional(),
+  owner_address: z.string().optional(),
+  owner_city: z.string().optional(),
+  owner_state: z.string().optional(),
+  owner_zip: z.string().optional(),
   owner_phone: z.string().optional(),
   owner_email: z.string().optional(),
   pff_name: z.string().optional(),
   pff_address: z.string().optional(),
   pff_county: z.string().optional(),
   menu_items: z.array(menuItemSchema).optional(),
+  delivery_method: z.enum(["pick-up", "delivery", "on-site", ""]).optional(),
+  employee_count: z.number().optional(),
+  operating_days: z.array(z.string()).optional(),
+  operating_times: z.string().optional(),
+  customer_types: z.array(z.string()).optional(),
+  order_methods: z.array(z.string()).optional(),
+  sanitize_method: z.enum(["manual", "chemical-dw", "high-temp-dw", ""]).optional(),
+  ingredient_sources: z.array(z.string()).optional(),
   transport_cambro: z.boolean().optional(),
   transport_refrigerated_truck: z.boolean().optional(),
   transport_coolers: z.boolean().optional(),
@@ -65,12 +79,24 @@ export type UpdatePermitData = z.infer<typeof updatePermitDataSchema>;
 export interface CateringPermitData {
   catering_dba: string;
   owner_name: string;
+  owner_address: string;
+  owner_city: string;
+  owner_state: string;
+  owner_zip: string;
   owner_phone: string;
   owner_email: string;
   pff_name: string;
   pff_address: string;
   pff_county: string;
   menu_items: MenuItem[];
+  delivery_method: "pick-up" | "delivery" | "on-site" | "";
+  employee_count: number;
+  operating_days: string[];
+  operating_times: string;
+  customer_types: string[];
+  order_methods: string[];
+  sanitize_method: "manual" | "chemical-dw" | "high-temp-dw" | "";
+  ingredient_sources: string[];
   transport_cambro: boolean;
   transport_refrigerated_truck: boolean;
   transport_coolers: boolean;
@@ -99,12 +125,24 @@ export interface CateringPermitData {
 export const DEFAULT_PERMIT_DATA: CateringPermitData = {
   catering_dba: "",
   owner_name: "",
+  owner_address: "",
+  owner_city: "",
+  owner_state: "",
+  owner_zip: "",
   owner_phone: "",
   owner_email: "",
   pff_name: "Culinary Block",
   pff_address: "1901 Las Plumas Ave, San Jose, CA 95133",
   pff_county: "Santa Clara",
   menu_items: [],
+  delivery_method: "",
+  employee_count: 0,
+  operating_days: [],
+  operating_times: "",
+  customer_types: [],
+  order_methods: [],
+  sanitize_method: "",
+  ingredient_sources: [],
   transport_cambro: false,
   transport_refrigerated_truck: false,
   transport_coolers: false,
@@ -138,12 +176,24 @@ export function mergePermitData(
     ...current,
     ...(update.catering_dba !== undefined && { catering_dba: update.catering_dba }),
     ...(update.owner_name !== undefined && { owner_name: update.owner_name }),
+    ...(update.owner_address !== undefined && { owner_address: update.owner_address }),
+    ...(update.owner_city !== undefined && { owner_city: update.owner_city }),
+    ...(update.owner_state !== undefined && { owner_state: update.owner_state }),
+    ...(update.owner_zip !== undefined && { owner_zip: update.owner_zip }),
     ...(update.owner_phone !== undefined && { owner_phone: update.owner_phone }),
     ...(update.owner_email !== undefined && { owner_email: update.owner_email }),
     ...(update.pff_name !== undefined && { pff_name: update.pff_name }),
     ...(update.pff_address !== undefined && { pff_address: update.pff_address }),
     ...(update.pff_county !== undefined && { pff_county: update.pff_county }),
     ...(update.menu_items !== undefined && { menu_items: update.menu_items }),
+    ...(update.delivery_method !== undefined && { delivery_method: update.delivery_method }),
+    ...(update.employee_count !== undefined && { employee_count: update.employee_count }),
+    ...(update.operating_days !== undefined && { operating_days: update.operating_days }),
+    ...(update.operating_times !== undefined && { operating_times: update.operating_times }),
+    ...(update.customer_types !== undefined && { customer_types: update.customer_types }),
+    ...(update.order_methods !== undefined && { order_methods: update.order_methods }),
+    ...(update.sanitize_method !== undefined && { sanitize_method: update.sanitize_method }),
+    ...(update.ingredient_sources !== undefined && { ingredient_sources: update.ingredient_sources }),
     ...(update.transport_cambro !== undefined && { transport_cambro: update.transport_cambro }),
     ...(update.transport_refrigerated_truck !== undefined && { transport_refrigerated_truck: update.transport_refrigerated_truck }),
     ...(update.transport_coolers !== undefined && { transport_coolers: update.transport_coolers }),
