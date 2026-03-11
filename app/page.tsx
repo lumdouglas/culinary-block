@@ -292,8 +292,15 @@ export default function Home() {
           </h2>
           <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
             Schedule a tour to see our 8,000 sq ft facility in person. We'll show you around
-            and discuss how Culinary Block can support your food business.
           </p>
+          <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700 max-w-2xl mx-auto mb-10 text-left relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              <strong className="text-white block mb-1">Please Note:</strong>
+              We are currently at or close to capacity and maintaining a waitlist for when space opens up (typically 2-6 months out).
+              Our minimum requirement is $1,000/month, which covers your first 20 hours at $50/hr (rates drop for additional hours via our timesheet billing).
+            </p>
+          </div>
           <div className="flex justify-center">
             <Link href="/apply">
               <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 text-lg px-10 font-semibold">
