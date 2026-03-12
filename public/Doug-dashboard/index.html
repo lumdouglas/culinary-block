@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doug Dashboard — Command Center</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+  :root {
+    --bg0: #0a0b0f; --bg1: #11131a; --bg2: #151720; --bg3: #1a1d2a; --bg4: #1e2130;
+    --bdr: #252840; --bdr2: #3d4170;
+    --t1: #e8eaf0; --t2: #8b8fa8; --t3: #5a5e78;
+    --grn: #34d399; --amb: #fbbf24; --red: #f87171; --blu: #60a5fa; --pur: #a78bfa; --cyn: #22d3ee;
+    --grn-d: rgba(52,211,153,0.12); --amb-d: rgba(251,191,36,0.12); --red-d: rgba(248,113,113,0.12);
+    --blu-d: rgba(96,165,250,0.12); --pur-d: rgba(167,139,250,0.12); --cyn-d: rgba(34,211,238,0.12);
+    --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', system-ui, sans-serif;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { background: var(--bg0); }
+  body { background: var(--bg0); color: var(--t1); font-family: var(--sans); min-height:100vh; overflow-x:hidden; }
+  #root { min-height: 100vh; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bdr); border-radius: 2px; }
+  input::placeholder { color: var(--t3); }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,0.4)} 50%{box-shadow:0 0 0 8px rgba(52,211,153,0)} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn 0.4s ease both; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+// ─── PERSISTENCE (localStorage) ──────────────────────
+const LS = {
+  get(key, fallback) { try { const v = localStorage.getItem('doug-dash-'+key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+  set(key, val) { try { localStorage.setItem('doug-dash-'+key, JSON.stringify(val)); } catch(e) { console.error(e); } },
+};
+
+// ─── PROJECT DATA ────────────────────────────────────
+const PROJECTS = [
+  { id:"cb-llc", name:"Culinary Block LLC", label:"Revenue Engine", desc:"Commercial kitchen commissary, San Jose. 50/50 partnership. Core revenue: kitchen rental.", progress:85, status:"operating", color:"var(--grn)", colorDim:"var(--grn-d)", tags:["Commissary","San Jose"], statusLabel:"● Operating" },
+  { id:"cbc", name:"CB Collective", label:"Growth Layer", desc:"Catering venture + software platform. Premium Drop-Off & Attended Service. Commission-based.", progress:55, status:"building", color:"var(--cyn)", colorDim:"var(--cyn-d)", tags:["Sales Infra","Landing Page","Outreach"], statusLabel:"◆ Building" },
+  { id:"unique", name:"Unique", label:"Software Build", desc:"Sushi catering logistics app. React + Supabase + Discord.js. Order mgmt & kitchen ops.", progress:40, status:"building", color:"var(--blu)", colorDim:"var(--blu-d)", tags:["React","Supabase","Discord.js"], statusLabel:"◆ Building" },
+  { id:"cb-platform", name:"CB Platform OS", label:"Platform Vision", desc:"Operating system for micro food businesses. Recipe DB → Costing → Analytics → Licensing.", progress:20, status:"planning", color:"var(--pur)", colorDim:"var(--pur-d)", tags:["Phase 1: Recipe DB","2-Year Plan"], statusLabel:"◇ Roadmap" },
+  { id:"signal", name:"Signal Apparel", label:"Hardware Product", desc:"Wearable LED matrix displaying live BTC price. ESP32 + cellular. Three-tier product.", progress:30, status:"planning", color:"var(--amb)", colorDim:"var(--amb-d)", tags:["ESP32","LED Matrix","BTC"], statusLabel:"◇ Prototype" },
+  { id:"openclaw", name:"OpenClaw", label:"AI / Local", desc:"Local AI setup on 2012 MacBook Pro. Local model inference & dev tooling.", progress:10, status:"setup", color:"var(--red)", colorDim:"var(--red-d)", tags:["MacBook 2012","Local AI"], statusLabel:"◻ Setup" },
+];
+
+const DEFAULT_ACTIONS = [
+  { id:"a1", text:"Ship Unique order creation flow (React + Supabase)", priority:"p1", done:false },
+  { id:"a2", text:"Wire Discord.js bot for kitchen order notifications", priority:"p1", done:false },
+  { id:"a3", text:"Finalize CBC chef commission structures", priority:"p1", done:false },
+  { id:"a4", text:"Deploy CBC landing page to separate domain", priority:"p2", done:false },
+  { id:"a5", text:"Set up OpenClaw on MacBook Pro 2012", priority:"p2", done:false },
+  { id:"a6", text:"Test Signal Apparel ESP32 BTC ticker on RTX machine", priority:"p2", done:false },
+  { id:"a7", text:"Design CB Platform recipe DB schema", priority:"p2", done:false },
+  { id:"a8", text:"Write CBC outreach email templates (5 variants)", priority:"p3", done:false },
+  { id:"a9", text:"Research Palantir Foundry Pilot docs (OSDK)", priority:"p3", done:false },
+  { id:"a10", text:"Configure GitHub Actions CI for Unique repo", priority:"p3", done:false },
+];
+
+const TOOLS = [
+  { name:"Cursor", detail:"AI IDE", abbr:"Cu", color:"var(--pur)", status:"online" },
+  { name:"Claude", detail:"Opus / Sonnet", abbr:"Cl", color:"var(--grn)", status:"online" },
+  { name:"Antigravity", detail:"AI Platform", abbr:"Ag", color:"var(--cyn)", status:"online" },
+  { name:"Supabase", detail:"Backend / Auth", abbr:"Sb", color:"var(--blu)", status:"online" },
+  { name:"GitHub", detail:"Repos / CI", abbr:"Gh", color:"var(--amb)", status:"online" },
+  { name:"Discord", detail:"Kitchen Ops Bot", abbr:"Dc", color:"var(--t2)", status:"online" },
+];
+
+const HARDWARE = [
+  { name:"Windows / RTX", detail:"GPU Compute", abbr:"W", color:"var(--grn)", status:"online" },
+  { name:"MacBook Pro '12", detail:"OpenClaw Host", abbr:"M", color:"var(--amb)", status:"setup" },
+];
+
+const PCOL = { p1:{bg:"var(--red-d)",fg:"var(--red)"}, p2:{bg:"var(--amb-d)",fg:"var(--amb)"}, p3:{bg:"var(--blu-d)",fg:"var(--blu)"} };
+const SCOL = { online:"var(--grn)", setup:"var(--amb)", offline:"var(--red)" };
+
+// ─── CALENDAR FETCH ──────────────────────────────────
+async function fetchCalendar() {
+  try {
+    const today = new Date();
+    const end = new Date(today); end.setDate(today.getDate() + 7);
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"claude-sonnet-4-20250514", max_tokens:2000,
+        system: "You are a calendar assistant. Return ONLY a JSON array. No other text, no markdown fences.",
+        messages:[{ role:"user", content:`List all my calendar events from ${today.toISOString().split('T')[0]} to ${end.toISOString().split('T')[0]}. Return a JSON array of objects with: title (string), start (ISO datetime string), end (ISO datetime string), description (string or null), location (string or null). If no events, return [].` }],
+        mcp_servers:[{ type:"url", url:"https://gcal.mcp.claude.com/mcp", name:"google-calendar" }]
+      })
+    });
+    const data = await r.json();
+    // Try tool results first, then text blocks
+    const parts = (data.content || []);
+    const toolText = parts.filter(i=>i.type==="mcp_tool_result").map(i=>i.content?.[0]?.text||"").join("\n");
+    const plainText = parts.filter(i=>i.type==="text").map(i=>i.text).join("\n");
+    const raw = toolText || plainText || "";
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    const cleaned = raw.replace(/```json?|```/g,"").trim();
+    return JSON.parse(cleaned);
+  } catch(e) { console.error("Calendar error:", e); return null; }
+}
+
+// ─── GITHUB FETCH ────────────────────────────────────
+async function fetchGH(username) {
+  if (!username) return null;
+  try {
+    const [rr, er] = await Promise.all([
+      fetch(`https://api.github.com/users/${username}/repos?sort=pushed&per_page=8`),
+      fetch(`https://api.github.com/users/${username}/events?per_page=100`)
+    ]);
+    const repos = await rr.json();
+    const events = await er.json();
+    if (!Array.isArray(repos)) return null;
+    const pushes = (Array.isArray(events)?events:[]).filter(e=>e.type==="PushEvent");
+    const activity = {};
+    pushes.forEach(e => { const d=e.created_at?.split("T")[0]; if(d) activity[d]=(activity[d]||0)+(e.payload?.commits?.length||1); });
+    return {
+      repos: repos.slice(0,6).map(r=>({ name:r.name, language:r.language||"—", stars:r.stargazers_count, url:r.html_url })),
+      activity,
+      totalCommits: pushes.reduce((s,e)=>s+(e.payload?.commits?.length||0),0),
+    };
+  } catch(e) { console.error("GH error:",e); return null; }
+}
+
+// ─── SMALL COMPONENTS ────────────────────────────────
+function Clock() {
+  const [t, setT] = useState(new Date());
+  useEffect(()=>{ const i=setInterval(()=>setT(new Date()),1000); return ()=>clearInterval(i); },[]);
+  const ts = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:${String(t.getSeconds()).padStart(2,'0')}`;
+  const ds = t.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'short',day:'numeric'});
+  return <div style={{textAlign:'right'}}>
+    <div style={{fontFamily:'var(--mono)',fontSize:22,fontWeight:300,color:'var(--t2)',letterSpacing:2}}>{ts}</div>
+    <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--t3)',letterSpacing:1}}>{ds}</div>
+  </div>;
+}
+
+function Label({color,children,right}) {
+  return <div style={{fontFamily:'var(--mono)',fontSize:10,letterSpacing:2,textTransform:'uppercase',color:'var(--t3)',marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
+    <div style={{width:6,height:6,borderRadius:'50%',background:color}}/>
+    {children}
+    {right && <span style={{marginLeft:'auto'}}>{right}</span>}
+  </div>;
+}
+
+function Card({children, style:s, ...props}) {
+  const [hov, setHov] = useState(false);
+  return <div onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
+    style={{background:hov?'var(--bg3)':'var(--bg2)',border:`1px solid ${hov?'var(--bdr2)':'var(--bdr)'}`,borderRadius:10,padding:20,transition:'all 0.25s',...s}} {...props}>
+    {children}
+  </div>;
+}
+
+// ─── PROJECT CARD ────────────────────────────────────
+function ProjectCard({p}) {
+  return <Card style={{position:'relative',overflow:'hidden'}}>
+    <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg, ${p.color}, transparent)`}}/>
+    <Label color={p.color}>{p.label}</Label>
+    <div style={{fontWeight:600,fontSize:16,marginBottom:4}}>{p.name}</div>
+    <div style={{fontSize:12,color:'var(--t2)',marginBottom:16,lineHeight:1.5}}>{p.desc}</div>
+    <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:6}}>
+      <div style={{flex:1,height:4,background:'var(--bg4)',borderRadius:2,overflow:'hidden'}}>
+        <div style={{height:'100%',width:`${p.progress}%`,background:p.color,borderRadius:2,transition:'width 1s ease'}}/>
+      </div>
+      <div style={{fontFamily:'var(--mono)',fontSize:12,fontWeight:500,color:'var(--t2)',minWidth:36,textAlign:'right'}}>{p.progress}%</div>
+    </div>
+    <div style={{display:'inline-flex',alignItems:'center',gap:6,fontFamily:'var(--mono)',fontSize:10,letterSpacing:1,textTransform:'uppercase',padding:'4px 10px',borderRadius:4,marginTop:12,background:p.colorDim,color:p.color}}>
+      {p.statusLabel}
+    </div>
+    <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
+      {p.tags.map(t=><span key={t} style={{fontFamily:'var(--mono)',fontSize:10,padding:'3px 8px',borderRadius:4,background:'var(--bg4)',color:'var(--t3)',border:'1px solid var(--bdr)'}}>{t}</span>)}
+    </div>
+  </Card>;
+}
+
+// ─── CALENDAR PANEL ──────────────────────────────────
+function CalendarPanel({events, loading, error}) {
+  const [sel, setSel] = useState(0);
+  const today = new Date();
+  const dn = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const days = Array.from({length:7},(_,i)=>{ const d=new Date(today); d.setDate(today.getDate()+i); return {name:dn[d.getDay()],num:d.getDate(),key:d.toISOString().split('T')[0]}; });
+
+  const dayEv = (events||[]).filter(e=>(e.start||'').split('T')[0]===days[sel]?.key).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  const fmt = iso => { try { return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}); } catch{return '';} };
+  const typeOf = title => { const t=(title||'').toLowerCase(); if(/focus|deep|build|code|dev/.test(t)) return 'var(--grn)'; if(/lunch|gym|personal|padel|break/.test(t)) return 'var(--pur)'; return 'var(--blu)'; };
+
+  return <div style={{background:'var(--bg2)',border:'1px solid var(--bdr)',borderRadius:10,padding:20,height:'100%',display:'flex',flexDirection:'column'}}>
+    <Label color="var(--blu)">
+      Daily Schedule
+      {loading && <span style={{color:'var(--amb)'}}> · syncing...</span>}
+      {events && !loading && <span style={{color:'var(--grn)'}}> · live</span>}
+    </Label>
+
+    <div style={{display:'flex',gap:4,marginBottom:16}}>
+      {days.map((d,i)=><button key={i} onClick={()=>setSel(i)} style={{
+        flex:1,padding:'8px 4px',border:`1px solid ${i===sel?'var(--blu)':'var(--bdr)'}`,borderRadius:6,
+        background:i===sel?'var(--blu-d)':'transparent',color:i===sel?'var(--blu)':'var(--t3)',
+        fontFamily:'var(--mono)',fontSize:10,textTransform:'uppercase',cursor:'pointer',textAlign:'center',
+      }}>{d.name}<span style={{display:'block',fontSize:16,fontWeight:600,marginTop:2}}>{d.num}</span></button>)}
+    </div>
+
+    <div style={{flex:1,overflowY:'auto'}}>
+      {error && <div style={{color:'var(--red)',fontFamily:'var(--mono)',fontSize:11,padding:'12px 0'}}>Calendar connection issue — events may load on retry</div>}
+      {!loading && !error && dayEv.length===0 && <div style={{color:'var(--t3)',fontSize:13,padding:'20px 0',textAlign:'center'}}>{events?'No events scheduled':'Connecting to calendar...'}</div>}
+      {dayEv.map((ev,i)=><div key={i} style={{display:'flex',gap:12,padding:'12px 0',borderBottom:'1px solid rgba(37,40,64,0.5)',alignItems:'flex-start'}}>
+        <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--t3)',minWidth:72,paddingTop:2}}>{fmt(ev.start)}</div>
+        <div style={{width:3,minHeight:36,borderRadius:2,alignSelf:'stretch',background:typeOf(ev.title)}}/>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:500,marginBottom:3}}>{ev.title}</div>
+          {ev.location && <div style={{fontSize:11,color:'var(--t3)'}}>📍 {ev.location}</div>}
+          {ev.description && <div style={{fontSize:11,color:'var(--t3)',marginTop:2}}>{ev.description}</div>}
+          {ev.end && <div style={{fontSize:10,fontFamily:'var(--mono)',color:'var(--t3)',marginTop:4}}>→ {fmt(ev.end)}</div>}
+        </div>
+      </div>)}
+    </div>
+  </div>;
+}
+
+// ─── ACTION LIST ─────────────────────────────────────
+function ActionList({actions, onToggle, onAdd, onDelete}) {
+  const [filter, setFilter] = useState('all');
+  const [newT, setNewT] = useState('');
+  const [newP, setNewP] = useState('p2');
+  const filtered = filter==='all' ? actions : actions.filter(a=>a.priority===filter);
+  const done = actions.filter(a=>a.done).length;
+
+  return <Card>
+    <Label color="var(--red)" right={<span style={{color:'var(--grn)'}}>{done}/{actions.length}</span>}>Priority Actions</Label>
+    <div style={{display:'flex',gap:2,marginBottom:12}}>
+      {['all','p1','p2','p3'].map(f=><button key={f} onClick={()=>setFilter(f)} style={{
+        padding:'6px 14px',border:'none',borderRadius:6,background:filter===f?'var(--bg4)':'transparent',
+        color:filter===f?'var(--t1)':'var(--t3)',fontFamily:'var(--mono)',fontSize:11,cursor:'pointer',
+      }}>{f.toUpperCase()}</button>)}
+    </div>
+    <div style={{maxHeight:340,overflowY:'auto'}}>
+      {filtered.map(a=><div key={a.id} style={{display:'flex',alignItems:'flex-start',gap:10,padding:'10px 0',borderBottom:'1px solid rgba(37,40,64,0.5)'}}>
+        <div onClick={()=>onToggle(a.id)} style={{
+          width:18,height:18,borderRadius:4,border:`1.5px solid ${a.done?'var(--grn)':'var(--bdr2)'}`,
+          background:a.done?'var(--grn)':'transparent',cursor:'pointer',flexShrink:0,marginTop:1,
+          display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,
+          color:a.done?'var(--bg0)':'transparent',transition:'all 0.2s',
+        }}>{a.done?'✓':''}</div>
+        <div style={{flex:1,fontSize:13,color:a.done?'var(--t3)':'var(--t1)',textDecoration:a.done?'line-through':'none',lineHeight:1.4}}>{a.text}</div>
+        <div style={{fontFamily:'var(--mono)',fontSize:9,padding:'2px 6px',borderRadius:3,textTransform:'uppercase',letterSpacing:1,flexShrink:0,background:PCOL[a.priority]?.bg,color:PCOL[a.priority]?.fg}}>{a.priority}</div>
+        <div onClick={()=>onDelete(a.id)} style={{cursor:'pointer',fontSize:14,color:'var(--t3)',padding:'0 4px',opacity:0.4,lineHeight:1}} title="Delete">×</div>
+      </div>)}
+    </div>
+    <div style={{display:'flex',gap:8,marginTop:12,paddingTop:12,borderTop:'1px solid var(--bdr)'}}>
+      <input value={newT} onChange={e=>setNewT(e.target.value)} placeholder="Add action item..."
+        onKeyDown={e=>{ if(e.key==='Enter'&&newT.trim()){onAdd(newT.trim(),newP);setNewT('');} }}
+        style={{flex:1,background:'var(--bg4)',border:'1px solid var(--bdr)',borderRadius:6,padding:'8px 12px',color:'var(--t1)',fontSize:12,fontFamily:'inherit',outline:'none'}}/>
+      <select value={newP} onChange={e=>setNewP(e.target.value)}
+        style={{background:'var(--bg4)',border:'1px solid var(--bdr)',borderRadius:6,padding:'8px',color:'var(--t2)',fontFamily:'var(--mono)',fontSize:11,outline:'none'}}>
+        <option value="p1">P1</option><option value="p2">P2</option><option value="p3">P3</option>
+      </select>
+    </div>
+  </Card>;
+}
+
+// ─── INFRA PANEL ─────────────────────────────────────
+function InfraPanel() {
+  const Item = ({i}) => <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',borderRadius:6,background:'var(--bg4)',border:'1px solid var(--bdr)'}}>
+    <div style={{width:32,height:32,borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,background:`color-mix(in srgb, ${i.color} 12%, transparent)`,color:i.color}}>{i.abbr}</div>
+    <div><div style={{fontSize:12,fontWeight:500}}>{i.name}</div><div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--t3)'}}>{i.detail}</div></div>
+    <div style={{width:6,height:6,borderRadius:'50%',marginLeft:'auto',background:SCOL[i.status]}}/>
+  </div>;
+
+  return <Card>
+    <Label color="var(--pur)">Tools & Infrastructure</Label>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>{TOOLS.map(i=><Item key={i.name} i={i}/>)}</div>
+    <div style={{fontFamily:'var(--mono)',fontSize:10,letterSpacing:3,textTransform:'uppercase',color:'var(--t3)',margin:'16px 0 10px'}}>Hardware</div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>{HARDWARE.map(i=><Item key={i.name} i={i}/>)}</div>
+  </Card>;
+}
+
+// ─── GITHUB PANEL ────────────────────────────────────
+function GHPanel({ghData, ghUser, onSetUser, loading}) {
+  const [input, setInput] = useState(ghUser||'');
+  const [editing, setEditing] = useState(!ghUser);
+
+  useEffect(()=>{ if(ghUser) { setInput(ghUser); setEditing(false); } }, [ghUser]);
+
+  const today = new Date();
+  const lvl = [
+    'var(--bg4)',
+    'rgba(52,211,153,0.2)',
+    'rgba(52,211,153,0.4)',
+    'rgba(52,211,153,0.65)',
+    'var(--grn)',
+  ];
+
+  const cells = useMemo(()=>{
+    const out = [];
+    for(let row=0;row<7;row++) for(let col=0;col<26;col++){
+      const d=new Date(today); d.setDate(today.getDate()-((25-col)*7+(6-row)));
+      const k=d.toISOString().split('T')[0];
+      const c=ghData?.activity?.[k]||0;
+      const l=c===0?0:c<=2?1:c<=5?2:c<=10?3:4;
+      out.push(<div key={`${row}-${col}`} style={{aspectRatio:'1',borderRadius:2,background:lvl[l]}} title={`${k}: ${c}`}/>);
+    }
+    return out;
+  },[ghData]);
+
+  return <Card>
+    <Label color="var(--grn)" right={ghData?<span style={{color:'var(--grn)'}}>{ghData.totalCommits} recent</span>:(loading?<span style={{color:'var(--amb)'}}>loading...</span>:null)}>GitHub</Label>
+
+    {editing ? <div style={{display:'flex',gap:8,marginBottom:12}}>
+      <input value={input} onChange={e=>setInput(e.target.value)} placeholder="GitHub username"
+        onKeyDown={e=>{ if(e.key==='Enter'&&input.trim()){onSetUser(input.trim());setEditing(false);} }}
+        style={{flex:1,background:'var(--bg4)',border:'1px solid var(--bdr)',borderRadius:6,padding:'8px 12px',color:'var(--t1)',fontSize:12,fontFamily:'var(--mono)',outline:'none'}}/>
+      <button onClick={()=>{if(input.trim()){onSetUser(input.trim());setEditing(false);}}}
+        style={{background:'var(--grn-d)',border:'1px solid var(--grn)',borderRadius:6,padding:'8px 14px',color:'var(--grn)',fontFamily:'var(--mono)',fontSize:11,cursor:'pointer'}}>Connect</button>
+    </div> : <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+      <a href={`https://github.com/${ghUser}`} target="_blank" rel="noopener" style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--blu)',textDecoration:'none'}}>@{ghUser}</a>
+      <button onClick={()=>setEditing(true)} style={{background:'none',border:'none',color:'var(--t3)',fontSize:11,cursor:'pointer'}}>edit</button>
+    </div>}
+
+    <div style={{display:'grid',gridTemplateColumns:'repeat(26, 1fr)',gap:3}}>{cells}</div>
+
+    {ghData?.repos && <div style={{marginTop:14}}>
+      {ghData.repos.map(r=><div key={r.name} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:'1px solid rgba(37,40,64,0.5)'}}>
+        <div>
+          <a href={r.url} target="_blank" rel="noopener" style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--blu)',textDecoration:'none'}}>{r.name}</a>
+          <div style={{fontSize:10,color:'var(--t3)'}}>{r.language}</div>
+        </div>
+        {r.stars>0 && <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--t2)'}}>★ {r.stars}</div>}
+      </div>)}
+    </div>}
+  </Card>;
+}
+
+// ─── REVENUE PANEL ───────────────────────────────────
+function Revenue() {
+  const rows = [
+    {label:"Kitchen Rental",sub:"Split w/ partner",status:"Active",color:"var(--grn)"},
+    {label:"Software Fees",sub:"Bundled into rental",status:"Building",color:"var(--amb)"},
+    {label:"CBC Commissions",sub:"Uncapped upside",status:"Pre-launch",color:"var(--blu)"},
+  ];
+  return <Card>
+    <Label color="var(--grn)">Revenue Layers</Label>
+    {rows.map(r=><div key={r.label} style={{display:'flex',justifyContent:'space-between',padding:'10px 0',borderBottom:'1px solid rgba(37,40,64,0.5)',alignItems:'center'}}>
+      <div><div style={{fontSize:13,color:'var(--t2)'}}>{r.label}</div><div style={{fontSize:10,color:'var(--t3)',marginTop:2}}>{r.sub}</div></div>
+      <div style={{fontFamily:'var(--mono)',fontSize:15,fontWeight:600,color:r.color}}>{r.status}</div>
+    </div>)}
+  </Card>;
+}
+
+// ─── MAIN APP ────────────────────────────────────────
+function App() {
+  const [actions, setActions] = useState(()=>LS.get('actions', DEFAULT_ACTIONS));
+  const [calEvents, setCalEvents] = useState(null);
+  const [calLoading, setCalLoading] = useState(true);
+  const [calError, setCalError] = useState(false);
+  const [ghUser, setGhUser] = useState(()=>LS.get('ghuser',''));
+  const [ghData, setGhData] = useState(null);
+  const [ghLoading, setGhLoading] = useState(false);
+
+  // Calendar
+  useEffect(()=>{
+    (async()=>{
+      setCalLoading(true); setCalError(false);
+      const ev = await fetchCalendar();
+      if(ev) setCalEvents(ev); else setCalError(true);
+      setCalLoading(false);
+    })();
+  },[]);
+
+  // GitHub
+  useEffect(()=>{
+    if(!ghUser) return;
+    setGhLoading(true);
+    fetchGH(ghUser).then(d=>{setGhData(d);setGhLoading(false);});
+  },[ghUser]);
+
+  // Persist
+  useEffect(()=>LS.set('actions',actions),[actions]);
+
+  const toggleAction = useCallback(id=>setActions(p=>p.map(a=>a.id===id?{...a,done:!a.done}:a)),[]);
+  const addAction = useCallback((text,priority)=>setActions(p=>[...p,{id:'a'+Date.now(),text,priority,done:false}]),[]);
+  const deleteAction = useCallback(id=>setActions(p=>p.filter(a=>a.id!==id)),[]);
+  const handleGHUser = useCallback(u=>{setGhUser(u);LS.set('ghuser',u);},[]);
+
+  const topP1 = actions.find(a=>a.priority==='p1'&&!a.done);
+  const remaining = actions.filter(a=>!a.done).length;
+  const completed = actions.filter(a=>a.done).length;
+
+  return <div style={{minHeight:'100vh',background:'var(--bg0)',color:'var(--t1)',fontFamily:'var(--sans)',position:'relative'}}>
+    {/* Grid BG */}
+    <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:0,backgroundImage:'linear-gradient(rgba(37,40,64,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(37,40,64,0.3) 1px, transparent 1px)',backgroundSize:'60px 60px'}}/>
+    <div style={{position:'fixed',inset:0,pointerEvents:'none',zIndex:0,background:'radial-gradient(ellipse at 30% 20%, rgba(96,165,250,0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(52,211,153,0.03) 0%, transparent 50%)'}}/>
+
+    <div style={{position:'relative',zIndex:1,maxWidth:1440,margin:'0 auto',padding:'24px 32px 60px'}}>
+
+      {/* HEADER */}
+      <header style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:36,paddingBottom:24,borderBottom:'1px solid var(--bdr)'}}>
+        <div>
+          <h1 style={{fontFamily:'var(--mono)',fontWeight:600,fontSize:13,letterSpacing:3,textTransform:'uppercase',color:'var(--t3)',marginBottom:6}}>Doug Dashboard</h1>
+          <h2 style={{fontWeight:700,fontSize:28,lineHeight:1.2}}>Command <span style={{color:'var(--grn)'}}>Center</span></h2>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <Clock/>
+          <div style={{width:8,height:8,borderRadius:'50%',background:'var(--grn)',animation:'pulse 2s ease-in-out infinite'}}/>
+        </div>
+      </header>
+
+      {/* FOCUS BANNER */}
+      <div className="fade-in" style={{background:'linear-gradient(135deg, rgba(96,165,250,0.08), rgba(52,211,153,0.06))',border:'1px solid rgba(96,165,250,0.2)',borderRadius:10,padding:'16px 20px',display:'flex',alignItems:'center',gap:16,marginBottom:24}}>
+        <div style={{width:40,height:40,borderRadius:8,background:'var(--blu-d)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>⚡</div>
+        <div style={{flex:1}}>
+          <h3 style={{fontSize:14,fontWeight:600,marginBottom:2}}>{topP1?`Today's Focus: ${topP1.text}`:'All P1s cleared — pick your next priority'}</h3>
+          <p style={{fontSize:12,color:'var(--t2)'}}>{remaining} remaining · {completed} completed</p>
+        </div>
+        <div style={{fontFamily:'var(--mono)',fontSize:10,padding:'4px 10px',borderRadius:4,background:'var(--blu-d)',color:'var(--blu)',letterSpacing:1,textTransform:'uppercase'}}>Deep Work</div>
+      </div>
+
+      {/* MAIN GRID */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 380px',gap:24,marginBottom:24}}>
+        <div>
+          <div style={{fontFamily:'var(--mono)',fontSize:10,letterSpacing:3,textTransform:'uppercase',color:'var(--t3)',marginBottom:16}}>Active Ventures & Projects</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+            {PROJECTS.map(p=><ProjectCard key={p.id} p={p}/>)}
+          </div>
+        </div>
+        <div><CalendarPanel events={calEvents} loading={calLoading} error={calError}/></div>
+      </div>
+
+      {/* BOTTOM */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 380px',gap:24}}>
+        <ActionList actions={actions} onToggle={toggleAction} onAdd={addAction} onDelete={deleteAction}/>
+        <InfraPanel/>
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          <GHPanel ghData={ghData} ghUser={ghUser} onSetUser={handleGHUser} loading={ghLoading}/>
+          <Revenue/>
+        </div>
+      </div>
+
+    </div>
+  </div>;
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
