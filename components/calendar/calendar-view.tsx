@@ -73,16 +73,20 @@ export function BookingCalendar({
     ? bookings.filter(b => selectedStations.includes(b.station_id))
     : bookings
 
-  // Map bookings to FullCalendar events — title is just station name
+  // Map bookings to FullCalendar events
   const events = filteredBookings.map((booking) => {
     const station = stations.find((s) => s.id === booking.station_id)
     const stationName = station?.name || 'Reserved'
+    const companyName = booking.profile?.company_name || 'Reserved'
     const color = stationColors[stationName] || '#6b7280'
     const isOwnBooking = currentUserId && booking.user_id === currentUserId
 
+    // Use a newline so that the company name drops to the next line in the block if possible
+    const title = isOwnBooking ? `★ ${stationName}\n${companyName}` : `${stationName}\n${companyName}`
+
     return {
       id: booking.id,
-      title: isOwnBooking ? `★ ${stationName}` : stationName,
+      title,
       start: booking.start_time,
       end: booking.end_time,
       backgroundColor: color,
@@ -168,6 +172,13 @@ export function BookingCalendar({
         .fc-col-header-cell { background-color: #f8fafc; padding: 0.75rem 0 !important; }
         .fc-col-header-cell-cushion { color: #334155; font-weight: 600; font-size: ${isMobile ? '0.8rem' : '1rem'}; }
         .fc-event { border-radius: 6px !important; font-size: ${isMobile ? '0.7rem' : '0.8rem'} !important; padding: 2px 6px !important; cursor: pointer !important; }
+        .fc-event-title { 
+          white-space: pre-wrap !important; 
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+        }
         .fc-timegrid-now-indicator-line { border-color: #ef4444 !important; }
         .fc-daygrid-day-top { padding: 8px; }
         .fc-scrollgrid { border-radius: 12px !important; overflow: hidden; }
@@ -177,7 +188,7 @@ export function BookingCalendar({
           .fc-toolbar { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem !important; }
           .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
         }
-        .fc-list-event-title { color: #0f172a !important; font-weight: 500 !important; }
+        .fc-list-event-title { color: #0f172a !important; font-weight: 500 !important; white-space: normal !important; }
         .fc-list-event-time { color: #334155 !important; }
         .fc-list-day-text { color: #0f172a !important; font-weight: 700 !important; }
         .fc-list-day-side-text { color: #334155 !important; }

@@ -9,10 +9,8 @@ import { UserMenu } from "@/components/user-menu"
 import { createClient } from "@/utils/supabase/client"
 import { Menu, X } from "lucide-react"
 
-// Create client once outside component to prevent re-render loop
-const supabase = createClient()
-
 export function SiteNav() {
+    const [supabase] = useState(() => createClient())
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [userRole, setUserRole] = useState<'admin' | 'tenant' | null>(null)
