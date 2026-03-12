@@ -25,8 +25,8 @@ export function Footer() {
                 </Link>
               </p>
               <p>
-                <Link href="/partnerships" className="hover:text-white transition-colors">
-                  Partnerships & Programs
+                <Link href="/apply/catering-permit" className="hover:text-white transition-colors">
+                  AI Permit Assistant
                 </Link>
               </p>
               <p>

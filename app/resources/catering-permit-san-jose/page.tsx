@@ -97,6 +97,21 @@ export default function CateringPermitGuide() {
             </li>
           </ul>
 
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 rounded-xl my-8 shadow-lg text-white">
+            <h3 className="text-2xl font-bold text-white mb-3 mt-0 flex items-center gap-2">
+              <FileText className="w-6 h-6 text-teal-400" />
+              Overwhelmed by the Paperwork?
+            </h3>
+            <p className="text-slate-300 mb-6">
+              Skip the confusion. We built an AI Permit Assistant trained specifically on Santa Clara County Health Department requirements. It guides you step-by-step and instantly handles translations.
+            </p>
+            <Link href="/apply/catering-permit">
+              <Button className="bg-teal-500 hover:bg-teal-400 text-white font-semibold border-none w-full sm:w-auto">
+                Use the Free AI Permit Assistant
+              </Button>
+            </Link>
+          </div>
+
           <h2 className="text-3xl font-bold text-slate-900 mt-12 mb-6">Step 4: Pay Fees and Schedule Inspection</h2>
           <p className="text-slate-600 mb-6">
             After submitting your packet, you will need to pay the annual health permit fee. The DEH will review your Standard Operating Procedures and may request an initial inspection of your vehicles and equipment at your commissary to ensure you can safely transport food at required temperatures.

@@ -93,7 +93,7 @@ export function SiteNav() {
                     {/* Desktop Navigation */}
                     <nav className="hidden lg:flex items-center gap-1">
                         <NavLink href="/">HOME</NavLink>
-                        <NavLink href="/partnerships">PARTNERSHIPS</NavLink>
+                        <NavLink href="/apply/catering-permit">AI PERMIT APP</NavLink>
                         <NavLink href="/resources/catering-permit-san-jose">RESOURCES</NavLink>
                         {isLoggedIn && (
                             <>
@@ -138,7 +138,7 @@ export function SiteNav() {
                 <div className="absolute right-4 top-16 z-50 w-64 bg-white rounded-lg shadow-xl border border-slate-100 p-2 lg:hidden">
                     <div className="flex flex-col space-y-1">
                         <MobileNavLink href="/">HOME</MobileNavLink>
-                        <MobileNavLink href="/partnerships">PARTNERSHIPS</MobileNavLink>
+                        <MobileNavLink href="/apply/catering-permit">AI PERMIT APP</MobileNavLink>
                         <MobileNavLink href="/resources/catering-permit-san-jose">RESOURCES</MobileNavLink>
                         {isLoggedIn && (
                             <>
