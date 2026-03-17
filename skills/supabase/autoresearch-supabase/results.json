@@ -1,0 +1,24 @@
+{
+  "skill_name": "supabase",
+  "status": "running",
+  "current_experiment": 0,
+  "baseline_score": 0.0,
+  "best_score": 0.0,
+  "experiments": [
+    {
+      "id": 0,
+      "score": 0,
+      "max_score": 25,
+      "pass_rate": 0.0,
+      "status": "baseline",
+      "description": "original skill — empty index with no rules, examples, or RLS/action guidance"
+    }
+  ],
+  "eval_breakdown": [
+    {"name": "Calls auth.getUser() before DB ops", "pass_count": 0, "total": 5},
+    {"name": "RLS includes ENABLE ROW LEVEL SECURITY", "pass_count": 0, "total": 5},
+    {"name": "Avoids SELECT *", "pass_count": 0, "total": 5},
+    {"name": "Named index in migrations", "pass_count": 0, "total": 5},
+    {"name": "Uses project table names", "pass_count": 0, "total": 5}
+  ]
+}

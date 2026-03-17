@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabase
     .from('timesheets')
-    .select('*')
+    .select('id, user_id, clock_in, clock_out')
     .eq('user_id', userId)
     .is('clock_out', null)
     .maybeSingle();

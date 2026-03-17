@@ -84,6 +84,6 @@ AFTER INSERT OR UPDATE OR DELETE ON timesheets
 FOR EACH ROW EXECUTE FUNCTION log_timesheet_changes();
 
 -- Index for fast lookups by timesheet or user.
-CREATE INDEX idx_timesheet_audit_log_timesheet_id ON timesheet_audit_log (timesheet_id);
-CREATE INDEX idx_timesheet_audit_log_user_id      ON timesheet_audit_log (user_id);
-CREATE INDEX idx_timesheet_audit_log_changed_at   ON timesheet_audit_log (changed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_timesheet_audit_log_timesheet_id ON timesheet_audit_log (timesheet_id);
+CREATE INDEX IF NOT EXISTS idx_timesheet_audit_log_user_id      ON timesheet_audit_log (user_id);
+CREATE INDEX IF NOT EXISTS idx_timesheet_audit_log_changed_at   ON timesheet_audit_log (changed_at DESC);

@@ -26,7 +26,7 @@ export async function approveApplication(applicationId: string) {
     // Get application details
     const { data: application, error: fetchError } = await supabase
         .from('applications')
-        .select('*')
+        .select('id, email, company_name, phone, status, submitted_at, invited_at')
         .eq('id', applicationId)
         .single();
 
@@ -135,7 +135,7 @@ export async function getApplications(status?: string) {
 
     let query = supabase
         .from('applications')
-        .select('*')
+        .select('id, email, company_name, phone, status, submitted_at, reviewed_at, notes, invited_at')
         .order('submitted_at', { ascending: false });
 
     if (status && status !== 'all') {
@@ -172,7 +172,7 @@ export async function getTenants() {
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, role, company_name, contact_name, email, phone, is_active, created_at, updated_at')
         .eq('role', 'tenant')
         .order('company_name', { ascending: true });
 

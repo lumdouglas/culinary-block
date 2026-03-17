@@ -8,7 +8,7 @@ export async function getActiveSession(userId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from('timesheets')
-    .select('*')
+    .select('id, user_id, clock_in, clock_out')
     .eq('user_id', userId)
     .is('clock_out', null)
     .maybeSingle();

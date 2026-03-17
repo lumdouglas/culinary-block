@@ -41,7 +41,7 @@ export async function PATCH(
         // 1. Get the request details
         const { data: request, error: reqError } = await supabase
             .from('timesheet_requests')
-            .select('*')
+            .select('id, status, type, timesheet_id, clock_in, clock_out, user_id')
             .eq('id', id)
             .single();
 

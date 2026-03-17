@@ -31,7 +31,7 @@ export async function getStations() {
 
   const { data, error } = await supabase
     .from('stations')
-    .select('*')
+    .select('id, name, category, is_active, equipment')
     .eq('is_active', true)
     .order('id');
 

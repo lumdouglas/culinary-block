@@ -101,10 +101,10 @@ export default function AccountSetupPage() {
     });
 
     async function onSubmit(values: z.infer<typeof accountSetupSchema>) {
-        // Explicitly check for an active session to prevent "User from sub claim doesn't exist" errors
-        const { data: { session } } = await supabase.auth.getSession();
+        // Explicitly verify the session against the server before updating the password
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (!session) {
+        if (!user) {
             toast.error("Your invite session has expired. Please request a new link.");
             router.push("/login");
             return;

@@ -12,7 +12,7 @@ export async function GET(req: Request) {
 
     const { data, error } = await supabase
         .from('timesheet_requests')
-        .select('*')
+        .select('id, type, status, reason, clock_in, clock_out, timesheet_id, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 

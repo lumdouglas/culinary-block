@@ -58,11 +58,11 @@ ALTER TABLE bookings ADD CONSTRAINT no_overlapping_bookings
   ) WHERE (status = 'confirmed');
 
 -- Create indexes for efficient queries
-CREATE INDEX idx_bookings_station_id ON bookings(station_id);
-CREATE INDEX idx_bookings_user_id ON bookings(user_id);
-CREATE INDEX idx_bookings_start_time ON bookings(start_time);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_bookings_time_range ON bookings(start_time, end_time);
+CREATE INDEX IF NOT EXISTS idx_bookings_station_id ON bookings(station_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_start_time ON bookings(start_time);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_time_range ON bookings(start_time, end_time);
 
 -- Enable RLS
 ALTER TABLE stations ENABLE ROW LEVEL SECURITY;
