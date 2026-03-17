@@ -1,4 +1,5 @@
 import { google } from "@ai-sdk/google";
+import crypto from "node:crypto";
 import { convertToModelMessages, stepCountIs, streamText, tool } from "ai";
 import { z } from "zod";
 import {
@@ -233,10 +234,10 @@ export async function POST(req: Request) {
             const updatedMessages = [
               ...messages,
               ...response.messages.map(m => ({
-                id: m.id,
+                id: (m as any).id || crypto.randomUUID(),
                 role: m.role,
                 content: m.content,
-                parts: m.parts
+                parts: (m as any).parts
               }))
             ];
             
