@@ -3,7 +3,7 @@ from pydantic import AnyHttpUrl, validator
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Culinary Block AI Agent"
+    PROJECT_NAME: str = "Culinary Block Growth Engine"
     API_V1_STR: str = "/api/v1"
     
     # CORS

@@ -22,4 +22,4 @@ app.include_router(router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 def root():
-    return {"message": "Culinary Block AI Agent API is running"}
+    return {"message": "Culinary Block Growth Engine API is running"}

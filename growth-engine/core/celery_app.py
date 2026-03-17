@@ -4,7 +4,7 @@ import os
 
 # Create Celery instance
 celery_app = Celery(
-    "ai_agent_worker",
+    "growth_engine_worker",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
     include=["core.tasks"]

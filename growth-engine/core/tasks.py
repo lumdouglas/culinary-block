@@ -1,7 +1,7 @@
 from core.celery_app import celery_app
 from celery.schedules import crontab
 
-@celery_app.task(name="test_ai_agent_task")
+@celery_app.task(name="test_growth_engine_task")
 def test_task(word: str) -> str:
     """A simple test task to ensure Celery is working."""
     return f"Test task completed successfully: {word}"

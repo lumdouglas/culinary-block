@@ -1,16 +1,16 @@
 #!/bin/bash
-echo "Starting Culinary Block AI Agent..."
+echo "Starting Culinary Block Growth Engine..."
 
 # Start the FastAPI Backend
 echo "Starting FastAPI Backend on port 8000..."
-cd /Users/doug/culinary-block/ai-agent
+cd /Users/doug/culinary-block/growth-engine
 source venv/bin/activate
 uvicorn main:app --reload &
 BACKEND_PID=$!
 
 # Start the Vite Frontend
 echo "Starting React Frontend on port 5173..."
-cd /Users/doug/culinary-block/ai-agent/dashboard
+cd /Users/doug/culinary-block/growth-engine/dashboard
 npm run dev &
 FRONTEND_PID=$!
 

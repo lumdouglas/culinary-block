@@ -1,4 +1,4 @@
-# Culinary Block AI Agent
+# Culinary Block Growth Engine
 
 This directory contains the Python FastAPI backend for the powerful AI marketing and growth agent.
 

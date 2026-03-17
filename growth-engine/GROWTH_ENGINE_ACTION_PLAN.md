@@ -1,12 +1,12 @@
 # Culinary Block AI Growth Agent: Overview & Action Items
 
-This document provides a comprehensive breakdown of the newly installed autonomous AI marketing agent located in `/ai-agent`, along with your specific action items to get it fully operational.
+This document provides a comprehensive breakdown of the newly installed autonomous AI marketing agent located in `/growth-engine`, along with your specific action items to get it fully operational.
 
 ---
 
 ## 🚀 What the Agent Does
 
-The AI Agent acts as a "100x Growth Operator" designed specifically for the Culinary Block physical + SaaS hybrid model. It runs autonomously in the background via scheduled Python tasks, but features a React **Dashboard** tailored with "Human-in-the-loop" approval gates, meaning it will never spend money or send outbound emails without your explicit approval.
+The Growth Engine acts as a "100x Growth Operator" designed specifically for the Culinary Block physical + SaaS hybrid model. It runs autonomously in the background via scheduled Python tasks, but features a React **Dashboard** tailored with "Human-in-the-loop" approval gates, meaning it will never spend money or send outbound emails without your explicit approval.
 
 It is split into 5 core modules:
 
@@ -45,7 +45,7 @@ You will need to register for developer access on the following platforms to fee
 - [ ] **Claude (Anthropic) or Gemini (Google):** Get an API key to power the actual LLM generation engine.
 
 ### 2. Enter Keys into the UI Dashboard
-- Run the agent locally: `cd /Users/doug/culinary-block/ai-agent && ./start.sh`
+- Run the agent locally: `cd /Users/doug/culinary-block/growth-engine && ./start.sh`
 - Open your browser to `http://localhost:5173`.
 - Navigate to the **Settings** page via the left sidebar.
 - Enter your acquired API keys into the Setup Wizard and click "Save & Connect". This updates the backend environment variables.
@@ -58,5 +58,5 @@ The codebase currently contains mock endpoints (created so you could demo the UI
 
 ### 4. Deploy the Agent
 Once the local testing is complete and the real APIs are connected, you'll need to deploy the infrastructure:
-- **Frontend Panel:** Deploy the `/ai-agent/dashboard` folder to **Vercel** (this acts exactly like the main Next.js app deployment).
+- **Frontend Panel:** Deploy the `/growth-engine/dashboard` folder to **Vercel** (this acts exactly like the main Next.js app deployment).
 - **Backend Service:** Deploy the Python FastAPI backend to **Render**, **Fly.io**, or **Google Cloud Run**. Ensure you attach a managed **Redis** instance to this deployment, as Celery relies on Redis to schedule and execute the daily cron jobs.
