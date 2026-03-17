@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout"
 import Overview from "@/pages/Overview"
 import Settings from "@/pages/Settings"
@@ -10,18 +10,37 @@ function AdsManager() { return <div className="text-2xl font-bold">Paid Acquisit
 function LeadGen() { return <div className="text-2xl font-bold">Outreach & Lead Gen</div> }
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState("/")
+
+  useEffect(() => {
+    setCurrentPath(window.location.pathname)
+
+    const handlePopState = () => setCurrentPath(window.location.pathname)
+    window.addEventListener("popstate", handlePopState)
+    return () => window.removeEventListener("popstate", handlePopState)
+  }, [])
+
+  const page = useMemo(() => {
+    switch (currentPath) {
+      case "/seo":
+        return <SEOHub />
+      case "/content":
+        return <ContentEngine />
+      case "/ads":
+        return <AdsManager />
+      case "/leads":
+        return <LeadGen />
+      case "/settings":
+        return <Settings />
+      case "/":
+      default:
+        return <Overview />
+    }
+  }, [currentPath])
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Overview />} />
-          <Route path="/seo" element={<SEOHub />} />
-          <Route path="/content" element={<ContentEngine />} />
-          <Route path="/ads" element={<AdsManager />} />
-          <Route path="/leads" element={<LeadGen />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <AppLayout currentPath={currentPath}>
+      {page}
+    </AppLayout>
   )
 }

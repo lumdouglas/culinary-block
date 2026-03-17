@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from "react-router-dom"
+import type { ReactNode } from "react"
 import { LayoutDashboard, Brain, MessageSquare, Megaphone, Users, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -11,8 +11,12 @@ const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
-export default function AppLayout() {
-  const location = useLocation()
+type AppLayoutProps = {
+  currentPath: string
+  children: ReactNode
+}
+
+export default function AppLayout({ currentPath, children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -26,12 +30,11 @@ export default function AppLayout() {
         </div>
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
-            const isActive = location.pathname === item.href || 
-                            (item.href !== '/' && location.pathname.startsWith(item.href))
+            const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))
             return (
-              <Link
+              <a
                 key={item.name}
-                to={item.href}
+                href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium",
                   isActive 
@@ -41,7 +44,7 @@ export default function AppLayout() {
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-teal-400" : "text-slate-400")} />
                 {item.name}
-              </Link>
+              </a>
             )
           })}
         </nav>
@@ -64,7 +67,7 @@ export default function AppLayout() {
         </header>
         <main className="flex-1 p-8 overflow-auto">
           <div className="max-w-7xl mx-auto">
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>
