@@ -1,8 +1,13 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminTimesheetsTable } from "@/components/admin/timesheets-table"
+import { getTenants } from "@/app/actions/admin"
 
-export default async function AdminTimesheetsPage() {
+export default async function AdminTimesheetsPage({
+    searchParams,
+}: {
+    searchParams: { tenantId?: string }
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -17,16 +22,27 @@ export default async function AdminTimesheetsPage() {
 
     if (profile?.role !== "admin") return redirect("/")
 
-    // Fetch all timesheets across all tenants
-    const { data: timesheets, error } = await supabase
+    const selectedTenantId = (await searchParams).tenantId
+
+    // Fetch all tenants for the filter
+    const { data: tenants } = await getTenants()
+
+    // Fetch timesheets with optional tenant filter
+    let query = supabase
         .from("timesheets")
         .select(`
             id, clock_in, clock_out, duration_minutes, is_edited, status,
-            profiles:user_id (company_name, email),
+            profiles:user_id (id, company_name, email),
             kitchens (name)
         `)
         .order("clock_in", { ascending: false })
         .limit(100)
+
+    if (selectedTenantId) {
+        query = query.eq("user_id", selectedTenantId)
+    }
+
+    const { data: timesheets, error } = await query
 
     if (error) {
         console.error("Error fetching timesheets:", error)
@@ -41,7 +57,11 @@ export default async function AdminTimesheetsPage() {
                 </div>
             </div>
 
-            <AdminTimesheetsTable initialTimesheets={timesheets || []} />
+            <AdminTimesheetsTable 
+                initialTimesheets={timesheets || []} 
+                tenants={tenants || []}
+                selectedTenantId={selectedTenantId}
+            />
         </div>
     )
 }

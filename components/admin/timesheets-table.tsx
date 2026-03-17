@@ -14,13 +14,20 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { verifyTimesheets } from "@/app/actions/timesheets"
 import { toast } from "sonner"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { CheckCircle2, Loader2, Filter } from "lucide-react"
+import { TenantFilter } from "./tenant-filter"
 
 interface TimesheetsTableProps {
     initialTimesheets: any[]
+    tenants: any[]
+    selectedTenantId?: string
 }
 
-export function AdminTimesheetsTable({ initialTimesheets }: TimesheetsTableProps) {
+export function AdminTimesheetsTable({ 
+    initialTimesheets, 
+    tenants,
+    selectedTenantId 
+}: TimesheetsTableProps) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [isPending, startTransition] = useTransition()
 
@@ -65,18 +72,22 @@ export function AdminTimesheetsTable({ initialTimesheets }: TimesheetsTableProps
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-slate-500">
-                    {selectedIds.size} selected
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                <TenantFilter tenants={tenants} selectedTenantId={selectedTenantId} />
+                
+                <div className="flex items-center gap-4">
+                    <div className="text-sm text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                        {selectedIds.size} selected for verification
+                    </div>
+                    <Button
+                        onClick={handleVerifySelected}
+                        disabled={selectedIds.size === 0 || isPending}
+                        className="bg-teal-600 hover:bg-teal-700 shadow-sm"
+                    >
+                        {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                        Verify Selected
+                    </Button>
                 </div>
-                <Button
-                    onClick={handleVerifySelected}
-                    disabled={selectedIds.size === 0 || isPending}
-                    className="bg-teal-600 hover:bg-teal-700"
-                >
-                    {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
-                    Verify Selected
-                </Button>
             </div>
 
             <div className="rounded-md border bg-white overflow-x-auto shadow-sm">
