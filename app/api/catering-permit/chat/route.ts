@@ -6,6 +6,7 @@ import {
   DEFAULT_PERMIT_DATA,
   mergePermitData,
 } from "@/lib/catering-permit";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 const permitTools = {
   update_permit_data: tool({
@@ -48,9 +49,8 @@ IMPORTANT CONTEXT: The applicant has been asked if they want to start with the b
 - Keep track of which sections are missing and circle back to the remaining steps once their priority section is finished.
 
 STEP 1 — CONTACT & BUSINESS INFO
-Ask for: Catering operation DBA name (the business name), owner full name, owner phone, owner email.
-Also ask for the owner's separated home/mailing address (Street, City, State, Zip) — this is required and usually different from the PFF address.
-Tip: DBA stands for "Doing Business As" — it is the name of their catering brand.
+The initial contact information (business name, owner name, phone, email) has already been collected on the intake form before this chat started. You do NOT need to ask for these unless you specifically need to confirm them.
+Just ask for the owner's separated home/mailing address (Street, City, State, Zip) — this is required and usually different from the PFF address.
 
 STEP 2 — MENU ITEMS & PROCEDURES
 Ask for each food/beverage/condiment they will prepare. For each item you MUST collect:
@@ -212,6 +212,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const messages = body.messages ?? [];
     const language = (body.language as string) || "en";
+    const sessionId = body.sessionId as string;
+    const sessionData = body.sessionData;
 
     const modelMessages = await convertToModelMessages(messages);
 
@@ -221,6 +223,44 @@ export async function POST(req: Request) {
       messages: modelMessages,
       tools: permitTools,
       stopWhen: stepCountIs(10),
+      onFinish: async ({ response }) => {
+        // Save the chat history to Supabase using the Service Role Admin Client.
+        if (sessionId && sessionData) {
+          try {
+            const adminClient = createAdminClient();
+            
+            // Reconstruct the full message array including the newly generated assistant response
+            const updatedMessages = [
+              ...messages,
+              ...response.messages.map(m => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                parts: m.parts
+              }))
+            ];
+            
+            const { error: upsertError } = await adminClient
+              .from('permit_chat_sessions')
+              .upsert({
+                id: sessionId,
+                business_name: sessionData.businessName,
+                owner_name: sessionData.ownerName,
+                email: sessionData.email,
+                phone: sessionData.phone,
+                language: language,
+                messages: updatedMessages,
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'id' });
+
+            if (upsertError) {
+              console.error("Failed to upsert permit chat session into Supabase:", upsertError);
+            }
+          } catch (dbErr) {
+            console.error("Database logging error:", dbErr);
+          }
+        }
+      }
     });
 
     return result.toUIMessageStreamResponse();

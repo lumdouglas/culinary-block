@@ -15,7 +15,7 @@ export const menuItemSchema = z.object({
   food: z.string(),
   procedures: z.string(),
   ingredients: z.string(),
-  category: z.enum(["no-cook", "cook-to-serve", "complex", ""]),
+  category: z.enum(["no-cook", "cook-to-serve", "complex", "unspecified"]),
 });
 
 // --- Host facility row ---
@@ -39,13 +39,13 @@ export const updatePermitDataSchema = z.object({
   pff_address: z.string().optional(),
   pff_county: z.string().optional(),
   menu_items: z.array(menuItemSchema).optional(),
-  delivery_method: z.enum(["pick-up", "delivery", "on-site", ""]).optional(),
+  delivery_method: z.enum(["pick-up", "delivery", "on-site", "unspecified"]).optional(),
   employee_count: z.number().optional(),
   operating_days: z.array(z.string()).optional(),
   operating_times: z.string().optional(),
   customer_types: z.array(z.string()).optional(),
   order_methods: z.array(z.string()).optional(),
-  sanitize_method: z.enum(["manual", "chemical-dw", "high-temp-dw", ""]).optional(),
+  sanitize_method: z.enum(["manual", "chemical-dw", "high-temp-dw", "unspecified"]).optional(),
   ingredient_sources: z.array(z.string()).optional(),
   transport_cambro: z.boolean().optional(),
   transport_refrigerated_truck: z.boolean().optional(),
@@ -89,13 +89,13 @@ export interface CateringPermitData {
   pff_address: string;
   pff_county: string;
   menu_items: MenuItem[];
-  delivery_method: "pick-up" | "delivery" | "on-site" | "";
+  delivery_method: "pick-up" | "delivery" | "on-site" | "unspecified" | "";
   employee_count: number;
   operating_days: string[];
   operating_times: string;
   customer_types: string[];
   order_methods: string[];
-  sanitize_method: "manual" | "chemical-dw" | "high-temp-dw" | "";
+  sanitize_method: "manual" | "chemical-dw" | "high-temp-dw" | "unspecified" | "";
   ingredient_sources: string[];
   transport_cambro: boolean;
   transport_refrigerated_truck: boolean;
