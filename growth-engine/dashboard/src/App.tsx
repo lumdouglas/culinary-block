@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
-import AppLayout from "@/components/layout"
-import Overview from "@/pages/Overview"
-import Settings from "@/pages/Settings"
+import AppLayout from "./components/layout"
+import Overview from "./pages/Overview"
+import Settings from "./pages/Settings"
 
 // Placeholders for the main views
 function SEOHub() { return <div className="text-2xl font-bold">Data & SEO Intelligence</div> }

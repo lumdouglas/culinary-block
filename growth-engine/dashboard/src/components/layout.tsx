@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { LayoutDashboard, Brain, MessageSquare, Megaphone, Users, Settings } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "../lib/utils"
 
 const navigation = [
   { name: 'Overview', href: '/', icon: LayoutDashboard },

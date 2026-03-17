@@ -1,5 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "../components/ui/card"
+import { Button } from "../components/ui/button"
 import { CheckCircle2, AlertCircle } from "lucide-react"
 
 export default function Settings() {
