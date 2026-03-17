@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #0f766e; /* Teal 700 */
+  --color-brand-light: #14b8a6; /* Teal 500 */
+  --color-brand-dark: #0f172a; /* Slate 900 */
+}
+
+/* Custom Base Styles */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8fafc; /* Slate 50 */
+  color: #0f172a; /* Slate 900 */
+}
