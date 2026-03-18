@@ -38,6 +38,7 @@
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "growth-engine/dashboard/vite.config.ts"
   ]
 }
