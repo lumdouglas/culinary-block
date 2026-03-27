@@ -99,41 +99,47 @@ function parseProcedureSteps(text: string): Record<string, string> {
     delivery: "",
   };
 
-  // Try to split by labelled sections
-  const patterns: [string, RegExp][] = [
-    ["storage", /(?:step\s*1|storage)[:\s-]+/i],
-    ["preparation", /(?:step\s*2|preparation|prep)[:\s-]+/i],
-    ["cooking", /(?:step\s*3|cooking|cook)[:\s-]+/i],
-    ["cooling", /(?:step\s*4|cooling|cool)[:\s-]+/i],
-    ["reheating", /(?:step\s*5|reheating|reheat)[:\s-]+/i],
-    ["delivery", /(?:step\s*6|delivery|deliver)[:\s-]+/i],
-  ];
+  // Split the text at step labels — handles both newline-separated and inline formats.
+  // This regex finds labels like "Storage:", "Step 1:", "Preparation:", etc.
+  // and splits the text into chunks, each starting with a label.
+  const labelPattern =
+    /(?:^|\n|(?<=\.\s)|(?<=;\s)|(?<=\s))(?:step\s*\d[\s:.—-]*)?(?:storage|preparation|prep|cooking|cook|cooling|cool|reheating|reheat|delivery|deliver)\s*[:.\s—-]+/gi;
 
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  // Find all label positions
+  const matches: { key: string; start: number; end: number }[] = [];
+  let m;
+  while ((m = labelPattern.exec(text)) !== null) {
+    const label = m[0].toLowerCase();
+    let key = "";
+    if (/storage/i.test(label)) key = "storage";
+    else if (/prep/i.test(label)) key = "preparation";
+    else if (/cook/i.test(label) && !/cool/i.test(label)) key = "cooking";
+    else if (/cool/i.test(label)) key = "cooling";
+    else if (/reheat/i.test(label)) key = "reheating";
+    else if (/deliver/i.test(label)) key = "delivery";
+    if (key) matches.push({ key, start: m.index, end: m.index + m[0].length });
+  }
 
-  let currentStep = "";
-  for (const line of lines) {
-    let matched = false;
-    for (const [key, regex] of patterns) {
-      if (regex.test(line)) {
-        currentStep = key;
-        // Extract the text after the label
-        const afterLabel = line.replace(regex, "").trim();
-        if (afterLabel) {
-          steps[currentStep] = (steps[currentStep] ? steps[currentStep] + " " : "") + afterLabel;
-        }
-        matched = true;
-        break;
-      }
-    }
-    if (!matched && currentStep) {
-      steps[currentStep] = (steps[currentStep] ? steps[currentStep] + " " : "") + line;
+  if (matches.length === 0) {
+    // No labels found — put everything in preparation as fallback
+    steps.preparation = text.trim();
+    return steps;
+  }
+
+  // Extract text between each label
+  for (let i = 0; i < matches.length; i++) {
+    const contentStart = matches[i].end;
+    const contentEnd = i + 1 < matches.length ? matches[i + 1].start : text.length;
+    const content = text.slice(contentStart, contentEnd).trim();
+    if (content) {
+      steps[matches[i].key] = (steps[matches[i].key] ? steps[matches[i].key] + " " : "") + content;
     }
   }
 
-  // If no steps were parsed, dump everything into preparation
-  if (!currentStep) {
-    steps.preparation = text;
+  // If there's text before the first label, put it in storage (most likely scenario)
+  const beforeFirst = text.slice(0, matches[0].start).trim();
+  if (beforeFirst) {
+    steps.storage = (beforeFirst + " " + steps.storage).trim();
   }
 
   return steps;
@@ -242,14 +248,17 @@ export async function generatePermitPdf(
   //   "Print Name" at y=387
 
   // Applicant Information
-  drawText(4, data.owner_name, 115, 675);
-  drawText(4, data.catering_dba, 380, 675);
-  drawText(4, data.owner_address, 120, 659);
-  drawText(4, data.owner_city, 300, 659);
-  drawText(4, data.owner_state || "CA", 470, 659);
-  drawText(4, data.owner_zip, 520, 659);
-  drawText(4, data.owner_email, 120, 642);
-  drawText(4, data.owner_phone, 330, 642);
+  //   Row 1: "Owner Name:" / "Name of Business:"
+  //   Row 2: "Owner Address:" / "City:" / "State:" / "Zip:"
+  //   Row 3: "Email Address:" / "Telephone:"
+  drawText(4, data.owner_name, 115, 660);
+  drawText(4, data.catering_dba, 380, 660);
+  drawText(4, data.owner_address, 120, 644);
+  drawText(4, data.owner_city, 300, 644);
+  drawText(4, data.owner_state || "CA", 470, 644);
+  drawText(4, data.owner_zip, 520, 644);
+  drawText(4, data.owner_email, 120, 628);
+  drawText(4, data.owner_phone, 330, 628);
 
   // Rental kitchen
   drawText(4, data.pff_name, 185, 609);
