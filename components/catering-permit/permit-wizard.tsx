@@ -279,6 +279,39 @@ function saveSessionData(data: SessionData) {
   }
 }
 
+// ── Simple inline markdown renderer (bold, italic, line breaks) ──────────────
+function renderMarkdown(text: string): React.ReactNode[] {
+  // Split into lines first, then process inline formatting
+  return text.split("\n").flatMap((line, li, lines) => {
+    const parts: React.ReactNode[] = [];
+    // Match **bold** and *italic* patterns
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(line.slice(lastIndex, match.index));
+      }
+      if (match[2]) {
+        // **bold**
+        parts.push(<strong key={`${li}-b-${match.index}`}>{match[2]}</strong>);
+      } else if (match[3]) {
+        // *italic*
+        parts.push(<em key={`${li}-i-${match.index}`}>{match[3]}</em>);
+      }
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < line.length) {
+      parts.push(line.slice(lastIndex));
+    }
+    // Add line break between lines (not after the last one)
+    if (li < lines.length - 1) {
+      parts.push(<br key={`br-${li}`} />);
+    }
+    return parts;
+  });
+}
+
 // ── Voice input language mapping ─────────────────────────────────────────────────
 const langMap: Record<PermitLanguageCode, string> = {
   en: "en-US",
@@ -792,7 +825,7 @@ export function PermitWizard() {
                           if (p.type === "text" && p.text) {
                             return (
                               <p key={i} className="whitespace-pre-wrap">
-                                {p.text}
+                                {renderMarkdown(p.text)}
                               </p>
                             );
                           }
