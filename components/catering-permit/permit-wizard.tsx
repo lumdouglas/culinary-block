@@ -33,6 +33,7 @@ import {
 // ─── constants ──────────────────────────────────────────────────────────────
 const FORM_DATA_KEY = "permit-wizard-form-v1";
 const SESSION_DATA_KEY = "permit-wizard-session-v1";
+const MESSAGES_DATA_KEY = "permit-wizard-messages-v1";
 const STREAM_TIMEOUT_MS = 60_000;
 
 type SessionData = {
@@ -234,6 +235,27 @@ function clearFormData() {
   try {
     localStorage.removeItem(FORM_DATA_KEY);
     localStorage.removeItem(SESSION_DATA_KEY);
+    localStorage.removeItem(MESSAGES_DATA_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function loadSavedMessages(): any[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(MESSAGES_DATA_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveMessages(messages: any[]) {
+  try {
+    if (messages.length > 0) {
+      localStorage.setItem(MESSAGES_DATA_KEY, JSON.stringify(messages));
+    }
   } catch {
     // ignore
   }
@@ -314,12 +336,14 @@ export function PermitWizard() {
   // "stop" aborts an in-flight stream; "error" surfaces API failures.
   const {
     messages,
+    setMessages,
     sendMessage,
     status,
     error: chatApiError,
     stop,
   } = useChat({ transport }) as {
     messages: Array<{ id: string; role: string; parts?: Array<{ type: string; text?: string; input?: unknown }> }>;
+    setMessages: (messages: any[]) => void;
     sendMessage: (msg: { text: string }) => void;
     status: "idle" | "submitted" | "streaming" | "error";
     error?: Error;
@@ -370,12 +394,17 @@ export function PermitWizard() {
   // Runs after the messages effect above, so it wins when messages are empty.
   // This avoids SSR hydration issues (we never read localStorage during SSR).
   useEffect(() => {
+    const savedMessages = loadSavedMessages();
+    if (savedMessages && savedMessages.length > 0 && messages.length === 0) {
+      setMessages(savedMessages);
+    }
+
     const savedSession = loadSavedSessionData();
     if (savedSession) {
       setSession(savedSession);
     }
     
-    if (messagesHaveToolUpdates(messages)) return; // AI data takes priority
+    if (messagesHaveToolUpdates(messages) || (savedMessages && messagesHaveToolUpdates(savedMessages))) return; // AI data takes priority
     const saved = loadSavedFormData();
     if (saved) {
         setPermitData(saved);
@@ -393,6 +422,11 @@ export function PermitWizard() {
   useEffect(() => {
     saveFormData(permitData);
   }, [permitData]);
+
+  // ── Persist messages whenever they change ─────────────────────────────────
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
 
   // ── Auto-scroll chat to bottom ────────────────────────────────────────────
   useEffect(() => {

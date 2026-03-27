@@ -52,6 +52,7 @@ IMPORTANT CONTEXT: The applicant has been asked if they want to start with the b
 STEP 1 — CONTACT & BUSINESS INFO
 The initial contact information (business name, owner name, phone, email) has already been collected on the intake form before this chat started. You do NOT need to ask for these unless you specifically need to confirm them.
 Just ask for the owner's separated home/mailing address (Street, City, State, Zip) — this is required and usually different from the PFF address.
+Also ask: "Have you ever held a permit to operate a food facility in Santa Clara County before?" If yes, ask for the Facility ID# (starts with FA0) and facility name. This goes on the Permit Application form.
 
 STEP 2 — MENU ITEMS & PROCEDURES
 Ask for each food/beverage/condiment they will prepare. For each item you MUST collect:
@@ -72,7 +73,14 @@ Ask for:
 - Operating times (e.g. 8am - 2pm)
 - Target customers (e.g. corporate, private parties, individual)
 - Order methods (e.g. internet, phone)
-- Ingredient purchase sources (e.g. Restaurant Depot, Costco, local grocery)
+- Ingredient purchase sources — ask which of these they'll use (check all that apply): Restaurant Depot, Costco, Cash and Carry, Smart and Final, local grocery store (ask them to specify which one), online ingredients (e.g. Amazon), Farmers Markets, or other.
+
+STEP 3.5 — KITCHEN STORAGE LOCATIONS
+Ask where they will store these categories of items at Culinary Block:
+- Cooking equipment (e.g. "on shelf rack by prep station")
+- Dry ingredients like salt, pepper, sugar (e.g. "dry storage shelf")
+- Dairy, meat, and vegetables (e.g. "walk-in cooler, designated shelf")
+This is required for Section 10 of the WOPS form. Keep it brief — one answer per category is enough.
 
 STEP 4 — DELIVERY METHOD & TRANSPORT
 Ask for their overall delivery method (pick-up, delivery, or on-site service).

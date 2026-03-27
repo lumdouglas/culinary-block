@@ -70,6 +70,12 @@ export const updatePermitDataSchema = z.object({
   agreement_initialed: z.boolean().optional(),
   signature_name: z.string().optional(),
   signature_title: z.string().optional(),
+  has_previous_permit: z.boolean().optional(),
+  previous_facility_id: z.string().optional(),
+  previous_facility_name: z.string().optional(),
+  storage_cooking_equipment: z.string().optional(),
+  storage_dry_ingredients: z.string().optional(),
+  storage_dairy_meat_veg: z.string().optional(),
 });
 
 export type MenuItem = z.infer<typeof menuItemSchema>;
@@ -120,6 +126,12 @@ export interface CateringPermitData {
   agreement_initialed: boolean;
   signature_name: string;
   signature_title: string;
+  has_previous_permit: boolean;
+  previous_facility_id: string;
+  previous_facility_name: string;
+  storage_cooking_equipment: string;
+  storage_dry_ingredients: string;
+  storage_dairy_meat_veg: string;
 }
 
 export const DEFAULT_PERMIT_DATA: CateringPermitData = {
@@ -166,6 +178,12 @@ export const DEFAULT_PERMIT_DATA: CateringPermitData = {
   agreement_initialed: false,
   signature_name: "",
   signature_title: "",
+  has_previous_permit: false,
+  previous_facility_id: "",
+  previous_facility_name: "",
+  storage_cooking_equipment: "",
+  storage_dry_ingredients: "",
+  storage_dairy_meat_veg: "",
 };
 
 export function mergePermitData(
@@ -217,5 +235,11 @@ export function mergePermitData(
     ...(update.agreement_initialed !== undefined && { agreement_initialed: update.agreement_initialed }),
     ...(update.signature_name !== undefined && { signature_name: update.signature_name }),
     ...(update.signature_title !== undefined && { signature_title: update.signature_title }),
+    ...(update.has_previous_permit !== undefined && { has_previous_permit: update.has_previous_permit }),
+    ...(update.previous_facility_id !== undefined && { previous_facility_id: update.previous_facility_id }),
+    ...(update.previous_facility_name !== undefined && { previous_facility_name: update.previous_facility_name }),
+    ...(update.storage_cooking_equipment !== undefined && { storage_cooking_equipment: update.storage_cooking_equipment }),
+    ...(update.storage_dry_ingredients !== undefined && { storage_dry_ingredients: update.storage_dry_ingredients }),
+    ...(update.storage_dairy_meat_veg !== undefined && { storage_dairy_meat_veg: update.storage_dairy_meat_veg }),
   };
 }
