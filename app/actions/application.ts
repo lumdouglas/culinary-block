@@ -8,26 +8,30 @@ import path from "path";
 import ApplicationReceived from "@/components/emails/ApplicationReceived";
 
 export async function submitApplication(values: any) {
-    try {
-        const supabase = await createClient();
+    const supabase = await createClient();
 
-        // 1. Insert into Supabase
-        const { error: dbError } = await supabase.from("applications").insert([values]);
-        if (dbError) {
-            console.error("Database insert error:", dbError);
-            return { error: "Failed to save application to database." };
+    // 1. Insert into Supabase
+    const { error: dbError } = await supabase.from("applications").insert([values]);
+    if (dbError) {
+        console.error("Database insert error:", dbError);
+        return { error: "Failed to save application to database." };
+    }
+
+    // 2. Send confirmation email (separate try/catch so DB success is preserved)
+    let emailError: string | null = null;
+    try {
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+            throw new Error("Missing GMAIL_USER or GMAIL_APP_PASSWORD environment variables");
         }
 
-        // 2. Set up Nodemailer transporter
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
                 user: process.env.GMAIL_USER,
-                pass: process.env.GMAIL_APP_PASSWORD, // Must be an App Password, not the regular Gmail password
+                pass: process.env.GMAIL_APP_PASSWORD,
             },
         });
 
-        // 3. Render the email template to HTML
         const emailHtml = await render(
             ApplicationReceived({
                 companyName: values.company_name,
@@ -35,38 +39,31 @@ export async function submitApplication(values: any) {
             })
         );
 
-        // 4. Read the Rental Agreement PDF from the public folder
-        let applicationAttachments = [];
-        try {
-            const pdfPath = path.join(process.cwd(), "public", "rental-agreement.pdf");
-            if (fs.existsSync(pdfPath)) {
-                applicationAttachments.push({
-                    filename: "Culinary-Block-Rental-Agreement.pdf",
-                    path: pdfPath,
-                });
-            } else {
-                console.warn("Rental agreement PDF not found at:", pdfPath);
-            }
-        } catch (fsError) {
-            console.error("Error reading PDF:", fsError);
+        const attachments: { filename: string; path: string }[] = [];
+        const pdfPath = path.join(process.cwd(), "public", "rental-agreement.pdf");
+        if (fs.existsSync(pdfPath)) {
+            attachments.push({
+                filename: "Culinary-Block-Rental-Agreement.pdf",
+                path: pdfPath,
+            });
+        } else {
+            console.warn("Rental agreement PDF not found at:", pdfPath);
         }
 
-        // 5. Send the email
-        const mailOptions = {
-            from: `"Culinary Block" <${process.env.GMAIL_USER || "culinaryblockkitchen@gmail.com"}>`,
+        await transporter.sendMail({
+            from: `"Culinary Block" <${process.env.GMAIL_USER}>`,
             to: values.email,
             subject: "Application Received - Culinary Block Prep Kitchen",
             html: emailHtml,
-            attachments: applicationAttachments,
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        return { success: true };
+            attachments,
+        });
     } catch (error) {
-        console.error("Application submission error:", error);
-        // We return success even if email fails, because the DB insert succeeded
-        // But in a real app, we might want to flag this for manual review
-        return { success: true, emailError: "Application saved, but failed to send confirmation email." };
+        console.error("Email sending failed:", error);
+        emailError = "Application saved, but we couldn't send the confirmation email. Our team has been notified.";
     }
+
+    if (emailError) {
+        return { success: true, emailError };
+    }
+    return { success: true };
 }

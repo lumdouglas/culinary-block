@@ -1,55 +1,80 @@
 "use client"
 
-import { useState } from "react";
-import { verifyKioskPin } from "@/app/actions/kiosk";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Loader2, Delete } from "lucide-react";
+import { Delete } from "lucide-react";
 
-export function PinPad({ userId, onSucceed }: { userId: string, onSucceed: () => void }) {
-  const [pin, setPin] = useState("");
-  const [loading, setLoading] = useState(false);
+interface PinPadProps {
+  value: string;
+  onChange: (pin: string) => void;
+  onSubmit?: () => void;
+  error?: boolean;
+}
 
+export function PinPad({ value, onChange, onSubmit, error }: PinPadProps) {
   const handlePress = (num: string) => {
-    if (pin.length < 4) setPin(prev => prev + num);
-  };
-
-  const handleVerify = async () => {
-    setLoading(true);
-    try {
-      const result = await verifyKioskPin(pin, userId);
-      if (result.success) {
-        toast.success("Identity Verified");
-        onSucceed();
+    if (value.length < 4) {
+      const next = value + num;
+      onChange(next);
+      if (next.length === 4 && onSubmit) {
+        setTimeout(onSubmit, 150);
       }
-    } catch {
-      toast.error("Invalid PIN");
-      setPin("");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col items-center space-y-6">
-      <div className="flex space-x-4">
+      <div className="flex space-x-4" data-testid="pin-dots">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className={`w-4 h-4 rounded-full border-2 border-slate-300 ${pin.length > i ? 'bg-slate-900' : ''}`} />
+          <div
+            key={i}
+            className={`w-5 h-5 rounded-full border-2 transition-colors duration-150 ${
+              error
+                ? 'border-red-400 bg-red-400'
+                : value.length > i
+                  ? 'border-slate-900 bg-slate-900'
+                  : 'border-slate-300'
+            }`}
+          />
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-          <Button key={n} variant="outline" className="h-16 w-16 text-xl" onClick={() => handlePress(n.toString())}>{n}</Button>
+          <Button
+            key={n}
+            variant="outline"
+            className="h-18 w-18 text-2xl font-semibold"
+            onClick={() => handlePress(n.toString())}
+            data-testid={`pin-key-${n}`}
+          >
+            {n}
+          </Button>
         ))}
-        <Button variant="ghost" className="h-16 w-16" onClick={() => setPin("")}>Clear</Button>
-        <Button variant="outline" className="h-16 w-16 text-xl" onClick={() => handlePress("0")}>0</Button>
-        <Button variant="ghost" className="h-16 w-16" onClick={() => setPin(pin.slice(0, -1))}><Delete /></Button>
+        <Button
+          variant="ghost"
+          className="h-18 w-18 text-sm font-medium text-slate-500"
+          onClick={() => onChange("")}
+          data-testid="pin-key-clear"
+        >
+          Clear
+        </Button>
+        <Button
+          variant="outline"
+          className="h-18 w-18 text-2xl font-semibold"
+          onClick={() => handlePress("0")}
+          data-testid="pin-key-0"
+        >
+          0
+        </Button>
+        <Button
+          variant="ghost"
+          className="h-18 w-18 text-slate-500"
+          onClick={() => onChange(value.slice(0, -1))}
+          data-testid="pin-key-delete"
+        >
+          <Delete className="h-6 w-6" />
+        </Button>
       </div>
-
-      <Button className="w-full h-12 text-lg" disabled={pin.length < 4 || loading} onClick={handleVerify}>
-        {loading ? <Loader2 className="animate-spin" /> : "Verify Identity"}
-      </Button>
     </div>
   );
 }

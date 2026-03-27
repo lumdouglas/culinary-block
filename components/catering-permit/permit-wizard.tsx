@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   DEFAULT_PERMIT_DATA,
   mergePermitData,
@@ -711,8 +712,8 @@ export function PermitWizard() {
             </div>
           ) : (
             // Active Chat Interface
-            <div className="rounded-2xl border bg-white min-h-[320px] max-h-[480px] overflow-y-auto p-4 flex flex-col">
-                <div className="flex-1 space-y-4">
+            <div className="rounded-2xl border bg-white min-h-[320px] max-h-[480px] flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
 
                   {/* Welcome message — shown only before first exchange */}
                   {messages.length === 0 && (
@@ -799,26 +800,29 @@ export function PermitWizard() {
                       </div>
                     </div>
                   )}
-                </div>
-                <div ref={messagesEndRef} />
+                {/* End of messages ref inside scrollable container */}
+                <div ref={messagesEndRef} className="h-4 shrink-0" />
+              </div>
 
-              {/* Mic error banner */}
-              {micError && (
-                <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>{micError}</span>
-                </div>
-              )}
+              {/* Fixed bottom area for input and errors */}
+              <div className="p-4 pt-2 bg-white border-t border-slate-100 flex flex-col shrink-0 gap-3 mt-auto">
+                {/* Mic error banner */}
+                {micError && (
+                  <div className="flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>{micError}</span>
+                  </div>
+                )}
 
-              {/* Input row */}
-              <form onSubmit={handleSubmit} className="flex gap-2">
+                {/* Input row */}
+                <form onSubmit={handleSubmit} className="flex items-end gap-2 relative m-0">
                 {speechSupported && (
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
                     onClick={toggleMic}
-                    className={cn(isListening && "bg-red-100 border-red-300")}
+                    className={cn(isListening && "bg-red-100 border-red-300", "mb-[2px]")}
                     aria-label={isListening ? "Stop listening" : "Start voice input"}
                     data-testid="speech-toggle"
                   >
@@ -829,22 +833,30 @@ export function PermitWizard() {
                     )}
                   </Button>
                 )}
-                <Input
+                <Textarea
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={t.placeholder}
-                  className="flex-1"
+                  className="flex-1 min-h-[60px] resize-y"
                   disabled={isLoading}
                   data-testid="permit-chat-input"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmit(e);
+                    }
+                  }}
                 />
                 <Button
                   type="submit"
                   disabled={isLoading || !inputValue.trim()}
                   data-testid="permit-chat-send"
+                  className="mb-[2px]"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </form>
+              </div>
             </div>
           )}
         </div>

@@ -1,13 +1,16 @@
 export interface Profile {
   id: string
-  email: string
+  email: string | null
   company_name: string
   phone?: string
   kiosk_pin_hash?: string
+  contact_name?: string | null
+  address?: string | null
   is_active?: boolean
   role: 'tenant' | 'admin'
-  created_at: string
-  updated_at: string
+  business_type?: string | null
+  business_description?: string | null
+  notification_email?: string | null
 }
 
 export interface Kitchen {
@@ -40,6 +43,7 @@ export interface Application {
   submitted_at: string
   reviewed_at?: string
   reviewed_by?: string
+  invited_at?: string
 }
 
 export interface Booking {

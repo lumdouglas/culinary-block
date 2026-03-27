@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Calendar, Clock, CheckCircle, Shield, MapPin, Phone, Mail, ChefHat, Thermometer, Building, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, CheckCircle, Shield, MapPin, Phone, Mail, ChefHat, DoorOpen, Building, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Footer } from '@/components/footer'
 
@@ -262,7 +262,7 @@ export default function Home() {
 
             <div className="bg-slate-50 rounded-xl p-8 hover:shadow-lg transition-shadow">
               <div className="w-14 h-14 bg-rose-100 rounded-xl flex items-center justify-center mb-6">
-                <Thermometer className="w-7 h-7 text-rose-600" />
+                <DoorOpen className="w-7 h-7 text-rose-600" />
               </div>
               <h3 className="text-xl font-bold text-slate-800 mb-3">Locking Roll-Up Door</h3>
               <p className="text-slate-600">

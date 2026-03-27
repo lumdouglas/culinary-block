@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Play, Square, Timer, Loader2, CheckCircle, Clock } from "lucide-react";
+import { PinPad } from "@/components/kiosk/pin-pad";
 
-// Local API wrappers
 async function clockIn(userId: string, pin: string, companyName: string) {
   try {
     const res = await fetch("/api/kiosk/clock-in", {
@@ -48,7 +47,6 @@ async function getActiveSession(userId: string) {
   }
 }
 
-// Format duration from milliseconds to human-readable string
 function formatDuration(ms: number): string {
   const totalMinutes = Math.floor(ms / 60000);
   const hours = Math.floor(totalMinutes / 60);
@@ -73,9 +71,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
   const [countdown, setCountdown] = useState(10);
   const [sessionDuration, setSessionDuration] = useState<string>("");
   const [successTime, setSuccessTime] = useState<string | null>(null);
-  const pinInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if the user is already clocked in
   useEffect(() => {
     const checkSession = async () => {
       const session = await getActiveSession(userId);
@@ -85,19 +81,10 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     checkSession();
   }, [userId]);
 
-  // Auto-focus PIN input when in idle state
-  useEffect(() => {
-    if (!loading && screenState === 'idle' && pinInputRef.current) {
-      pinInputRef.current.focus();
-    }
-  }, [loading, screenState]);
-
-  // Countdown timer for auto-redirect
   useEffect(() => {
     if (screenState === 'idle') return;
 
     if (countdown <= 0) {
-      // Redirect back to main kiosk page
       window.location.href = '/kiosk';
       return;
     }
@@ -115,19 +102,9 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     setPin("");
 
     setTimeout(() => {
-      pinInputRef.current?.focus();
-    }, 100);
-
-    setTimeout(() => {
       setShake(false);
       setPinError(false);
     }, 600);
-  };
-
-  const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-    setPin(value);
-    if (pinError) setPinError(false);
   };
 
   const handleClockIn = async () => {
@@ -144,7 +121,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     } else {
       const time = new Date().toISOString();
       setSuccessTime(time);
-      setActiveSession(result.data); // Optimistic update or use returned data
+      setActiveSession(result.data);
       setPin("");
       setCountdown(10);
       setScreenState('clocked-in');
@@ -166,7 +143,6 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
       toast.error("Wrong PIN", { description: "Please try again" });
       triggerErrorAnimation();
     } else {
-      // Calculate session duration
       const clockInTime = new Date(String(activeSession.clock_in)).getTime();
       const clockOutTime = Date.now();
       const duration = clockOutTime - clockInTime;
@@ -180,16 +156,6 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     setIsProcessing(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && pin.length === 4) {
-      if (activeSession) {
-        handleClockOut();
-      } else {
-        handleClockIn();
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center p-12">
@@ -198,10 +164,9 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     );
   }
 
-  // Success screen after clocking IN
   if (screenState === 'clocked-in') {
     return (
-      <div className="flex flex-col items-center justify-center space-y-8 h-full text-center">
+      <div className="flex flex-col items-center justify-center space-y-8 h-full text-center" data-testid="clock-in-success">
         <div className="bg-emerald-100 rounded-full p-6">
           <CheckCircle className="h-20 w-20 text-emerald-600" />
         </div>
@@ -219,10 +184,9 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     );
   }
 
-  // Summary screen after clocking OUT
   if (screenState === 'clocked-out') {
     return (
-      <div className="flex flex-col items-center justify-center space-y-8 h-full text-center">
+      <div className="flex flex-col items-center justify-center space-y-8 h-full text-center" data-testid="clock-out-success">
         <div className="bg-blue-100 rounded-full p-6">
           <Clock className="h-20 w-20 text-blue-600" />
         </div>
@@ -231,7 +195,7 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
           <p className="text-xl text-blue-600 font-semibold mt-2">Shift Completed!</p>
           <div className="mt-4 bg-slate-100 rounded-xl px-8 py-4">
             <p className="text-slate-500 text-sm">Session Duration</p>
-            <p className="text-3xl font-bold text-slate-900">{sessionDuration}</p>
+            <p className="text-3xl font-bold text-slate-900" data-testid="session-duration">{sessionDuration}</p>
           </div>
         </div>
         <div className="text-slate-400 text-sm">
@@ -241,7 +205,6 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
     );
   }
 
-  // CSS for shake animation
   const shakeStyle = shake ? {
     animation: 'shake 0.5s ease-in-out'
   } : {};
@@ -264,90 +227,60 @@ export function KioskActions({ userId, companyName }: { userId: string, companyN
           </p>
         </div>
 
+        {activeSession && (
+          <div className="bg-orange-100 text-orange-700 px-6 py-3 rounded-full flex items-center font-mono text-xl" data-testid="active-session-badge">
+            <Timer className="mr-2" />
+            Active since: {activeSession.clock_in ? new Date(String(activeSession.clock_in)).toLocaleTimeString() : ''}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center space-y-2">
+          <label className="block text-sm font-medium text-slate-600 text-center">
+            Enter your 4-digit PIN
+          </label>
+          <div style={shakeStyle}>
+            <PinPad
+              value={pin}
+              onChange={(newPin) => {
+                setPin(newPin);
+                if (pinError) setPinError(false);
+              }}
+              error={pinError}
+            />
+          </div>
+        </div>
+
         {activeSession ? (
-          <div className="flex flex-col items-center space-y-6 w-full">
-            <div className="bg-orange-100 text-orange-700 px-6 py-3 rounded-full flex items-center font-mono text-xl">
-              <Timer className="mr-2" />
-              Active since: {activeSession.clock_in ? new Date(String(activeSession.clock_in)).toLocaleTimeString() : ''}
-            </div>
-
-            <div className="w-full max-w-xs space-y-2">
-              <label htmlFor="pin" className="block text-sm font-medium text-slate-600 text-center">
-                Enter your 4-digit PIN
-              </label>
-              <Input
-                ref={pinInputRef}
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                placeholder="••••"
-                value={pin}
-                onChange={handlePinChange}
-                onKeyDown={handleKeyDown}
-                className={`text-center text-3xl tracking-[0.5em] h-16 font-mono transition-colors duration-200 ${pinError ? 'border-red-500 ring-2 ring-red-200 focus-visible:ring-red-300' : ''
-                  }`}
-                autoComplete="off"
-                autoFocus
-              />
-            </div>
-
-            <Button
-              variant="destructive"
-              className="w-full max-w-xs h-20 text-2xl font-bold"
-              onClick={handleClockOut}
-              disabled={isProcessing || pin.length !== 4}
-              style={shakeStyle}
-            >
-              {isProcessing ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <>
-                  <Square className="mr-2 fill-current" /> CLOCK OUT
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            variant="destructive"
+            className="w-full max-w-xs h-20 text-2xl font-bold"
+            onClick={handleClockOut}
+            disabled={isProcessing || pin.length !== 4}
+            data-testid="clock-out-button"
+          >
+            {isProcessing ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <>
+                <Square className="mr-2 fill-current" /> CLOCK OUT
+              </>
+            )}
+          </Button>
         ) : (
-          <div className="flex flex-col items-center space-y-6 w-full">
-            <div className="w-full max-w-xs space-y-2">
-              <label htmlFor="pin" className="block text-sm font-medium text-slate-600 text-center">
-                Enter your 4-digit PIN
-              </label>
-              <Input
-                ref={pinInputRef}
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                placeholder="••••"
-                value={pin}
-                onChange={handlePinChange}
-                onKeyDown={handleKeyDown}
-                className={`text-center text-3xl tracking-[0.5em] h-16 font-mono transition-colors duration-200 ${pinError ? 'border-red-500 ring-2 ring-red-200 focus-visible:ring-red-300' : ''
-                  }`}
-                autoComplete="off"
-                autoFocus
-              />
-            </div>
-
-            <Button
-              className="bg-emerald-600 hover:bg-emerald-700 w-full max-w-xs h-20 text-2xl font-bold"
-              onClick={handleClockIn}
-              disabled={isProcessing || pin.length !== 4}
-              style={shakeStyle}
-            >
-              {isProcessing ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <>
-                  <Play className="mr-2 fill-current" /> CLOCK IN
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            className="bg-emerald-600 hover:bg-emerald-700 w-full max-w-xs h-20 text-2xl font-bold"
+            onClick={handleClockIn}
+            disabled={isProcessing || pin.length !== 4}
+            data-testid="clock-in-button"
+          >
+            {isProcessing ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <>
+                <Play className="mr-2 fill-current" /> CLOCK IN
+              </>
+            )}
+          </Button>
         )}
       </div>
     </>

@@ -54,6 +54,12 @@ export async function GET(request: NextRequest) {
     .select('id, company_name')
     .eq('role', 'tenant')
     .eq('is_active', true);
+  const tenantCount = (profiles || []).length;
+  const tenantColumns =
+    tenantCount > 20 ? 6 :
+    tenantCount > 15 ? 5 :
+    tenantCount > 10 ? 4 :
+    tenantCount > 5 ? 3 : 2;
 
   const tenantButtons = (profiles || [])
     .map((p) => `<button class="tenant-btn" onclick="selectTenant('${p.id}', '${p.company_name.replace(/'/g, "\\'")}')">${p.company_name}</button>`)
@@ -98,28 +104,28 @@ export async function GET(request: NextRequest) {
       -webkit-box-align: center;
       -webkit-align-items: center;
       align-items: center;
-      padding-top: 60px;
+      padding-top: 28px;
     }
 
     /* ─── SCREEN 1: Tenant Select ─── */
     .brand-title {
-      font-size: 42px;
+      font-size: 36px;
       font-weight: 800;
       color: #0d9488;
       letter-spacing: 2px;
     }
     .brand-subtitle {
-      font-size: 18px;
+      font-size: 16px;
       color: #64748b;
       letter-spacing: 3px;
       text-transform: uppercase;
       margin-top: 6px;
     }
     .section-title {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
       color: #1e293b;
-      margin: 40px 0 24px;
+      margin: 20px 0 14px;
       text-align: center;
       flex-shrink: 0;
     }
@@ -127,40 +133,36 @@ export async function GET(request: NextRequest) {
       width: 100%;
       flex-grow: 1;
       min-height: 0;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
       display: flex;
       justify-content: center;
-      padding-bottom: 40px;
+      align-items: stretch;
+      padding-bottom: 12px;
     }
     .tenant-grid {
-      display: -webkit-box;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-wrap: wrap;
-      flex-wrap: wrap;
-      max-width: 700px;
+      display: grid;
+      grid-template-columns: repeat(var(--tenant-columns, 3), minmax(0, 1fr));
+      grid-auto-rows: 1fr;
+      gap: 10px;
+      max-width: 1100px;
       width: 100%;
-      -webkit-box-pack: center;
-      -webkit-justify-content: center;
-      justify-content: center;
-      margin: -10px;
-      align-content: flex-start;
+      height: 100%;
+      align-content: stretch;
+      justify-content: stretch;
     }
     .tenant-btn {
-      -webkit-box-flex: 0;
-      -webkit-flex: 0 0 calc(50% - 20px);
-      flex: 0 0 calc(50% - 20px);
-      margin: 10px;
-      padding: 36px 20px;
+      width: 100%;
+      height: 100%;
+      min-height: 62px;
+      padding: 12px 10px;
       background: #fff;
       border: 2px solid #e2e8f0;
-      border-radius: 20px;
+      border-radius: 14px;
       cursor: pointer;
-      font-size: 24px;
+      font-size: clamp(18px, 2vw, 24px);
       font-weight: 700;
       color: #334155;
       text-align: center;
+      line-height: 1.2;
       -webkit-appearance: none;
       outline: none;
       -webkit-transition: all 0.15s;
@@ -421,7 +423,7 @@ export async function GET(request: NextRequest) {
     </div>
     <h2 class="section-title">Select Your Company</h2>
     <div class="tenant-grid-container">
-      <div class="tenant-grid">
+      <div class="tenant-grid" style="--tenant-columns:${tenantColumns}">
         ${tenantButtons || '<div class="empty-state">No active tenants found.</div>'}
       </div>
     </div>

@@ -85,19 +85,18 @@ export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8
   };
 
   // ── Page 2: Permit Application Page 1 ───────────────────────────────────────────
-  drawText(1, data.catering_dba, 40, 680);
-  drawText(1, data.owner_name, 40, 642);
-  drawText(1, data.owner_address, 40, 608);
-  drawText(1, data.owner_city, 40, 574);
-  drawText(1, data.owner_state || "CA", 400, 574);
-  drawText(1, data.owner_zip, 450, 574);
-  drawText(1, data.owner_phone, 40, 538);
-  drawText(1, data.owner_email, 250, 538);
+  drawText(1, data.owner_name, 120, 680);
+  drawText(1, data.owner_address, 100, 642);
+  drawText(1, data.owner_city, 100, 608);
+  drawText(1, data.owner_state || "CA", 430, 608);
+  drawText(1, data.owner_zip, 480, 608);
+  drawText(1, data.owner_phone, 120, 574);
+  drawText(1, data.owner_email, 320, 574);
 
-  drawText(1, data.pff_name, 40, 470);
-  drawText(1, data.pff_address, 40, 435);
+  drawText(1, data.catering_dba, 150, 470);
+  drawText(1, data.pff_address, 100, 435);
   // PFF address is combined typically, let's just dump it in address
-  drawText(1, data.pff_county, 40, 365);
+  drawText(1, data.pff_county, 100, 365);
   drawCheck(1, 40, 246, true); // Always check "Owner" for billing
 
   // ── Page 3: Permit Application Page 2 ───────────────────────────────────────────
@@ -108,37 +107,38 @@ export async function generatePermitPdf(data: CateringPermitData): Promise<Uint8
   drawText(2, todayFormatted(), 450, 60);
 
   // ── Page 5: Rental Kitchen Agreement ────────────────────────────────────────────
-  drawText(4, data.catering_dba, 70, 655);
-  drawText(4, data.owner_name, 70, 630);
-  drawText(4, data.owner_address, 70, 605);
-  const fullOwnerCity = [data.owner_city, data.owner_state, data.owner_zip].filter(Boolean).join(", ");
-  drawText(4, fullOwnerCity, 70, 580);
-  drawText(4, data.owner_email, 70, 555);
-  drawText(4, data.owner_phone, 320, 555);
+  drawText(4, data.owner_name, 110, 655);
+  drawText(4, data.catering_dba, 450, 655);
+  drawText(4, data.owner_address, 120, 630);
+  drawText(4, data.owner_city, 370, 630);
+  drawText(4, data.owner_state || "CA", 470, 630);
+  drawText(4, data.owner_zip, 520, 630);
+  drawText(4, data.owner_email, 110, 605);
+  drawText(4, data.owner_phone, 350, 605);
 
-  drawText(4, data.pff_name, 70, 480);
-  drawText(4, data.pff_address, 300, 480);
+  drawText(4, data.pff_name, 180, 560);
+  drawText(4, data.pff_address, 360, 560);
 
   // Operating days checkboxes (M-Su)
   const days = data.operating_days || [];
   const dayStr = days.join(" ").toLowerCase();
-  drawCheck(4, 98, 458, dayStr.includes("mon"));
-  drawCheck(4, 137, 458, dayStr.includes("tue"));
-  drawCheck(4, 187, 458, dayStr.includes("wed"));
-  drawCheck(4, 230, 458, dayStr.includes("thu"));
-  drawCheck(4, 280, 458, dayStr.includes("fri"));
-  drawCheck(4, 323, 458, dayStr.includes("sat"));
-  drawCheck(4, 360, 458, dayStr.includes("sun"));
-  drawText(4, data.operating_times || "", 60, 435);
+  drawCheck(4, 98, 568, dayStr.includes("mon"));
+  drawCheck(4, 137, 568, dayStr.includes("tue"));
+  drawCheck(4, 187, 568, dayStr.includes("wed"));
+  drawCheck(4, 230, 568, dayStr.includes("thu"));
+  drawCheck(4, 280, 568, dayStr.includes("fri"));
+  drawCheck(4, 323, 568, dayStr.includes("sat"));
+  drawCheck(4, 360, 568, dayStr.includes("sun"));
+  drawText(4, data.operating_times || "", 60, 555);
 
   const initials = getInitials(ownerOrAgent);
   if (data.agreement_initialed && initials) {
-    drawText(4, initials, 80, 375, 12);
-    drawText(4, initials, 80, 350, 12);
-    drawText(4, initials, 80, 325, 12);
-    drawText(4, initials, 80, 300, 12);
-    drawText(4, initials, 80, 275, 12);
-    drawText(4, initials, 80, 250, 12);
+    drawText(4, initials, 50, 532, 12);
+    drawText(4, initials, 50, 517, 12);
+    drawText(4, initials, 50, 502, 12);
+    drawText(4, initials, 50, 487, 12);
+    drawText(4, initials, 50, 472, 12);
+    drawText(4, initials, 50, 458, 12);
   }
 
   // ── Page 6: WOPS Section A ──────────────────────────────────────────────────────

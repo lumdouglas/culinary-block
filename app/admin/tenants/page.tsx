@@ -68,7 +68,7 @@ export default function AdminTenantsPage() {
 
     const filteredTenants = tenants.filter(tenant =>
         tenant.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (tenant.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -138,8 +138,12 @@ export default function AdminTenantsPage() {
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
                                             <p>{tenant.email}</p>
-                                            <p className="hidden md:block">•</p>
-                                            <p>Join Date: {new Date(tenant.created_at).toLocaleDateString()}</p>
+                                            {tenant.contact_name && (
+                                                <>
+                                                    <p className="hidden md:block">•</p>
+                                                    <p>{tenant.contact_name}</p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
 

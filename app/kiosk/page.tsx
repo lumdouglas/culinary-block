@@ -94,7 +94,7 @@ export default async function KioskPage({ searchParams }: { searchParams: Promis
             Device Authorized
           </div>
         )}
-        <div className="py-12">
+        <div className="h-screen py-4 md:py-6">
           <UserSelection profiles={profiles || []} />
         </div>
       </div>

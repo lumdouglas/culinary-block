@@ -171,7 +171,7 @@ export default function AccountSetupPage() {
                             <FormField control={form.control} name="password" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>New Password</FormLabel>
-                                    <FormControl><Input type="password" {...field} /></FormControl>
+                                    <FormControl><Input type="password" data-testid="setup-password" {...field} /></FormControl>
                                     <FormDescription>At least 8 characters, one number, and one symbol.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
@@ -179,11 +179,11 @@ export default function AccountSetupPage() {
                             <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Confirm Password</FormLabel>
-                                    <FormControl><Input type="password" {...field} /></FormControl>
+                                    <FormControl><Input type="password" data-testid="setup-confirm-password" {...field} /></FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )} />
-                            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting} data-testid="setup-submit">
                                 {form.formState.isSubmitting ? "Saving..." : "Save Password & Continue"}
                             </Button>
                         </form>

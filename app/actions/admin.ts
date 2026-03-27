@@ -135,7 +135,7 @@ export async function getApplications(status?: string) {
 
     let query = supabase
         .from('applications')
-        .select('id, email, company_name, phone, status, submitted_at, reviewed_at, notes, invited_at')
+        .select('id, email, company_name, phone, address, contact_first_name, contact_last_name, website, years_in_operation, social_media, cuisine_type, kitchen_use_description, usage_hours, equipment_needed, status, submitted_at, reviewed_at, reviewed_by, notes, invited_at')
         .order('submitted_at', { ascending: false });
 
     if (status && status !== 'all') {
@@ -172,12 +172,13 @@ export async function getTenants() {
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, role, company_name, contact_name, email, phone, is_active, created_at, updated_at')
+        .select('id, role, company_name, contact_name, email, phone, address, is_active, business_type, business_description, notification_email')
         .eq('role', 'tenant')
         .order('company_name', { ascending: true });
 
     if (error) {
-        return { error: "Failed to fetch tenants" };
+        console.error("getTenants query error:", JSON.stringify(error));
+        return { error: `Failed to fetch tenants: ${error.message}` };
     }
 
     return { data };

@@ -69,7 +69,7 @@ export default function LoginPage() {
               <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
-                  <FormControl><Input placeholder="chef@example.com" {...field} /></FormControl>
+                  <FormControl><Input placeholder="chef@example.com" data-testid="login-email" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -81,15 +81,22 @@ export default function LoginPage() {
                       Forgot password?
                     </Link>
                   </div>
-                  <FormControl><Input type="password" {...field} /></FormControl>
+                  <FormControl><Input type="password" data-testid="login-password" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting} data-testid="login-submit">
                 {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             </form>
           </Form>
+
+          <p className="text-center text-sm text-slate-500">
+            Need kitchen space?{" "}
+            <Link href="/apply" className="font-medium text-teal-600 hover:text-teal-500">
+              Apply here
+            </Link>
+          </p>
         </div>
       </div>
     </div>

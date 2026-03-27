@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 
 import { submitApplication } from "@/app/actions/application";
+import { SiteNav } from "@/components/site-nav";
 
 const applySchema = z.object({
   // Company Information
@@ -61,14 +62,16 @@ export default function ApplicationPage() {
 
     if (result.error) {
       toast.error(result.error);
+      return;
+    }
+
+    form.reset();
+
+    if (result.emailError) {
+      toast.warning(result.emailError, { duration: 5000 });
+      setTimeout(() => { window.location.href = '/apply/thank-you'; }, 3000);
     } else {
-      if (result.emailError) {
-        toast.warning(result.emailError);
-      } else {
-        toast.success("Application submitted successfully!");
-      }
-      form.reset();
-      // Redirect to thank you page
+      toast.success("Application submitted successfully!");
       window.location.href = '/apply/thank-you';
     }
   }
@@ -87,6 +90,7 @@ export default function ApplicationPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <SiteNav />
 
       <div className="max-w-4xl mx-auto py-12 px-6">
         <div className="mb-10 text-center">
@@ -256,7 +260,7 @@ export default function ApplicationPage() {
                 )} />
               </div>
 
-              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6">
+              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6" data-testid="apply-submit">
                 Submit Application
               </Button>
             </form>
