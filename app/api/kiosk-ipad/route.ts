@@ -54,12 +54,7 @@ export async function GET(request: NextRequest) {
     .select('id, company_name')
     .eq('role', 'tenant')
     .eq('is_active', true);
-  const tenantCount = (profiles || []).length;
-  const tenantColumns =
-    tenantCount > 20 ? 6 :
-    tenantCount > 15 ? 5 :
-    tenantCount > 10 ? 4 :
-    tenantCount > 5 ? 3 : 2;
+  const tenantColumns = 2;
 
   const tenantButtons = (profiles || [])
     .map((p) => `<button class="tenant-btn" onclick="selectTenant('${p.id}', '${p.company_name.replace(/'/g, "\\'")}')">${p.company_name}</button>`)
@@ -153,16 +148,18 @@ export async function GET(request: NextRequest) {
       width: 100%;
       height: 100%;
       min-height: 62px;
-      padding: 12px 10px;
+      padding: 16px 20px;
       background: #fff;
       border: 2px solid #e2e8f0;
       border-radius: 14px;
       cursor: pointer;
-      font-size: clamp(18px, 2vw, 24px);
+      font-size: clamp(24px, 3.5vw, 42px);
       font-weight: 700;
       color: #334155;
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.25;
+      word-break: break-word;
+      overflow-wrap: break-word;
       -webkit-appearance: none;
       outline: none;
       -webkit-transition: all 0.15s;

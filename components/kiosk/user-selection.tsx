@@ -7,13 +7,7 @@ interface UserSelectionProps {
 }
 
 export function UserSelection({ profiles }: UserSelectionProps) {
-  const tenantColumns =
-    profiles.length > 40 ? 8 :
-    profiles.length > 30 ? 7 :
-    profiles.length > 20 ? 6 :
-    profiles.length > 15 ? 5 :
-    profiles.length > 10 ? 4 :
-    profiles.length > 5 ? 3 : 2;
+  const tenantColumns = 2;
 
   const rowsCount = Math.max(1, Math.ceil(profiles.length / tenantColumns));
 
@@ -36,7 +30,7 @@ export function UserSelection({ profiles }: UserSelectionProps) {
             className="h-full px-1 py-1 md:px-2 md:py-2 text-center border-2 border-slate-100 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition-all group bg-white shadow-sm flex items-center justify-center overflow-hidden"
             data-testid={`tenant-card-${profile.id}`}
           >
-            <span className="font-bold text-sm md:text-base lg:text-lg leading-tight text-slate-700 group-hover:text-emerald-700 line-clamp-2">
+            <span className="font-bold text-xl md:text-2xl lg:text-3xl leading-tight text-slate-700 group-hover:text-emerald-700 break-words">
               {profile.company_name}
             </span>
           </Link>
