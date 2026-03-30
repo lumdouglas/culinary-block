@@ -716,7 +716,7 @@ export function PermitWizardWithPreview() {
             <div className="rounded-2xl border bg-white flex-1 min-h-0 overflow-hidden relative">
               {pdfUrl ? (
                 <iframe
-                  src={pdfUrl}
+                  src={`${pdfUrl}#navpanes=0`}
                   className="w-full h-full border-0"
                   title="Permit PDF Preview"
                 />
