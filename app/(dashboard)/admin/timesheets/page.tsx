@@ -37,17 +37,8 @@ export default async function AdminTimesheetsPage({
     const startUtc = new Date(Date.UTC(year, mon - 1, 1, 8))   // noon UTC ≈ midnight PST
     const endUtc   = new Date(Date.UTC(year, mon,     1, 8))
 
-    // Fetch tenants, kitchens, and timesheets in parallel
-    const [{ data: tenants }, { data: kitchens }] = await Promise.all([
-        getTenants(),
-        supabase
-            .from("kitchens")
-            .select("id, name")
-            .eq("is_active", true)
-            .order("name"),
-    ])
-
-    let query = supabase
+    // Build timesheets query before awaiting so it can run in parallel
+    let timesheetQuery = supabase
         .from("timesheets")
         .select(`
             id, user_id, clock_in, clock_out, duration_minutes, is_edited, status, kitchen_id, notes,
@@ -59,10 +50,19 @@ export default async function AdminTimesheetsPage({
         .order("clock_in", { ascending: false })
 
     if (selectedTenantId) {
-        query = query.eq("user_id", selectedTenantId)
+        timesheetQuery = timesheetQuery.eq("user_id", selectedTenantId)
     }
 
-    const { data: timesheets, error } = await query
+    // Fetch tenants, kitchens, and timesheets all in parallel
+    const [{ data: tenants }, { data: kitchens }, { data: timesheets, error }] = await Promise.all([
+        getTenants(),
+        supabase
+            .from("kitchens")
+            .select("id, name")
+            .eq("is_active", true)
+            .order("name"),
+        timesheetQuery,
+    ])
 
     if (error) {
         console.error("Error fetching timesheets:", error)

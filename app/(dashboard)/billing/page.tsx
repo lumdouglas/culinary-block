@@ -48,19 +48,25 @@ export default async function BillingPage() {
 
   if (!user) return <div>Please log in to view billing.</div>;
 
-  // Fetch usage and kitchen details from TIMESHEETS (actual usage)
-  const { data: timesheets } = await supabase
-    .from('timesheets')
-    .select(`
-      id,
-      clock_in,
-      clock_out,
-      duration_minutes,
-      status,
-      kitchens(name)
-    `)
-    .eq('user_id', user.id)
-    .order('clock_in', { ascending: false });
+  // Fetch timesheets and billing periods in parallel (neither depends on the other)
+  const [{ data: timesheets }, { data: billingPeriods }] = await Promise.all([
+    supabase
+      .from('timesheets')
+      .select(`
+        id,
+        clock_in,
+        clock_out,
+        duration_minutes,
+        status,
+        kitchens(name)
+      `)
+      .eq('user_id', user.id)
+      .order('clock_in', { ascending: false }),
+    supabase
+      .from('billing_periods')
+      .select('period_month, status')
+      .eq('tenant_id', user.id),
+  ]);
 
   const records = timesheets || [];
 
@@ -108,12 +114,6 @@ export default async function BillingPage() {
   const currentMonthCost = calculateTieredCost(totalHours);
 
   const historyList = Object.values(history || {}).sort((a: any, b: any) => b.month.localeCompare(a.month));
-
-  // Fetch billing period statuses for this tenant
-  const { data: billingPeriods } = await supabase
-    .from('billing_periods')
-    .select('period_month, status')
-    .eq('tenant_id', user.id);
 
   const billingStatusMap: Record<string, string> = {};
   (billingPeriods || []).forEach((bp: any) => {

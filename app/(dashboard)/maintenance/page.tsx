@@ -26,17 +26,18 @@ import { CreateTicketForm } from "@/components/maintenance/create-ticket-form";
 export default async function MaintenancePage() {
     const supabase = await createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Fetch user, tickets, and kitchens in parallel (tickets/kitchens don't depend on user)
+    const [{ data: { user } }, { data: tickets }, { data: kitchens }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase
+            .from("maintenance_tickets")
+            .select("*, profiles:user_id(company_name), kitchens(name)")
+            .order("created_at", { ascending: false }),
+        supabase.from("kitchens").select("id, name").eq("is_active", true),
+    ]);
+
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
     const isAdmin = profile?.role === 'admin';
-
-    const { data: tickets } = await supabase
-        .from("maintenance_tickets")
-        .select("*, profiles:user_id(company_name), kitchens(name)")
-        .order("created_at", { ascending: false });
-
-    // Get kitchens for the form
-    const { data: kitchens } = await supabase.from("kitchens").select("id, name").eq("is_active", true);
 
     return (
         <div className="p-8 max-w-7xl mx-auto">

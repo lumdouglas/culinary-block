@@ -13,22 +13,23 @@ export default async function TicketDetailPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = await params;
-    const supabase = await createClient();
+    // Resolve params and create Supabase client in parallel
+    const [{ id }, supabase] = await Promise.all([params, createClient()]);
 
-    // Fetch ticket details
-    const { data: ticket } = await supabase
-        .from("maintenance_tickets")
-        .select("*, profiles:user_id(company_name, email), kitchens(name)")
-        .eq("id", id)
-        .single();
+    // Fetch ticket details and auth user in parallel
+    const [{ data: ticket }, { data: { user } }] = await Promise.all([
+        supabase
+            .from("maintenance_tickets")
+            .select("*, profiles:user_id(company_name, email), kitchens(name)")
+            .eq("id", id)
+            .single(),
+        supabase.auth.getUser(),
+    ]);
 
     if (!ticket) {
         notFound();
     }
 
-    // Check if user is admin (to show admin actions)
-    const { data: { user } } = await supabase.auth.getUser();
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user?.id).single();
     const isAdmin = profile?.role === 'admin';
     const isOwner = user?.id === ticket.user_id;
