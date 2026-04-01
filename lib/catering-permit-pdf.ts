@@ -186,126 +186,136 @@ export async function generatePermitPdf(
   // ════════════════════════════════════════════════════════════════════════════
   // PAGE 2 (index 1) — Permit Application & Certification Statement
   // ════════════════════════════════════════════════════════════════════════════
-  // All y values derived from pymupdf label extraction (bottom-up origin).
-  //
-  //   "Owner Name:"     label at y=706  → value field right of label
-  //   "Address:"        label at y=681  → value field right of label
-  //   "City: / ST: / Zip:" on same row y=681
-  //   "Phone: / Email:" label at y=665
-  //   "Facility Name (dba):" at y=594
-  //   Facility "Address:" at y=578
-  //   "Owner" billing checkbox at y=489
-  //   "Signature:" at y=328, "Print Name:" at y=311
+  // Exact y values from pymupdf extraction of blank PDF (bottom-up origin):
+  //   "Owner Information:" header  y=703  (do not draw here)
+  //   "Owner Name:"                y=691
+  //   "(Corporation, LLC...)"      y=681  (subtitle, do not draw here)
+  //   "Address:"                   y=665
+  //   "Phone: / Email:"            y=650
+  //   "Has/Does the owner..."      y=634  — No checkbox x≈362, Yes x≈388
+  //   "Facility ID#: FA0"          y=619
+  //   "Facility Information:"      y=594  (do not draw here)
+  //   "Facility Name (dba):"       y=578
+  //   "Address:" (facility)        y=563
+  //   "Phone: / Email:" (facility) y=547
+  //   "Owner" billing row          y=473
+  //   "Signature:"                 y=314
+  //   "Print Name:"                y=297
 
   // Owner Information
-  drawText(1, data.owner_name, 120, 706);
-  drawText(1, data.owner_address, 80, 681);
-  drawText(1, data.owner_city, 340, 681);
-  drawText(1, data.owner_state || "CA", 492, 681);
-  drawText(1, data.owner_zip, 550, 681);
-  drawText(1, data.owner_phone, 70, 665);
-  drawText(1, data.owner_email, 275, 665);
+  drawText(1, data.owner_name, 120, 691);
+  drawText(1, data.owner_address, 80, 665);
+  drawText(1, data.owner_city, 330, 665);
+  drawText(1, data.owner_state || "CA", 490, 665);
+  drawText(1, data.owner_zip, 548, 665);
+  drawText(1, data.owner_phone, 70, 650);
+  drawText(1, data.owner_email, 270, 650);
 
   // Facility Information
-  drawText(1, data.catering_dba, 155, 594);
-  drawText(1, data.pff_address, 80, 578);
+  drawText(1, data.catering_dba, 155, 578);
 
   // Parse city and zip from the combined PFF address string
   const pffCity = data.pff_address?.match(/,\s*([^,]+),/)?.[1]?.trim() || "San Jose";
   const pffZip = data.pff_address?.match(/\b(\d{5})\b/)?.[1] || "95133";
-  drawText(1, pffCity, 340, 578);
-  drawText(1, pffZip, 550, 578);
-  drawText(1, data.owner_phone, 70, 563);
-  drawText(1, data.owner_email, 275, 563);
+  drawText(1, data.pff_address, 80, 563);
+  drawText(1, pffCity, 330, 563);
+  drawText(1, "CA", 490, 563);
+  drawText(1, pffZip, 548, 563);
+  drawText(1, data.owner_phone, 70, 547);
+  drawText(1, data.owner_email, 270, 547);
 
-  // Previous permit info (above the billing section)
+  // Previous permit — "Has/Does the owner had/have a permit?" at y=634
+  // "No" text at x=374 → checkbox at x≈362; "Yes" text at x=400 → checkbox at x≈388
   if (data.has_previous_permit) {
-    drawCheck(1, 55, 649, true); // "Yes" checkbox
-    drawText(1, data.previous_facility_id, 310, 635, 9);
-    drawText(1, data.previous_facility_name, 440, 635, 9);
+    drawCheck(1, 388, 634, true); // "Yes" checkbox
+    drawText(1, data.previous_facility_id || "", 92, 619, 9);   // after "FA0" at x=74
+    drawText(1, data.previous_facility_name || "", 260, 619, 9); // after "Facility Name:"
   } else if (data.has_previous_permit === false) {
-    drawCheck(1, 110, 649, true); // "No" checkbox
+    drawCheck(1, 362, 634, true); // "No" checkbox
   }
 
-  // Billing — check "Owner"
-  drawCheck(1, 24, 489, true);
+  // Billing — check "Owner" (row at y=473)
+  drawCheck(1, 24, 473, true);
 
-  // Signature block (on page 2, NOT page 3)
-  drawText(1, ownerOrAgent, 90, 328);
-  drawText(1, todayFormatted(), 430, 328);
-  drawText(1, ownerOrAgent, 100, 311);
-  drawText(1, data.owner_phone, 440, 311);
+  // Signature block
+  drawText(1, ownerOrAgent, 90, 314);
+  drawText(1, todayFormatted(), 430, 314);
+  drawText(1, ownerOrAgent, 100, 297);
+  drawText(1, data.owner_phone, 440, 297);
 
   // ════════════════════════════════════════════════════════════════════════════
   // PAGE 5 (index 4) — Rental Kitchen Agreement
   // ════════════════════════════════════════════════════════════════════════════
-  //   "Owner Name:" at y=675, "Name of Business:" at x=272, y=675
-  //   "Owner Address:" at y=659, "City:" x=272, "State:" x=437, "Zip:" x=497
-  //   "Email Address:" at y=642, "Telephone:" at x=271
-  //   "Name of the rental kitchen:" at y=609, "Address:" at x=320
-  //   Day labels at y=578: Mon(42), Tues(128), Wed(214), Thurs(295), Fri(376), Sat(448), Sun(520)
-  //   Initial labels at y = 542, 530, 518, 506, 494, 482
-  //   "Print Name" at y=387
+  // Exact y values from pymupdf extraction of blank PDF:
+  //   "Owner Name:" / "Name of Business:"   y=662
+  //   "Owner Address:" / "City:" / "State:" / "Zip:"  y=645
+  //   "Email Address:" / "Telephone:"        y=628
+  //   "Name of the rental kitchen:"          y=596
+  //   Day checkboxes                         y=562
+  //   Initials                               y=530,519,506,494,482,470
+  //   "Print Name" label                     y=375  → sign above at y=388
+  //   "Type of Facility:" checkboxes         y=337
+  //   "Facility name:"                       y=299
+  //   "Facility Address:"                    y=282
+  //   "Email Address:" / "Telephone:"        y=265
 
   // Applicant Information
-  //   Row 1: "Owner Name:" / "Name of Business:"
-  //   Row 2: "Owner Address:" / "City:" / "State:" / "Zip:"
-  //   Row 3: "Email Address:" / "Telephone:"
-  drawText(4, data.owner_name, 115, 660);
-  drawText(4, data.catering_dba, 380, 660);
+  drawText(4, data.owner_name, 115, 661);
+  drawText(4, data.catering_dba, 380, 661);
   drawText(4, data.owner_address, 120, 644);
-  drawText(4, data.owner_city, 300, 644);
-  drawText(4, data.owner_state || "CA", 470, 644);
-  drawText(4, data.owner_zip, 520, 644);
-  drawText(4, data.owner_email, 120, 628);
-  drawText(4, data.owner_phone, 330, 628);
+  drawText(4, data.owner_city, 290, 644);
+  drawText(4, data.owner_state || "CA", 460, 644);
+  drawText(4, data.owner_zip, 518, 644);
+  drawText(4, data.owner_email, 120, 627);
+  drawText(4, data.owner_phone, 330, 627);
 
-  // Rental kitchen
-  drawText(4, data.pff_name, 185, 609);
-  drawText(4, data.pff_address, 365, 609);
+  // Rental kitchen — street address only (city/state/zip not separate fields here)
+  const pffStreet = data.pff_address?.split(",")[0]?.trim() || data.pff_address;
+  drawText(4, data.pff_name, 185, 595);
+  drawText(4, pffStreet, 365, 595);
 
-  // Operating days checkboxes — small boxes appear left of each day label
+  // Operating days checkboxes
   const days = data.operating_days || [];
   const dayStr = days.join(" ").toLowerCase();
-  drawCheck(4, 32, 578, dayStr.includes("mon"));
-  drawCheck(4, 117, 578, dayStr.includes("tue"));
-  drawCheck(4, 203, 578, dayStr.includes("wed"));
-  drawCheck(4, 284, 578, dayStr.includes("thu"));
-  drawCheck(4, 365, 578, dayStr.includes("fri"));
-  drawCheck(4, 437, 578, dayStr.includes("sat"));
-  drawCheck(4, 510, 578, dayStr.includes("sun"));
+  drawCheck(4, 32, 562, dayStr.includes("mon"));
+  drawCheck(4, 117, 562, dayStr.includes("tue"));
+  drawCheck(4, 203, 562, dayStr.includes("wed"));
+  drawCheck(4, 284, 562, dayStr.includes("thu"));
+  drawCheck(4, 365, 562, dayStr.includes("fri"));
+  drawCheck(4, 437, 562, dayStr.includes("sat"));
+  drawCheck(4, 510, 562, dayStr.includes("sun"));
 
   // Operating times (written below the days row)
-  drawText(4, data.operating_times || "", 60, 560, 9);
+  drawText(4, data.operating_times || "", 60, 546, 9);
 
-  // Rental kitchen initials (6 lines at y = 542, 530, 518, 506, 494, 482)
+  // Rental kitchen initials (6 lines)
   if (data.agreement_initialed && initials) {
-    const rkInitialYs = [542, 530, 518, 506, 494, 482];
+    const rkInitialYs = [530, 519, 506, 494, 482, 470];
     for (const y of rkInitialYs) {
       drawText(4, initials, 42, y, 9);
     }
   }
 
-  // Applicant signature area (above the "Print Name / Signature / Date" label)
-  drawText(4, ownerOrAgent, 37, 400, 10);
-  drawText(4, todayFormatted(), 457, 400, 10);
+  // Applicant signature area (above the "Print Name" label at y=375)
+  drawText(4, ownerOrAgent, 37, 388, 10);
+  drawText(4, todayFormatted(), 470, 388, 10);
 
   // ── APPROVED RENTAL FACILITY INFORMATION (bottom half of page 5) ──
-  // "Type of Facility:" at y=350.7 — checkboxes: Commercial Kitchen(x=136), Restaurant(x=261), Bakery(x=350)
-  drawCheck(4, 124, 351, true); // Always "Commercial Kitchen" for Culinary Block
+  // "Type of Facility:" at y=337 — Commercial Kitchen x=136, Restaurant x=261, Bakery x=350
+  drawCheck(4, 124, 337, true); // Always "Commercial Kitchen" for Culinary Block
 
-  // "Facility name:" at y=311.9
-  drawText(4, data.pff_name || "Culinary Block", 120, 312);
+  // "Facility name:" at y=299
+  drawText(4, data.pff_name || "Culinary Block", 120, 298);
 
-  // "Facility Address:" at y=295.2, "City:" x=271, "State:" x=375, "Zip:" x=435
-  drawText(4, "1901 Las Plumas Ave", 130, 295);
-  drawText(4, "San Jose", 300, 295);
-  drawText(4, "CA", 410, 295);
-  drawText(4, "95133", 460, 295);
+  // "Facility Address:" at y=282, "City:" x=271, "State:" x=375, "Zip:" x=435
+  drawText(4, "1901 Las Plumas Ave", 130, 281);
+  drawText(4, "San Jose", 300, 281);
+  drawText(4, "CA", 408, 281);
+  drawText(4, "95133", 456, 281);
 
-  // Facility "Email Address:" at y=278.5, "Telephone:" x=271
-  drawText(4, "culinaryblockcatering@gmail.com", 120, 279);
-  drawText(4, "4156994397", 330, 279);
+  // "Email Address:" at y=265, "Telephone:" x=271
+  drawText(4, "culinaryblockcatering@gmail.com", 120, 264);
+  drawText(4, "4156994397", 330, 264);
 
   // ════════════════════════════════════════════════════════════════════════════
   // PAGE 6 (index 5) — WOPS Section A: Business Plan
