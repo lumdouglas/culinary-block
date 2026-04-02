@@ -39,6 +39,7 @@
   ],
   "exclude": [
     "node_modules",
+    "scripts",
     "growth-engine/dashboard/vite.config.ts"
   ]
 }
