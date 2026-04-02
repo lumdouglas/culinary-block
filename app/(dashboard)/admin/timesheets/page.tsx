@@ -3,6 +3,9 @@ import { redirect } from "next/navigation"
 import { AdminTimesheetsTable } from "@/components/admin/timesheets-table"
 import { getTenants } from "@/app/actions/admin"
 
+/** Matches `handle_new_user` placeholder when no approved application (see migrations). */
+const PLACEHOLDER_COMPANY_NAME = "New User"
+
 export const dynamic = "force-dynamic"
 
 function getCurrentMonthKey() {
@@ -31,13 +34,6 @@ export default async function AdminTimesheetsPage({
     const { tenantId: selectedTenantId, month: monthParam } = await searchParams
     const month = monthParam ?? getCurrentMonthKey()
 
-    // PST-aware month boundaries → UTC for the query
-    const [year, mon] = month.split("-").map(Number)
-    // PST = UTC-8 standard / UTC-7 daylight. Using UTC+8 offset to get start of PST month.
-    const startUtc = new Date(Date.UTC(year, mon - 1, 1, 8))   // noon UTC ≈ midnight PST
-    const endUtc   = new Date(Date.UTC(year, mon,     1, 8))
-
-    // Fetch tenants, kitchens, and timesheets in parallel
     const [{ data: tenants }, { data: kitchens }] = await Promise.all([
         getTenants(),
         supabase
@@ -46,6 +42,26 @@ export default async function AdminTimesheetsPage({
             .eq("is_active", true)
             .order("name"),
     ])
+
+    const tenantRows = tenants ?? []
+    if (selectedTenantId) {
+        const selected = tenantRows.find((t) => t.id === selectedTenantId)
+        if (selected?.company_name === PLACEHOLDER_COMPANY_NAME) {
+            const p = new URLSearchParams()
+            p.set("month", month)
+            redirect(`/admin/timesheets?${p.toString()}`)
+        }
+    }
+
+    const tenantsForFilter = tenantRows.filter(
+        (t) => t.company_name !== PLACEHOLDER_COMPANY_NAME,
+    )
+
+    // PST-aware month boundaries → UTC for the query
+    const [year, mon] = month.split("-").map(Number)
+    // PST = UTC-8 standard / UTC-7 daylight. Using UTC+8 offset to get start of PST month.
+    const startUtc = new Date(Date.UTC(year, mon - 1, 1, 8))   // noon UTC ≈ midnight PST
+    const endUtc   = new Date(Date.UTC(year, mon,     1, 8))
 
     let query = supabase
         .from("timesheets")
@@ -104,7 +120,7 @@ export default async function AdminTimesheetsPage({
 
             <AdminTimesheetsTable
                 initialTimesheets={(timesheets ?? []) as any}
-                tenants={tenants ?? []}
+                tenants={tenantsForFilter}
                 kitchens={kitchens ?? []}
                 selectedTenantId={selectedTenantId}
                 selectedMonth={month}
