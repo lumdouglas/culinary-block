@@ -48,6 +48,9 @@ function getCurrentMonthKey() {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 }
 
+/** Matches `handle_new_user` placeholder when no approved application (see migrations). */
+const PLACEHOLDER_COMPANY_NAME = "New User"
+
 export default function AdminBillingPage() {
     const [month, setMonth] = useState(getCurrentMonthKey)
     const [data, setData] = useState<AdminBillingData | null>(null)
@@ -67,6 +70,14 @@ export default function AdminBillingPage() {
     }, [])
 
     useEffect(() => { load(month) }, [month, load])
+
+    useEffect(() => {
+        if (tenantFilter === "all" || !data) return
+        const row = data.tenants.find((t) => t.tenantId === tenantFilter)
+        if (row?.companyName === PLACEHOLDER_COMPANY_NAME) {
+            setTenantFilter("all")
+        }
+    }, [data, tenantFilter])
 
     const navigateMonth = (offset: number) => {
         setMonth(prev => getAdjacentMonth(prev, offset))
@@ -115,7 +126,9 @@ export default function AdminBillingPage() {
             : data.tenants.filter(t => t.tenantId === tenantFilter)
         : []
 
-    const allTenantsForFilter = data?.tenants ?? []
+    const allTenantsForFilter = (data?.tenants ?? []).filter(
+        (t) => t.companyName !== PLACEHOLDER_COMPANY_NAME,
+    )
 
     const displayTotalHours = displayTenants.reduce((s, t) => s + t.totalHours, 0)
     const displayTotalCost = displayTenants.reduce((s, t) => s + t.estimatedCost, 0)
