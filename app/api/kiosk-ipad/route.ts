@@ -138,10 +138,11 @@ export async function GET(request: NextRequest) {
       align-items: stretch;
       padding-bottom: 12px;
     }
+    /* Column count is inlined on the element — repeat(var(--n), …) breaks on older WebKit. */
     .tenant-grid {
       display: grid;
-      grid-template-columns: repeat(var(--tenant-columns, 3), minmax(0, 1fr));
       grid-auto-rows: 1fr;
+      grid-gap: 10px;
       gap: 10px;
       max-width: 1100px;
       width: 100%;
@@ -158,6 +159,7 @@ export async function GET(request: NextRequest) {
       border: 2px solid #e2e8f0;
       border-radius: 14px;
       cursor: pointer;
+      font-size: 20px;
       font-size: clamp(18px, 2vw, 24px);
       font-weight: 700;
       color: #334155;
@@ -423,7 +425,7 @@ export async function GET(request: NextRequest) {
     </div>
     <h2 class="section-title">Select Your Company</h2>
     <div class="tenant-grid-container">
-      <div class="tenant-grid" style="--tenant-columns:${tenantColumns}">
+      <div class="tenant-grid" style="grid-template-columns: repeat(${tenantColumns}, minmax(0, 1fr));">
         ${tenantButtons || '<div class="empty-state">No active tenants found.</div>'}
       </div>
     </div>
