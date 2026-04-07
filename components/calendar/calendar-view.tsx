@@ -3,25 +3,10 @@
 import React, { useEffect, useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import timeGridPlugin from '@fullcalendar/timegrid'
-import listPlugin from '@fullcalendar/list'
 import interactionPlugin from '@fullcalendar/interaction'
 import { Station, Booking } from '@/app/actions/bookings'
-import { formatTimePST, formatLongDatePST, formatDayPST, durationLabel } from '@/utils/timezone'
-import { X, Clock, MapPin, User, FileText } from 'lucide-react'
-
-// Station color mapping
-const stationColors: Record<string, string> = {
-  'Station 1': '#0d9488',
-  'Station 3': '#14b8a6',
-  'Station 2': '#2563eb',
-  'Station 4': '#3b82f6',
-  'Oven L': '#16a34a',
-  'Oven M': '#22c55e',
-  'Oven R': '#4ade80',
-  'Prep Kitchen': '#f59e0b',
-  'Dairy Clean Room': '#f87171',
-}
+import { getStationHex } from '@/lib/station-colors'
+import { BookingPopup, PopupState } from '@/components/calendar/booking-popup'
 
 interface BookingCalendarProps {
   bookings: Booking[]
@@ -32,13 +17,6 @@ interface BookingCalendarProps {
   onDatesSet?: (start: string, end: string) => void
 }
 
-interface PopupState {
-  booking: Booking
-  station: Station | undefined
-  x: number
-  y: number
-}
-
 export function BookingCalendar({
   bookings,
   stations,
@@ -47,17 +25,8 @@ export function BookingCalendar({
   onDateSelect,
   onDatesSet,
 }: BookingCalendarProps) {
-  const [isMobile, setIsMobile] = useState(false)
   const [popup, setPopup] = useState<PopupState | null>(null)
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  // Close popup when clicking outside
   useEffect(() => {
     if (!popup) return
     const close = (e: MouseEvent) => {
@@ -68,20 +37,16 @@ export function BookingCalendar({
     return () => document.removeEventListener('mousedown', close)
   }, [popup])
 
-  // Filter bookings by selected stations
   const filteredBookings = selectedStations.length > 0
     ? bookings.filter(b => selectedStations.includes(b.station_id))
     : bookings
 
-  // Map bookings to FullCalendar events
   const events = filteredBookings.map((booking) => {
     const station = stations.find((s) => s.id === booking.station_id)
     const stationName = station?.name || 'Reserved'
     const companyName = booking.profile?.company_name || 'Reserved'
-    const color = stationColors[stationName] || '#6b7280'
+    const color = getStationHex(stationName)
     const isOwnBooking = currentUserId && booking.user_id === currentUserId
-
-    // Use a newline so that the company name drops to the next line in the block if possible
     const title = isOwnBooking ? `★ ${stationName}\n${companyName}` : `${stationName}\n${companyName}`
 
     return {
@@ -106,11 +71,7 @@ export function BookingCalendar({
       booking: Booking
       station: Station | undefined
     }
-
-    // Calculate popup position from the event element
-    // fixed positioning uses viewport coords, so no scrollY offset needed
     const rect = (clickInfo.el as HTMLElement).getBoundingClientRect()
-
     setPopup({
       booking,
       station,
@@ -122,168 +83,57 @@ export function BookingCalendar({
   return (
     <div className="calendar-container relative">
       <FullCalendar
-        key={isMobile ? 'mobile' : 'desktop'}
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView={isMobile ? "timeGridDay" : "timeGridWeek"}
+        plugins={[dayGridPlugin, interactionPlugin]}
+        initialView="dayGridMonth"
         headerToolbar={{
-          left: isMobile ? 'prev,next' : 'prev,next today',
+          left: 'prev,next today',
           center: 'title',
-          right: isMobile ? 'timeGridDay,listWeek' : 'dayGridMonth,timeGridWeek,timeGridDay'
+          right: '',
         }}
         events={events}
-        height={isMobile ? "80vh" : "70vh"}
-        contentHeight={undefined}
-        aspectRatio={isMobile ? 0.8 : 1.35}
+        height="auto"
         nowIndicator={true}
         editable={false}
         selectable={true}
         select={handleDateSelect}
         eventClick={handleEventClick}
         datesSet={(info) => onDatesSet?.(info.startStr, info.endStr)}
-        slotMinTime="00:00:00"
-        slotMaxTime="24:00:00"
-        scrollTime="07:00:00"
-        slotDuration="00:30:00"
-        allDaySlot={false}
+        timeZone="America/Los_Angeles"
         weekends={true}
-        selectMirror={true}
         dayMaxEvents={true}
-        eventDisplay={isMobile ? 'block' : 'auto'}
+        eventDisplay="auto"
       />
 
-      {/* Booking detail popup */}
       {popup && <BookingPopup popup={popup} currentUserId={currentUserId} onClose={() => setPopup(null)} />}
 
       <style jsx global>{`
         .fc { font-family: inherit; }
-        .fc-toolbar-title { font-size: ${isMobile ? '1.1rem' : '1.5rem'} !important; font-weight: 700; color: #1e293b; }
-        .fc-button-primary { 
-          background-color: #1e293b !important; 
-          border: none !important; 
+        .fc-toolbar-title { font-size: 1.4rem !important; font-weight: 700; color: #1e293b; }
+        .fc-button-primary {
+          background-color: #1e293b !important;
+          border: none !important;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-          padding: ${isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem'} !important;
-          font-size: ${isMobile ? '0.8rem' : '1rem'} !important;
+          padding: 0.5rem 1rem !important;
+          font-size: 0.9rem !important;
         }
         .fc-button-primary:hover { background-color: #334155 !important; }
         .fc-button-primary:disabled { background-color: #94a3b8 !important; }
         .fc-button-active { background-color: #0f172a !important; }
-        .fc-timegrid-slot { height: 2.5em; }
-        .fc-timegrid-slot-label { font-size: 0.75rem; color: #64748b; }
         .fc-col-header-cell { background-color: #f8fafc; padding: 0.75rem 0 !important; }
-        .fc-col-header-cell-cushion { color: #334155; font-weight: 600; font-size: ${isMobile ? '0.8rem' : '1rem'}; }
-        .fc-event { border-radius: 6px !important; font-size: ${isMobile ? '0.7rem' : '0.8rem'} !important; padding: 2px 6px !important; cursor: pointer !important; }
-        .fc-event-title { 
-          white-space: pre-wrap !important; 
+        .fc-col-header-cell-cushion { color: #334155; font-weight: 600; font-size: 0.9rem; }
+        .fc-event { border-radius: 4px !important; font-size: 0.78rem !important; padding: 1px 4px !important; cursor: pointer !important; }
+        .fc-event-title {
+          white-space: pre-wrap !important;
           overflow: hidden;
           display: -webkit-box;
-          -webkit-line-clamp: 3;
+          -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
         }
-        .fc-timegrid-now-indicator-line { border-color: #ef4444 !important; }
-        .fc-daygrid-day-top { padding: 8px; }
+        .fc-daygrid-day-top { padding: 6px; }
         .fc-scrollgrid { border-radius: 12px !important; overflow: hidden; }
         .fc-scrollgrid td, .fc-scrollgrid th { border-color: #e2e8f0 !important; }
         .own-booking { border-width: 2px !important; border-style: solid !important; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25) !important; }
-        @media (max-width: 768px) {
-          .fc-toolbar { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem !important; }
-          .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
-        }
-        .fc-list-event-title { color: #0f172a !important; font-weight: 500 !important; white-space: normal !important; }
-        .fc-list-event-time { color: #334155 !important; }
-        .fc-list-day-text { color: #0f172a !important; font-weight: 700 !important; }
-        .fc-list-day-side-text { color: #334155 !important; }
-        .fc-list-table td { border-color: #e2e8f0 !important; }
       `}</style>
-    </div>
-  )
-}
-
-function BookingPopup({
-  popup,
-  currentUserId,
-  onClose,
-}: {
-  popup: PopupState
-  currentUserId?: string | null
-  onClose: () => void
-}) {
-  const { booking, station, x, y } = popup
-  const isOwn = currentUserId && booking.user_id === currentUserId
-  const duration = durationLabel(booking.start_time, booking.end_time)
-  const color = stationColors[station?.name || ''] || '#6b7280'
-
-  // Clamp horizontally so popup stays within viewport
-  const popupWidth = 288 // w-72
-  const clampedX = Math.min(Math.max(x - popupWidth / 2, 12), window.innerWidth - popupWidth - 12)
-
-  return (
-    <div
-      id="booking-popup"
-      className="fixed z-50 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
-      style={{ left: clampedX, top: y }}
-    >
-      {/* Colour header strip */}
-      <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
-
-      <div className="p-4 space-y-3">
-        {/* Title row */}
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-bold text-slate-900 text-base leading-tight">
-              {isOwn ? '★ ' : ''}{station?.name ?? 'Kitchen Station'}
-            </p>
-            {station?.category && (
-              <p className="text-xs text-slate-400 mt-0.5">{station.category}</p>
-            )}
-          </div>
-          <button onClick={onClose} className="text-slate-300 hover:text-slate-600 transition-colors flex-shrink-0 mt-0.5">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="space-y-2 text-sm">
-          {/* Tenant */}
-          <div className="flex items-center gap-2 text-slate-600">
-            <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <span className="font-medium">
-              {isOwn ? 'You' : (booking.profile?.company_name || 'Reserved')}
-            </span>
-          </div>
-
-          {/* Date */}
-          <div className="flex items-center gap-2 text-slate-600">
-            <div className="w-4 flex justify-center">
-              <span className="text-xs font-bold text-slate-400">{formatDayPST(booking.start_time)}</span>
-            </div>
-            <span>{formatLongDatePST(booking.start_time)}</span>
-          </div>
-
-          {/* Time */}
-          <div className="flex items-center gap-2 text-slate-600">
-            <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-            <span>
-              {formatTimePST(booking.start_time)} – {formatTimePST(booking.end_time)}
-              <span className="text-slate-400 ml-1">({duration})</span>
-            </span>
-          </div>
-
-          {/* Notes */}
-          {booking.notes && (
-            <div className="flex items-start gap-2 text-slate-600">
-              <FileText className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-              <span className="text-slate-500 italic">{booking.notes}</span>
-            </div>
-          )}
-
-          {/* Equipment */}
-          {station?.equipment && (
-            <div className="flex items-start gap-2 text-slate-600">
-              <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
-              <span className="text-slate-500">{station.equipment}</span>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
