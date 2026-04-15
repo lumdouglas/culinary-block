@@ -1,12 +1,25 @@
 "use client"
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface UserSelectionProps {
   profiles: { id: string; company_name: string }[];
 }
 
 export function UserSelection({ profiles }: UserSelectionProps) {
+  const router = useRouter();
+
+  // Auto-refresh tenant list every 60 seconds so admin changes
+  // (activate/deactivate) propagate to the kiosk without a manual reload.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [router]);
+
   const tenantColumns =
     profiles.length > 40 ? 8 :
     profiles.length > 30 ? 7 :

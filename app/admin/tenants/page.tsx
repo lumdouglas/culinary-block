@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Profile } from "@/types/database";
-import { getTenants, toggleTenantActive } from "@/app/actions/admin";
+import { getTenants, toggleTenantActive, pushKioskUpdate } from "@/app/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Search, ArrowLeft } from "lucide-react";
+import { Users, Search, ArrowLeft, MonitorCheck } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 
@@ -27,6 +27,7 @@ export default function AdminTenantsPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [tenantToDeactivate, setTenantToDeactivate] = useState<Profile | null>(null);
+    const [pushing, setPushing] = useState(false);
 
     const loadTenants = async () => {
         setLoading(true);
@@ -66,6 +67,17 @@ export default function AdminTenantsPage() {
         setTenantToDeactivate(null);
     };
 
+    const handlePushToKiosk = async () => {
+        setPushing(true);
+        const result = await pushKioskUpdate();
+        if (result.error) {
+            toast.error(result.error);
+        } else {
+            toast.success("Kiosk updated — changes will appear within 60 seconds.");
+        }
+        setPushing(false);
+    };
+
     const filteredTenants = tenants.filter(tenant =>
         tenant.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tenant.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -78,11 +90,21 @@ export default function AdminTenantsPage() {
                     <Link href="/admin/applications" className="text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm mb-4">
                         <ArrowLeft className="w-4 h-4" /> Back to Applications
                     </Link>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="bg-blue-100 p-2 rounded-lg">
-                            <Users className="w-8 h-8 text-blue-600" />
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-3">
+                            <div className="bg-blue-100 p-2 rounded-lg">
+                                <Users className="w-8 h-8 text-blue-600" />
+                            </div>
+                            <h1 className="text-4xl font-bold">Tenant Management</h1>
                         </div>
-                        <h1 className="text-4xl font-bold">Tenant Management</h1>
+                        <Button
+                            onClick={handlePushToKiosk}
+                            disabled={pushing}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                        >
+                            <MonitorCheck className="w-4 h-4" />
+                            {pushing ? "Pushing..." : "Push to Kiosk"}
+                        </Button>
                     </div>
                     <p className="text-slate-600 ml-14">Manage active tenants and their access to the kiosk and booking system</p>
                 </div>
