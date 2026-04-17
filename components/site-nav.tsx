@@ -151,6 +151,7 @@ export function SiteNav() {
                                             <MobileNavLink href="/admin/tenants">Active Tenants</MobileNavLink>
                                             <MobileNavLink href="/admin/applications">Applications</MobileNavLink>
                                             <MobileNavLink href="/admin/requests">Tenant Requests</MobileNavLink>
+                                            <MobileNavLink href="/admin/bookings">Bookings</MobileNavLink>
                                             <MobileNavLink href="/admin/timesheets">Timesheet Log</MobileNavLink>
                                             <MobileNavLink href="/admin/billing">Billing</MobileNavLink>
                                             <MobileNavLink href="/kiosk">Kiosk Setup</MobileNavLink>

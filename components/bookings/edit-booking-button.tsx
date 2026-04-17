@@ -65,6 +65,7 @@ interface EditBookingButtonProps {
     currentEndTime: string     // ISO string
     currentNotes?: string
     stations: Station[]
+    isAdmin?: boolean
 }
 
 // todayStr and maxDateStr are module-level constants (safe — static dates)
@@ -96,6 +97,7 @@ export function EditBookingButton({
     currentEndTime,
     currentNotes,
     stations,
+    isAdmin = false,
 }: EditBookingButtonProps) {
     const [open, setOpen] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -220,7 +222,7 @@ export function EditBookingButton({
                                         <Input
                                             type="date"
                                             min={todayStr}
-                                            max={maxDateStr}
+                                            {...(!isAdmin ? { max: maxDateStr } : {})}
                                             {...field}
                                         />
                                     </FormControl>
@@ -324,10 +326,12 @@ export function EditBookingButton({
                             </Button>
                         </div>
 
-                        <p className="text-xs text-slate-400 text-center pt-1">
-                            Bookings are limited to 6 months in advance and one station at a time.{" "}
-                            <span className="text-slate-500 font-medium">Need more? Contact Culinary Block Management.</span>
-                        </p>
+                        {!isAdmin && (
+                            <p className="text-xs text-slate-400 text-center pt-1">
+                                Bookings are limited to 6 months in advance and one station at a time.{" "}
+                                <span className="text-slate-500 font-medium">Need more? Contact Culinary Block Management.</span>
+                            </p>
+                        )}
                     </form>
                 </Form>
             </DialogContent>

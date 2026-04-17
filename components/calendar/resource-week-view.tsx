@@ -176,7 +176,10 @@ export function ResourceWeekView({
                         {dayBookings.map((booking) => {
                           const isOwn = currentUserId && booking.user_id === currentUserId
                           const label = booking.profile?.company_name || 'Reserved'
-                          const timeStr = `${formatTimePST(booking.start_time)}–${formatTimePST(booking.end_time)}`
+                          const isOvernight = new Date(booking.end_time).getDate() !== new Date(booking.start_time).getDate()
+                          const timeStr = isOvernight
+                            ? `${formatTimePST(booking.start_time)} →`
+                            : `${formatTimePST(booking.start_time)}–${formatTimePST(booking.end_time)}`
 
                           return (
                             <div

@@ -281,10 +281,12 @@ export function ResourceDayView({
             .filter((b) => b.station_id === station.id)
             .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
           // Compact when empty, taller when concurrent bookings exist
+          const hasMultiple = stationBookings.length >= 2
           const rowHeight = stationBookings.length === 0 ? COMPACT_ROW_HEIGHT
-            : isMulti && stationBookings.length >= 2 ? MULTI_ROW_HEIGHT
+            : hasMultiple ? MULTI_ROW_HEIGHT
             : ROW_HEIGHT
-          const stackOffsets = isMulti ? stackBookings(stationBookings) : null
+          // Always stack when multiple bookings exist (not just General stations)
+          const stackOffsets = hasMultiple ? stackBookings(stationBookings) : null
 
           return (
             <div key={station.id} className="flex" style={{ minHeight: rowHeight }}>
@@ -401,7 +403,10 @@ function RowTimeline({
       {/* Booking bars */}
       {stationBookings.map((booking) => {
         const startMin = getMinutesFromMidnight(booking.start_time)
-        const endMin = getMinutesFromMidnight(booking.end_time)
+        let endMin = getMinutesFromMidnight(booking.end_time)
+        // Overnight booking: end time is on the next calendar day (endMin < startMin)
+        // Clamp to HOUR_END so the bar renders to the right edge of the visible window
+        if (endMin < startMin) endMin = HOUR_END * 60
         const clampedStart = Math.max(startMin, HOUR_START * 60)
         const clampedEnd = Math.min(endMin, HOUR_END * 60)
         const leftPct = ((clampedStart - HOUR_START * 60) / DAY_MINUTES) * 100

@@ -325,7 +325,15 @@ export async function updateBooking(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Verify ownership
+  // Check if caller is admin
+  const { data: callerProfile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  const isAdmin = callerProfile?.role === 'admin';
+
+  // Verify ownership (admins may edit any booking)
   const { data: booking } = await supabase
     .from('bookings')
     .select('user_id')
@@ -333,7 +341,7 @@ export async function updateBooking(
     .single();
 
   if (!booking) return { error: "Booking not found" };
-  if (booking.user_id !== user.id) return { error: "You can only edit your own bookings" };
+  if (!isAdmin && booking.user_id !== user.id) return { error: "You can only edit your own bookings" };
 
   // Rule: Cannot book more than 6 months in advance
   const sixMonthsFromNow = new Date();
@@ -416,6 +424,93 @@ export async function updateBooking(
   return { success: true };
 }
 
+
+// Hard-delete a booking (admin only)
+export async function deleteBooking(bookingId: string) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') return { error: "Only admins can delete bookings" };
+
+  const { error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('id', bookingId);
+
+  if (error) {
+    console.error('Error deleting booking:', error);
+    return { error: "Failed to delete booking" };
+  }
+
+  revalidatePath('/calendar');
+  revalidatePath('/admin/bookings');
+  return { success: true };
+}
+
+// Get ALL bookings for admin management (admin only)
+export async function adminGetAllBookings({
+  from,
+  to,
+  stationId,
+  tenantId,
+}: {
+  from?: string;
+  to?: string;
+  stationId?: number;
+  tenantId?: string;
+} = {}) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated", data: [] };
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.role !== 'admin') return { error: "Admin only", data: [] };
+
+  let query = supabase
+    .from('bookings')
+    .select('*, station:stations(id, name, category)')
+    .eq('status', 'confirmed')
+    .order('start_time', { ascending: true });
+
+  if (from) query = query.gte('start_time', from);
+  if (to) query = query.lte('start_time', to);
+  if (stationId) query = query.eq('station_id', stationId);
+  if (tenantId) query = query.eq('user_id', tenantId);
+
+  const { data: bookings, error } = await query;
+  if (error) return { error: error.message, data: [] };
+  if (!bookings?.length) return { data: [] };
+
+  // Enrich with profiles
+  const userIds = [...new Set(bookings.map(b => b.user_id))];
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, company_name')
+    .in('id', userIds);
+
+  const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+  return {
+    data: bookings.map(b => ({
+      ...b,
+      profile: profileMap.get(b.user_id) || { company_name: 'Unknown' },
+    })) as Booking[],
+  };
+}
 
 // Get user's own bookings
 export async function getUserBookings() {
