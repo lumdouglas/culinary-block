@@ -216,10 +216,10 @@ export async function createBooking(
 
       // If BOTH stations are NOT General AND neither is 'Oven (M)', block it.
       // E.g., two Hoods, or a Hood and Oven L
-      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)';
+      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)' || targetStation.name === 'Oven (L)';
       // @ts-ignore - Supabase join typing returns an array for one-to-many, even if it's meant to be a single object
       const existingStationName = Array.isArray(booking.station) ? booking.station[0]?.name : (booking.station as any)?.name;
-      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)';
+      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)' || existingStationName === 'Oven (L)';
 
       if (!targetIsSecondary && !existingIsSecondary) {
         return { error: "You already have a primary station booked during this time. To book multiple primary stations simultaneously, please contact Culinary Block Management." };
@@ -383,11 +383,11 @@ export async function updateBooking(
       // @ts-ignore - Supabase join typing
       const existingCategory = booking.station?.category;
 
-      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)';
+      const targetIsSecondary = targetStation.category === 'General' || targetStation.name === 'Oven (M)' || targetStation.name === 'Oven (L)';
 
       // @ts-ignore - Supabase join typing returns an array for one-to-many, even if it's meant to be a single object
       const existingStationName = Array.isArray(booking.station) ? booking.station[0]?.name : (booking.station as any)?.name;
-      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)';
+      const existingIsSecondary = existingCategory === 'General' || existingStationName === 'Oven (M)' || existingStationName === 'Oven (L)';
 
       // If BOTH stations are NOT General AND neither is 'Oven (M)', block it.
       if (!targetIsSecondary && !existingIsSecondary) {

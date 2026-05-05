@@ -39,10 +39,22 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const router = useRouter()
 
-  // Handle Supabase Dashboard magic links & invites
+  // Handle Supabase invite/magic-link redirects landing on the homepage
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hash.includes('access_token=')) {
-      const hash = window.location.hash;
+    if (typeof window === 'undefined') return;
+
+    // PKCE flow: Supabase drops ?code=... on the homepage when redirectTo isn't allowlisted
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      // Relay to the auth callback handler so cookies are set before navigating
+      window.location.replace(`/auth/callback?code=${encodeURIComponent(code)}&next=/account-setup`);
+      return;
+    }
+
+    // Legacy implicit flow: hash-based access_token (older Supabase email templates)
+    const hash = window.location.hash;
+    if (hash.includes('access_token=')) {
       if (hash.includes('type=invite') || hash.includes('type=recovery')) {
         window.location.assign('/account-setup' + hash);
       } else if (hash.includes('type=magiclink')) {

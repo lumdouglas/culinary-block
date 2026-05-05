@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Application } from "@/types/database";
-import { getApplications, approveApplication, rejectApplication } from "@/app/actions/admin";
+import { getApplications, approveApplication, rejectApplication, resendInvite } from "@/app/actions/admin";
 import { ApplicationDetails } from "@/components/application-details";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Mail } from "lucide-react";
 
 export default function AdminApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -62,6 +62,18 @@ export default function AdminApplicationsPage() {
       toast.success("Application rejected.");
       loadApplications();
       setSelectedApplication(null);
+    }
+    setActionLoading(false);
+  };
+
+  const handleResendInvite = async (id: string) => {
+    setActionLoading(true);
+    const result = await resendInvite(id);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Invitation email resent successfully.");
+      loadApplications();
     }
     setActionLoading(false);
   };
@@ -192,6 +204,17 @@ export default function AdminApplicationsPage() {
                         </Button>
                       </>
                     )}
+                    {app.status === 'approved' && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleResendInvite(app.id)}
+                        disabled={actionLoading}
+                      >
+                        <Mail className="w-4 h-4 mr-1" />
+                        Resend Invite
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -231,6 +254,19 @@ export default function AdminApplicationsPage() {
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Reject Application
+                  </Button>
+                </div>
+              )}
+
+              {selectedApplication.status === 'approved' && (
+                <div className="flex gap-2 mt-6 pt-6 border-t">
+                  <Button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleResendInvite(selectedApplication.id)}
+                    disabled={actionLoading}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Resend Invitation Email
                   </Button>
                 </div>
               )}
