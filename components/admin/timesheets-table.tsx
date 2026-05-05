@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { verifyTimesheets, adminDeleteTimesheet } from "@/app/actions/timesheets"
 import { toast } from "sonner"
-import { CheckCircle2, Loader2, Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { CheckCircle2, Loader2, Pencil, Trash2, Plus, ChevronLeft, ChevronRight, Eye } from "lucide-react"
 import { TenantFilter } from "./tenant-filter"
 import {
     TimesheetEditDialog,
@@ -297,6 +298,18 @@ export function AdminTimesheetsTable({
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                                                {shift.profiles?.id && (
+                                                    <Link href={`/admin/timesheets/${shift.profiles.id}`}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-slate-500 hover:text-amber-600 hover:bg-amber-50"
+                                                            title="View as tenant"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                        </Button>
+                                                    </Link>
+                                                )}
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
