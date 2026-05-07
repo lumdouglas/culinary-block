@@ -48,16 +48,18 @@ function StatusBadge({ status }: { status: string }) {
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: { month?: string }
+  searchParams: Promise<{ month?: string }>
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) return <div>Please log in to view billing.</div>;
 
+  const { month } = await searchParams;
+
   // Determine viewed month
   const currentDate = new Date();
-  const viewDate = searchParams.month ? new Date(`${searchParams.month}-01T00:00:00`) : currentDate;
+  const viewDate = month ? new Date(`${month}-01T00:00:00`) : currentDate;
   const isCurrentMonth = isSameMonth(viewDate, currentDate);
   const prevMonthStr = format(subMonths(viewDate, 1), 'yyyy-MM');
   const nextMonthStr = format(addMonths(viewDate, 1), 'yyyy-MM');

@@ -11,7 +11,7 @@ import { startOfMonth, endOfMonth, addMonths, subMonths, format, isSameMonth, pa
 export default async function TimesheetsPage({
     searchParams,
 }: {
-    searchParams: { month?: string }
+    searchParams: Promise<{ month?: string }>
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -20,9 +20,11 @@ export default async function TimesheetsPage({
         redirect("/login")
     }
 
+    const { month } = await searchParams
+
     // Determine current month view
     const currentDate = new Date()
-    const viewDate = searchParams.month ? new Date(`${searchParams.month}-01T00:00:00`) : currentDate
+    const viewDate = month ? new Date(`${month}-01T00:00:00`) : currentDate
 
     // Date navigation logic
     const startDate = startOfMonth(viewDate)
