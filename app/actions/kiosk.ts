@@ -72,14 +72,24 @@ export async function clockOut(sessionId: string) {
 
 export async function updateTimesheet(sessionId: string, newClockIn: string, newClockOut: string | null) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const updateData: any = {
-    clock_in: new Date(newClockIn).toISOString(),
-    is_edited: true
-  };
+  const clockIn = new Date(newClockIn).toISOString();
+  const clockOut = newClockOut ? new Date(newClockOut).toISOString() : null;
+  const durationMinutes = clockOut
+    ? Math.round((new Date(clockOut).getTime() - new Date(clockIn).getTime()) / 60000)
+    : null;
 
-  if (newClockOut) {
-    updateData.clock_out = new Date(newClockOut).toISOString();
+  const updateData: {
+    clock_in: string;
+    is_edited: boolean;
+    clock_out?: string;
+    duration_minutes?: number;
+  } = { clock_in: clockIn, is_edited: true };
+
+  if (clockOut) {
+    updateData.clock_out = clockOut;
+    if (durationMinutes !== null) updateData.duration_minutes = durationMinutes;
   }
 
   const { error } = await supabase
@@ -92,9 +102,9 @@ export async function updateTimesheet(sessionId: string, newClockIn: string, new
   appendTimesheetLog({
     op: 'timesheet_edit',
     timesheetId: sessionId,
-    userId: 'via-server-action',
-    clockIn: updateData.clock_in,
-    clockOut: updateData.clock_out ?? null,
+    userId: user?.id ?? 'unknown',
+    clockIn,
+    clockOut,
   });
   revalidatePath('/timesheets');
   revalidatePath('/admin/timesheets');

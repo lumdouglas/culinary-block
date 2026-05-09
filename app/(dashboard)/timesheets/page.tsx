@@ -6,7 +6,17 @@ import { EditTimesheetDialog } from "@/components/timesheets/edit-dialog"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Clock, CalendarDays } from "lucide-react"
-import { startOfMonth, endOfMonth, addMonths, subMonths, format, isSameMonth, parseISO } from "date-fns"
+import { startOfMonth, endOfMonth, addMonths, subMonths, format, isSameMonth } from "date-fns"
+
+type TimesheetRow = {
+    id: string
+    clock_in: string
+    clock_out: string | null
+    duration_minutes: number | null
+    is_edited: boolean | null
+    status: string | null
+    kitchens: { name: string }[] | null
+}
 
 export default async function TimesheetsPage({
     searchParams,
@@ -22,13 +32,18 @@ export default async function TimesheetsPage({
 
     const { month } = await searchParams
 
-    // Determine current month view
-    const currentDate = new Date()
+    // Determine current month view — all dates interpreted in PST
+    const pstNowStr = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+    const currentDate = new Date(pstNowStr)
     const viewDate = month ? new Date(`${month}-01T00:00:00`) : currentDate
 
-    // Date navigation logic
+    // Build PST start/end-of-month as UTC ISO strings for Supabase filtering
+    // so the query boundary matches the PST month shown to the user
+    const pstOffsetMs = new Date().getTime() - new Date(new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })).getTime()
     const startDate = startOfMonth(viewDate)
     const endDate = endOfMonth(viewDate)
+    const startDateUTC = new Date(startDate.getTime() + pstOffsetMs)
+    const endDateUTC = new Date(endDate.getTime() + pstOffsetMs)
     const prevMonthStr = format(subMonths(viewDate, 1), 'yyyy-MM')
     const nextMonthStr = format(addMonths(viewDate, 1), 'yyyy-MM')
     const isCurrentMonth = isSameMonth(viewDate, currentDate)
@@ -42,8 +57,8 @@ export default async function TimesheetsPage({
             kitchens (name)
         `)
         .eq("user_id", user.id)
-        .gte("clock_in", startDate.toISOString())
-        .lte("clock_in", endDate.toISOString())
+        .gte("clock_in", startDateUTC.toISOString())
+        .lte("clock_in", endDateUTC.toISOString())
         .order("clock_in", { ascending: false })
 
     // Fetch lightweight all-time data to build monthly history
@@ -127,7 +142,7 @@ export default async function TimesheetsPage({
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {timesheets?.map((shift: any) => (
+                        {timesheets?.map((shift: TimesheetRow) => (
                             <TableRow key={shift.id} className="border-b border-slate-100 hover:bg-slate-50/50">
                                 <TableCell className="font-medium text-slate-900">
                                     {new Date(shift.clock_in).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric', year: 'numeric' })}
@@ -141,7 +156,7 @@ export default async function TimesheetsPage({
                                         </Badge>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-slate-900">{shift.kitchens?.name || '—'}</TableCell>
+                                <TableCell className="text-slate-900">{shift.kitchens?.[0]?.name || '—'}</TableCell>
                                 <TableCell className="text-slate-700">
                                     {shift.duration_minutes != null ?
                                         `${Math.floor(shift.duration_minutes / 60)}h ${shift.duration_minutes % 60}m`
@@ -161,7 +176,7 @@ export default async function TimesheetsPage({
                                         shiftId={shift.id}
                                         currentClockIn={shift.clock_in}
                                         currentClockOut={shift.clock_out}
-                                        isEdited={shift.is_edited}
+                                        isEdited={shift.is_edited ?? undefined}
                                     />
                                 </TableCell>
                             </TableRow>

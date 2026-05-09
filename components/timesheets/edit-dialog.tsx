@@ -31,7 +31,10 @@ import { updateTimesheet } from "@/app/actions/kiosk"
 const formSchema = z.object({
     clockIn: z.string().min(1, "Clock In is required"),
     clockOut: z.string().optional()
-})
+}).refine(
+    (data) => !data.clockOut || new Date(data.clockIn) < new Date(data.clockOut),
+    { message: "Clock out must be after clock in", path: ["clockOut"] }
+)
 
 interface EditTimesheetDialogProps {
     shiftId: string
@@ -44,10 +47,12 @@ export function EditTimesheetDialog({ shiftId, currentClockIn, currentClockOut, 
     const [open, setOpen] = useState(false)
     const router = useRouter()
 
+    // Convert UTC to PST for datetime-local input so displayed times match the table
     const toLocalISO = (dateStr: string) => {
-        const d = new Date(dateStr)
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-        return d.toISOString().slice(0, 16)
+        const pstStr = new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
+        const pst = new Date(pstStr)
+        const pad = (n: number) => String(n).padStart(2, "0")
+        return `${pst.getFullYear()}-${pad(pst.getMonth() + 1)}-${pad(pst.getDate())}T${pad(pst.getHours())}:${pad(pst.getMinutes())}`
     }
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -58,8 +63,6 @@ export function EditTimesheetDialog({ shiftId, currentClockIn, currentClockOut, 
         },
     })
 
-    // Reset form when dialog opens so it doesn't keep stale unsaved edits
-    // Reset form when dialog opens so it doesn't keep stale unsaved edits
     useEffect(() => {
         if (open) {
             form.reset({
