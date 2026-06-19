@@ -10,14 +10,27 @@ import ApplicationReceived from "@/components/emails/ApplicationReceived";
 export async function submitApplication(values: any) {
     const supabase = await createClient();
 
-    // 1. Insert into Supabase
+    // 1. Reject duplicate pending applications from the same email
+    const { data: existing } = await supabase
+        .from("applications")
+        .select("id")
+        .eq("email", values.email)
+        .eq("status", "pending")
+        .limit(1)
+        .maybeSingle();
+
+    if (existing) {
+        return { error: "An application from this email is already under review. We'll be in touch soon!" };
+    }
+
+    // 2. Insert into Supabase
     const { error: dbError } = await supabase.from("applications").insert([values]);
     if (dbError) {
         console.error("Database insert error:", dbError);
         return { error: "Failed to save application to database." };
     }
 
-    // 2. Send confirmation email (separate try/catch so DB success is preserved)
+    // 3. Send confirmation email (separate try/catch so DB success is preserved)
     let emailError: string | null = null;
     try {
         if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {

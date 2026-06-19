@@ -150,7 +150,7 @@ export default function AdminTenantsPage() {
                                     <div className="flex items-center gap-4">
                                         <div className="flex flex-col items-start md:items-end gap-1 w-full md:w-auto">
                                             <span className="text-sm font-medium text-slate-700">
-                                                {tenant.is_active ? 'Kiosk Access Enabled' : 'Kiosk Access Disabled'}
+                                                {tenant.is_active ? 'Active' : 'Closed'}
                                             </span>
                                             <Switch
                                                 checked={tenant.is_active || false}
@@ -169,15 +169,18 @@ export default function AdminTenantsPage() {
             <AlertDialog open={!!tenantToDeactivate} onOpenChange={(open) => !open && setTenantToDeactivate(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Deactivate Tenant?</AlertDialogTitle>
+                        <AlertDialogTitle>Close Tenant Account?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to deactivate <strong>{tenantToDeactivate?.company_name}</strong>?
+                            Are you sure you want to close the account for <strong>{tenantToDeactivate?.company_name}</strong>?
                             <br /><br />
-                            They will no longer be able to:
+                            They will be removed from:
                             <ul className="list-disc list-inside mt-2">
-                                <li>Log in to the Kiosk</li>
-                                <li>Make new bookings</li>
+                                <li>Active tenant lists and billing</li>
+                                <li>Timesheets</li>
+                                <li>Kiosk login</li>
                             </ul>
+                            <br />
+                            You can reactivate them at any time using the toggle.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -186,7 +189,7 @@ export default function AdminTenantsPage() {
                             className="bg-red-600 hover:bg-red-700"
                             onClick={() => tenantToDeactivate && updateTenantStatus(tenantToDeactivate.id, false)}
                         >
-                            Deactivate
+                            Close Account
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

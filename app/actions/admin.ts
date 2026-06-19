@@ -203,7 +203,7 @@ export async function getApplications(status?: string) {
     return { data };
 }
 
-export async function getTenants() {
+export async function getTenants(options?: { activeOnly?: boolean }) {
     const supabase = await createClient();
 
     // Check if user is admin
@@ -222,11 +222,17 @@ export async function getTenants() {
         return { error: "Not authorized" };
     }
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('profiles')
         .select('id, role, company_name, contact_name, email, phone, address, is_active, business_type, business_description, notification_email')
         .eq('role', 'tenant')
         .order('company_name', { ascending: true });
+
+    if (options?.activeOnly) {
+        query = query.eq('is_active', true);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error("getTenants query error:", JSON.stringify(error));

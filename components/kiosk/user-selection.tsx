@@ -2,11 +2,16 @@
 
 import Link from 'next/link';
 
+import { useRouter } from 'next/navigation';
+import { RefreshCw } from 'lucide-react';
+
 interface UserSelectionProps {
   profiles: { id: string; company_name: string }[];
 }
 
 export function UserSelection({ profiles }: UserSelectionProps) {
+  const router = useRouter();
+
   const tenantColumns =
     profiles.length > 40 ? 8 :
     profiles.length > 30 ? 7 :
@@ -19,7 +24,16 @@ export function UserSelection({ profiles }: UserSelectionProps) {
 
   return (
     <div className="h-full flex flex-col space-y-3 px-4 md:px-8">
-      <h2 className="text-xl md:text-2xl font-bold text-slate-800 text-center">Select Your Company</h2>
+      <div className="relative flex items-center justify-center">
+        <h2 className="text-xl md:text-2xl font-bold text-slate-800 text-center">Select Your Company</h2>
+        <button
+          onClick={() => router.refresh()}
+          className="absolute right-0 p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all"
+          title="Refresh tenant list"
+        >
+          <RefreshCw className="h-5 w-5 md:h-6 md:w-6" />
+        </button>
+      </div>
       
       <div
         className="grid flex-1 min-h-0 gap-2 md:gap-3"

@@ -260,8 +260,13 @@ export default function ApplicationPage() {
                 )} />
               </div>
 
-              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6" data-testid="apply-submit">
-                Submit Application
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-lg py-6 disabled:opacity-60 disabled:cursor-not-allowed"
+                data-testid="apply-submit"
+              >
+                {form.formState.isSubmitting ? "Submitting…" : "Submit Application"}
               </Button>
             </form>
           </Form>

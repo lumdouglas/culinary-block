@@ -79,6 +79,7 @@ export async function getAdminBillingData(month: string): Promise<{ data?: Admin
         .from("profiles")
         .select("id, company_name, email")
         .eq("role", "tenant")
+        .eq("is_active", true)
         .order("company_name");
 
     const { data: billingPeriods } = await supabase

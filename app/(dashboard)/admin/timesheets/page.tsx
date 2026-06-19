@@ -35,7 +35,7 @@ export default async function AdminTimesheetsPage({
     const month = monthParam ?? getCurrentMonthKey()
 
     const [{ data: tenants }, { data: kitchens }] = await Promise.all([
-        getTenants(),
+        getTenants({ activeOnly: true }),
         supabase
             .from("kitchens")
             .select("id, name")
@@ -46,7 +46,7 @@ export default async function AdminTimesheetsPage({
     const tenantRows = tenants ?? []
     if (selectedTenantId) {
         const selected = tenantRows.find((t) => t.id === selectedTenantId)
-        if (selected?.company_name === PLACEHOLDER_COMPANY_NAME) {
+        if (!selected || selected.company_name === PLACEHOLDER_COMPANY_NAME) {
             const p = new URLSearchParams()
             p.set("month", month)
             redirect(`/admin/timesheets?${p.toString()}`)
@@ -63,6 +63,8 @@ export default async function AdminTimesheetsPage({
     const startUtc = new Date(Date.UTC(year, mon - 1, 1, 8))   // noon UTC ≈ midnight PST
     const endUtc   = new Date(Date.UTC(year, mon,     1, 8))
 
+    const activeTenantIds = tenantsForFilter.map((t) => t.id)
+
     let query = supabase
         .from("timesheets")
         .select(`
@@ -76,6 +78,8 @@ export default async function AdminTimesheetsPage({
 
     if (selectedTenantId) {
         query = query.eq("user_id", selectedTenantId)
+    } else if (activeTenantIds.length > 0) {
+        query = query.in("user_id", activeTenantIds)
     }
 
     const { data: timesheets, error } = await query
