@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { Check, X, Loader2 } from "lucide-react"
+import { approveTimesheetRequest, rejectTimesheetRequest } from "@/app/actions/timesheets"
 
 interface RequestActionProps {
     requestId: string
@@ -33,21 +34,19 @@ export function RequestActionDialog({ requestId, status }: RequestActionProps) {
     async function handleAction() {
         setLoading(true)
         try {
-            const response = await fetch(`/api/admin/timesheets/requests/${requestId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status, resolutionNotes: notes }),
-            })
+            const action = isApprove ? approveTimesheetRequest : rejectTimesheetRequest
+            const res = await action(requestId, notes || undefined)
 
-            if (!response.ok) {
-                throw new Error("Failed to process request")
+            if (res?.error) {
+                throw new Error(res.error)
             }
 
             toast.success(`Request ${status} successfully`)
             setOpen(false)
             router.refresh()
-        } catch {
-            toast.error("Something went wrong. Please try again.")
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Something went wrong. Please try again."
+            toast.error(message)
         } finally {
             setLoading(false)
         }
