@@ -5,9 +5,48 @@ import { render } from "@react-email/render";
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
+import { headers } from "next/headers";
 import ApplicationReceived from "@/components/emails/ApplicationReceived";
 
-export async function submitApplication(values: any) {
+// Best-effort in-memory rate limit — resets per server instance/deploy, so it
+// is a speed bump against casual bots, not a substitute for the RLS/honeypot checks below.
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_MAX_SUBMISSIONS = 3;
+const submissionsByIp = new Map<string, number[]>();
+
+function isRateLimited(ip: string): boolean {
+    const now = Date.now();
+    const timestamps = (submissionsByIp.get(ip) ?? []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+    timestamps.push(now);
+    submissionsByIp.set(ip, timestamps);
+    return timestamps.length > RATE_LIMIT_MAX_SUBMISSIONS;
+}
+
+type SubmitMeta = {
+    honeypot?: string;
+    elapsedMs?: number;
+};
+
+export async function submitApplication(values: any, meta?: SubmitMeta) {
+    // Honeypot: this field is hidden from real users via CSS, so only bots that
+    // blindly fill every input end up populating it. Pretend success so bots
+    // don't learn to leave it blank.
+    if (meta?.honeypot) {
+        return { success: true };
+    }
+
+    // Timing check: a multi-field form filled and submitted in under ~2.5s is
+    // almost certainly scripted, not a human reading the labels.
+    if (typeof meta?.elapsedMs === "number" && meta.elapsedMs < 2500) {
+        return { success: true };
+    }
+
+    const headerList = await headers();
+    const ip = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (isRateLimited(ip)) {
+        return { error: "Too many applications submitted recently. Please try again later." };
+    }
+
     const supabase = await createClient();
 
     // 1. Reject duplicate pending applications from the same email
