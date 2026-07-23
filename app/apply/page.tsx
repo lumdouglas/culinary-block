@@ -1,5 +1,6 @@
 "use client"
 
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -38,6 +39,9 @@ const applySchema = z.object({
 });
 
 export default function ApplicationPage() {
+  const honeypotRef = useRef<HTMLInputElement>(null);
+  const formLoadedAtRef = useRef<number>(Date.now());
+
   const form = useForm<z.infer<typeof applySchema>>({
     resolver: zodResolver(applySchema),
     defaultValues: {
@@ -58,7 +62,10 @@ export default function ApplicationPage() {
   });
 
   async function onSubmit(values: z.infer<typeof applySchema>) {
-    const result = await submitApplication(values);
+    const result = await submitApplication(values, {
+      honeypot: honeypotRef.current?.value ?? "",
+      elapsedMs: Date.now() - formLoadedAtRef.current,
+    });
 
     if (result.error) {
       toast.error(result.error);
@@ -113,6 +120,19 @@ export default function ApplicationPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-8 bg-white p-8 border rounded-2xl">
+
+              {/* Honeypot: hidden from real users, only bots that auto-fill every input populate this */}
+              <div className="absolute left-[-9999px] top-auto w-px h-px overflow-hidden" aria-hidden="true">
+                <label htmlFor="company_url">Leave this field blank</label>
+                <input
+                  id="company_url"
+                  name="company_url"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  ref={honeypotRef}
+                />
+              </div>
 
               {/* Company Information */}
               <div className="space-y-4">
