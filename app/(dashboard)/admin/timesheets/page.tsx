@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { AdminTimesheetsTable } from "@/components/admin/timesheets-table"
+import { TimesheetRequestsPanel } from "@/components/admin/timesheet-requests-panel"
 import { getTenants } from "@/app/actions/admin"
 
 /** Matches `handle_new_user` placeholder when no approved application (see migrations). */
@@ -34,13 +35,18 @@ export default async function AdminTimesheetsPage({
     const { tenantId: selectedTenantId, month: monthParam } = await searchParams
     const month = monthParam ?? getCurrentMonthKey()
 
-    const [{ data: tenants }, { data: kitchens }] = await Promise.all([
+    const [{ data: tenants }, { data: kitchens }, { data: pendingRequests }] = await Promise.all([
         getTenants({ activeOnly: true }),
         supabase
             .from("kitchens")
             .select("id, name")
             .eq("is_active", true)
             .order("name"),
+        supabase
+            .from("timesheet_requests")
+            .select("id, type, reason, clock_in, clock_out, created_at, profiles:user_id (company_name, email)")
+            .eq("status", "pending")
+            .order("created_at", { ascending: true }),
     ])
 
     const tenantRows = tenants ?? []
@@ -121,6 +127,8 @@ export default async function AdminTimesheetsPage({
                     <p className="text-2xl font-bold text-blue-700 mt-1">{activeSessions}</p>
                 </div>
             </div>
+
+            <TimesheetRequestsPanel requests={(pendingRequests ?? []) as any} />
 
             <AdminTimesheetsTable
                 initialTimesheets={(timesheets ?? []) as any}

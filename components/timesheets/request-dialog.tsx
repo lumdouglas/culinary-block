@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Loader2 } from "lucide-react"
+import { Loader2, PlusCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -26,22 +26,18 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { requestMissingTimesheetEntry } from "@/app/actions/timesheets"
 
 const formSchema = z.object({
-    type: z.enum(["create", "update", "delete"]),
-    clockIn: z.string().optional(), // datetime-local string
+    clockIn: z.string().min(1, "Clock-in time is required"),
     clockOut: z.string().optional(),
-    reason: z.string().min(5, "Reason is required"),
-})
+    reason: z.string().min(5, "Please describe what happened"),
+}).refine(
+    (data) => !data.clockOut || new Date(data.clockIn) < new Date(data.clockOut),
+    { message: "Clock out must be after clock in", path: ["clockOut"] }
+)
 
 export function TimesheetRequestDialog() {
     const [open, setOpen] = useState(false)
@@ -50,69 +46,51 @@ export function TimesheetRequestDialog() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            type: "create",
+            clockIn: "",
+            clockOut: "",
             reason: "",
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            const response = await fetch("/api/timesheets/requests", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
+            const res = await requestMissingTimesheetEntry({
+                clockIn: new Date(values.clockIn).toISOString(),
+                clockOut: values.clockOut ? new Date(values.clockOut).toISOString() : undefined,
+                reason: values.reason,
             })
 
-            if (!response.ok) {
-                throw new Error("Failed to submit request")
+            if (res?.error) {
+                throw new Error(res.error)
             }
 
-            toast.success("Request submitted successfully")
+            toast.success("Request submitted. An admin will review it shortly.")
             setOpen(false)
             form.reset()
             router.refresh()
-        } catch {
-            toast.error("Something went wrong. Please try again.")
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Something went wrong. Please try again."
+            toast.error(message)
         }
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button>Request Correction</Button>
+                <Button variant="outline" className="gap-1.5">
+                    <PlusCircle className="h-4 w-4" />
+                    Report Missing Shift
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Request Timesheet Correction</DialogTitle>
+                    <DialogTitle>Report a Missing Shift</DialogTitle>
                     <DialogDescription>
-                        Submit a request to add or fix a shift. An admin will review it.
+                        Forgot to clock in? Let us know the times and why — an admin will review and add it to your timesheet.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="type"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Request Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="create">Add Missing Shift</SelectItem>
-                                            <SelectItem value="update">Fix Existing Shift</SelectItem>
-                                            <SelectItem value="delete">Remove Shift</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
@@ -151,7 +129,7 @@ export function TimesheetRequestDialog() {
                                     <FormLabel>Reason</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="I forgot to clock out..."
+                                            placeholder="I forgot to clock in when my shift started..."
                                             className="resize-none"
                                             {...field}
                                         />

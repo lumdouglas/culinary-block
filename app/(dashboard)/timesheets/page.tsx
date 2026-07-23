@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EditTimesheetDialog } from "@/components/timesheets/edit-dialog"
+import { TimesheetRequestDialog } from "@/components/timesheets/request-dialog"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Clock, CalendarDays } from "lucide-react"
@@ -16,6 +17,22 @@ type TimesheetRow = {
     is_edited: boolean | null
     status: string | null
     kitchens: { name: string }[] | null
+}
+
+type TimesheetRequestRow = {
+    id: string
+    type: "create" | "update" | "delete"
+    status: "pending" | "approved" | "rejected"
+    reason: string | null
+    clock_in: string | null
+    clock_out: string | null
+    created_at: string
+}
+
+const REQUEST_TYPE_LABELS: Record<TimesheetRequestRow["type"], string> = {
+    create: "Missing Shift",
+    update: "Fix Shift",
+    delete: "Remove Shift",
 }
 
 export default async function TimesheetsPage({
@@ -69,6 +86,14 @@ export default async function TimesheetsPage({
         .not("clock_in", "is", null)
         .order("clock_in", { ascending: false })
 
+    // Fetch this tenant's own missed-shift / correction requests
+    const { data: timesheetRequests } = await supabase
+        .from("timesheet_requests")
+        .select("id, type, status, reason, clock_in, clock_out, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
     // Build monthly summary map
     const monthSummaryMap: Record<string, { totalMinutes: number; shiftCount: number; date: Date }> = {}
     for (const record of allTimesheets || []) {
@@ -101,30 +126,34 @@ export default async function TimesheetsPage({
                     </p>
                 </div>
 
-                {/* Month navigation */}
-                <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-                    <Link href={`?month=${prevMonthStr}`}>
-                        <Button variant="outline" size="icon" className="h-8 w-8">
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                    </Link>
-
-                    <div className="text-sm font-medium px-3 text-center min-w-[140px]">
-                        <div className="text-slate-400 text-xs uppercase tracking-wide leading-tight">Total</div>
-                        <div className="text-slate-900 font-bold">{totalHours}h {remainingMinutes}m</div>
-                    </div>
-
-                    {isCurrentMonth ? (
-                        <Button variant="outline" size="icon" className="h-8 w-8" disabled>
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    ) : (
-                        <Link href={`?month=${nextMonthStr}`}>
+                <div className="flex items-center gap-3">
+                    {/* Month navigation */}
+                    <div className="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                        <Link href={`?month=${prevMonthStr}`}>
                             <Button variant="outline" size="icon" className="h-8 w-8">
-                                <ChevronRight className="h-4 w-4" />
+                                <ChevronLeft className="h-4 w-4" />
                             </Button>
                         </Link>
-                    )}
+
+                        <div className="text-sm font-medium px-3 text-center min-w-[140px]">
+                            <div className="text-slate-400 text-xs uppercase tracking-wide leading-tight">Total</div>
+                            <div className="text-slate-900 font-bold">{totalHours}h {remainingMinutes}m</div>
+                        </div>
+
+                        {isCurrentMonth ? (
+                            <Button variant="outline" size="icon" className="h-8 w-8" disabled>
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        ) : (
+                            <Link href={`?month=${nextMonthStr}`}>
+                                <Button variant="outline" size="icon" className="h-8 w-8">
+                                    <ChevronRight className="h-4 w-4" />
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+
+                    <TimesheetRequestDialog />
                 </div>
             </div>
 
@@ -191,6 +220,48 @@ export default async function TimesheetsPage({
                     </TableBody>
                 </Table>
             </div>
+
+            {/* My Requests Panel */}
+            {timesheetRequests && timesheetRequests.length > 0 && (
+                <div className="rounded-xl border bg-white overflow-x-auto shadow-sm mb-8">
+                    <div className="px-4 pt-4 pb-2">
+                        <h3 className="text-sm font-semibold text-slate-800">My Requests</h3>
+                    </div>
+                    <Table>
+                        <TableHeader className="bg-slate-50 border-b border-slate-200">
+                            <TableRow className="border-slate-200 hover:bg-transparent">
+                                <TableHead className="text-slate-700 font-semibold">Submitted</TableHead>
+                                <TableHead className="text-slate-700 font-semibold">Type</TableHead>
+                                <TableHead className="text-slate-700 font-semibold">Requested Time</TableHead>
+                                <TableHead className="text-slate-700 font-semibold">Status</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {timesheetRequests.map((req: TimesheetRequestRow) => (
+                                <TableRow key={req.id} className="border-b border-slate-100">
+                                    <TableCell className="text-slate-700">
+                                        {new Date(req.created_at).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric' })}
+                                    </TableCell>
+                                    <TableCell className="text-slate-700">{REQUEST_TYPE_LABELS[req.type]}</TableCell>
+                                    <TableCell className="text-slate-700">
+                                        {req.clock_in ? new Date(req.clock_in).toLocaleString("en-US", { timeZone: "America/Los_Angeles", month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : "—"}
+                                        {req.clock_out ? ` – ${new Date(req.clock_out).toLocaleTimeString("en-US", { timeZone: "America/Los_Angeles", hour: 'numeric', minute: '2-digit' })}` : ""}
+                                    </TableCell>
+                                    <TableCell>
+                                        {req.status === 'pending' ? (
+                                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">Pending Review</Badge>
+                                        ) : req.status === 'approved' ? (
+                                            <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">Approved</Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="bg-red-100 text-red-800 hover:bg-red-100">Rejected</Badge>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            )}
 
             {/* Monthly History Panel */}
             {monthHistory.length > 0 && (

@@ -24,6 +24,7 @@ export type TimesheetLogEntry =
   | { op: 'clock_out';             timesheetId: string; userId: string; companyName?: string; clockOut: string }
   | { op: 'timesheet_edit';        timesheetId: string; userId: string; clockIn: string; clockOut: string | null }
   | { op: 'timesheets_verified';   timesheetIds: string[]; adminId: string }
+  | { op: 'request_submitted';     requestId: string; type: 'create' | 'update' | 'delete'; userId: string; clockIn?: string | null; clockOut?: string | null }
   | { op: 'request_approved';      requestId: string; type: 'create' | 'update' | 'delete'; timesheetId?: string | null; userId: string; adminId: string; clockIn?: string | null; clockOut?: string | null }
   | { op: 'request_rejected';      requestId: string; type: 'create' | 'update' | 'delete'; timesheetId?: string | null; userId: string; adminId: string; notes?: string | null };
 
