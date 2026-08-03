@@ -43,7 +43,7 @@ export function TenantFilter({ tenants, selectedTenantId }: TenantFilterProps) {
                     <SelectItem value="all">All Tenants</SelectItem>
                     {tenants.map((tenant) => (
                         <SelectItem key={tenant.id} value={tenant.id}>
-                            {tenant.company_name}
+                            {tenant.company_name}{tenant.is_active === false ? " (Closed)" : ""}
                         </SelectItem>
                     ))}
                 </SelectContent>

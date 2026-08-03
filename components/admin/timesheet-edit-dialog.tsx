@@ -23,7 +23,7 @@ import { adminUpsertTimesheet } from "@/app/actions/timesheets"
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface Kitchen { id: string; name: string }
-export interface Tenant  { id: string; company_name: string; email: string | null }
+export interface Tenant  { id: string; company_name: string; email: string | null; is_active?: boolean | null }
 
 export interface TimesheetEntry {
     id: string
@@ -254,7 +254,7 @@ export function TimesheetEditDialog({
                                         <SelectContent>
                                             {tenants.map(t => (
                                                 <SelectItem key={t.id} value={t.id}>
-                                                    {t.company_name}
+                                                    {t.company_name}{t.is_active === false ? " (Closed)" : ""}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
