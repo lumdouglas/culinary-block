@@ -27,6 +27,12 @@ async function assertAdmin(supabase: Awaited<ReturnType<typeof createClient>>) {
     return { user };
 }
 
+/** Surfaces our own trigger-raised messages (Postgres SQLSTATE P0001); falls back to a generic message for anything else. */
+function dbErrorMessage(error: { code?: string; message?: string }, fallback: string): string {
+    if (error.code === "P0001" && error.message) return error.message;
+    return fallback;
+}
+
 export async function verifyTimesheets(timesheetIds: string[]) {
     const supabase = await createClient();
 
@@ -115,7 +121,7 @@ export async function adminUpsertTimesheet(raw: AdminTimesheetFormValues) {
             .eq("id", id);
         if (error) {
             console.error("adminUpsertTimesheet update error:", error);
-            return { error: "Failed to update timesheet" };
+            return { error: dbErrorMessage(error, "Failed to update timesheet") };
         }
         appendTimesheetLog({
             op: "timesheet_edit",
@@ -128,7 +134,7 @@ export async function adminUpsertTimesheet(raw: AdminTimesheetFormValues) {
         const { error } = await supabase.from("timesheets").insert([payload]);
         if (error) {
             console.error("adminUpsertTimesheet insert error:", error);
-            return { error: "Failed to create timesheet entry" };
+            return { error: dbErrorMessage(error, "Failed to create timesheet entry") };
         }
     }
 
