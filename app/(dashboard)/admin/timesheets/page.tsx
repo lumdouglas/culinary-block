@@ -36,7 +36,9 @@ export default async function AdminTimesheetsPage({
     const month = monthParam ?? getCurrentMonthKey()
 
     const [{ data: tenants }, { data: kitchens }, { data: pendingRequests }] = await Promise.all([
-        getTenants({ activeOnly: true }),
+        // Fetch all tenants (not just active) — closed tenants must still be selectable
+        // when adding/editing a historical timesheet entry or filtering to review their past records.
+        getTenants(),
         supabase
             .from("kitchens")
             .select("id, name")
@@ -69,7 +71,11 @@ export default async function AdminTimesheetsPage({
     const startUtc = new Date(Date.UTC(year, mon - 1, 1, 8))   // noon UTC ≈ midnight PST
     const endUtc   = new Date(Date.UTC(year, mon,     1, 8))
 
-    const activeTenantIds = tenantsForFilter.map((t) => t.id)
+    // Only used to narrow the *default* (no tenant filter selected) view to active
+    // tenants, so closed accounts don't clutter it — selecting one explicitly still works.
+    const activeTenantIds = tenantsForFilter
+        .filter((t) => t.is_active !== false)
+        .map((t) => t.id)
 
     let query = supabase
         .from("timesheets")
