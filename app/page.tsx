@@ -310,7 +310,7 @@ export default function Home() {
             <div className="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
             <p className="text-slate-300 text-sm md:text-base leading-relaxed">
               <strong className="text-white block mb-1">Please Note:</strong>
-              We are currently at or close to capacity and maintaining a waitlist for when space opens up (typically 2-6 months out).
+              We are currently at or close to capacity and maintaining a waitlist for when space opens up (typically 2-3 months out).
               Our minimum requirement is $1,000/month, which covers your first 20 hours at $50/hr (rates drop for additional hours via our timesheet billing).
             </p>
           </div>

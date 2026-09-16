@@ -50,7 +50,7 @@ export function Footer() {
               </p>
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:info@culinaryblock.com" className="hover:text-white transition-colors">info@culinaryblock.com</a>
+                <a href="mailto:culinaryblockkitchen@gmail.com" className="hover:text-white transition-colors">culinaryblockkitchen@gmail.com</a>
               </p>
               <div className="pt-2">
                 <p className="text-white font-medium">Kitchen Access</p>

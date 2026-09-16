@@ -27,7 +27,7 @@ export default function PartnershipsPage() {
             A seamless transition from culinary incubator to full-scale commercial production. We partner with local programs to guarantee approved kitchen space for your graduates.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link href="mailto:info@culinaryblock.com?subject=Partnership Inquiry">
+            <Link href="mailto:culinaryblockkitchen@gmail.com?subject=Partnership Inquiry">
               <Button size="lg" className="bg-teal-500 hover:bg-teal-400 text-white px-8 text-lg font-semibold border-none">
                 Become a Partner
               </Button>
@@ -99,7 +99,7 @@ export default function PartnershipsPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-3">Guaranteed Placement</h3>
               <p className="text-slate-600 leading-relaxed">
-                While Culinary Block often maintains a 2-6 month waitlist, graduates from Official Partner Programs get priority placement to ensure their business doesn't stall.
+                While Culinary Block often maintains a 2-3 month waitlist, graduates from Official Partner Programs get priority placement to ensure their business doesn't stall.
               </p>
             </div>
 
@@ -123,7 +123,7 @@ export default function PartnershipsPage() {
           <p className="text-xl text-slate-300 mb-10">
             Let's give your graduates the commercial space they need to thrive. Reach out to set up an Official Partnership today.
           </p>
-          <Link href="mailto:info@culinaryblock.com?subject=Partnership Inquiry">
+          <Link href="mailto:culinaryblockkitchen@gmail.com?subject=Partnership Inquiry">
             <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 font-bold px-10 border-none">
               Contact Our Team
             </Button>

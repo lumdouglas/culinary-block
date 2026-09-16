@@ -37,7 +37,7 @@ export const ApplicationReceived = ({
 
                     <Section style={alertBox}>
                         <Text style={alertText}>
-                            <strong>Please Note:</strong> We are currently operating at or near capacity and are maintaining a waitlist for when space opens up (typically a 2-6 month wait).
+                            <strong>Please Note:</strong> We are currently operating at or near capacity and are maintaining a waitlist for when space opens up (typically a 2-3 month wait).
                         </Text>
                     </Section>
 

@@ -113,7 +113,7 @@ export default function ApplicationPage() {
             <div>
               <h3 className="font-semibold text-amber-900 mb-1">Waitlist Information</h3>
               <p className="text-amber-800 text-sm leading-relaxed">
-                Thank you for your interest! We are currently operating at or near capacity and are maintaining a waitlist for when space opens up (typically a 2-6 month wait). Please note our minimum requirement is $1,000/month, which covers your first 20 hours at $50/hr (rates drop for additional hours via our timesheet billing).
+                Thank you for your interest! We are currently operating at or near capacity and are maintaining a waitlist for when space opens up (typically a 2-3 month wait). Please note our minimum requirement is $1,000/month, which covers your first 20 hours at $50/hr (rates drop for additional hours via our timesheet billing).
               </p>
             </div>
           </div>
