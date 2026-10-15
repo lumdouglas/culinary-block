@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Application } from "@/types/database";
-import { getApplications, approveApplication, rejectApplication, resendInvite } from "@/app/actions/admin";
+import { getApplications, rejectApplication, resendInvite } from "@/app/actions/admin";
 import { ApplicationDetails } from "@/components/application-details";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { CheckCircle, XCircle, Eye, Mail } from "lucide-react";
+import { XCircle, Eye, Mail } from "lucide-react";
 
 export default function AdminApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -38,19 +38,6 @@ export default function AdminApplicationsPage() {
   useEffect(() => {
     loadApplications();
   }, [filter]);
-
-  const handleApprove = async (id: string) => {
-    setActionLoading(true);
-    const result = await approveApplication(id);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Application approved! Invitation email sent.");
-      loadApplications();
-      setSelectedApplication(null);
-    }
-    setActionLoading(false);
-  };
 
   const handleReject = async (id: string) => {
     setActionLoading(true);
@@ -183,26 +170,15 @@ export default function AdminApplicationsPage() {
                       View
                     </Button>
                     {app.status === 'pending' && (
-                      <>
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleApprove(app.id)}
-                          disabled={actionLoading}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleReject(app.id)}
-                          disabled={actionLoading}
-                        >
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Reject
-                        </Button>
-                      </>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleReject(app.id)}
+                        disabled={actionLoading}
+                      >
+                        <XCircle className="w-4 h-4 mr-1" />
+                        Reject
+                      </Button>
                     )}
                     {app.status === 'approved' && (
                       <Button
@@ -238,14 +214,6 @@ export default function AdminApplicationsPage() {
 
               {selectedApplication.status === 'pending' && (
                 <div className="flex gap-2 mt-6 pt-6 border-t">
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => handleApprove(selectedApplication.id)}
-                    disabled={actionLoading}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Approve & Send Invitation
-                  </Button>
                   <Button
                     className="flex-1"
                     variant="destructive"
