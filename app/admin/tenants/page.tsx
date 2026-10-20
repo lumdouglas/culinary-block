@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Profile } from "@/types/database";
-import { getTenants, toggleTenantActive } from "@/app/actions/admin";
+import { getTenants, toggleTenantActive, inviteTenant } from "@/app/actions/admin";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -18,15 +18,27 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Users, Search, ArrowLeft } from "lucide-react";
+import { Users, Search, ArrowLeft, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function AdminTenantsPage() {
     const [tenants, setTenants] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [tenantToDeactivate, setTenantToDeactivate] = useState<Profile | null>(null);
+    const [addOpen, setAddOpen] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const [newTenant, setNewTenant] = useState({ email: "", company_name: "", contact_name: "", phone: "" });
 
     const loadTenants = async () => {
         setLoading(true);
@@ -66,6 +78,21 @@ export default function AdminTenantsPage() {
         setTenantToDeactivate(null);
     };
 
+    const handleAddTenant = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setAdding(true);
+        const result = await inviteTenant(newTenant);
+        if (result.error) {
+            toast.error(result.error);
+        } else {
+            toast.success("Tenant added. Invitation email sent.");
+            setAddOpen(false);
+            setNewTenant({ email: "", company_name: "", contact_name: "", phone: "" });
+            loadTenants();
+        }
+        setAdding(false);
+    };
+
     const filteredTenants = tenants.filter(tenant =>
         tenant.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (tenant.email ?? '').toLowerCase().includes(searchTerm.toLowerCase())
@@ -100,6 +127,10 @@ export default function AdminTenantsPage() {
                         </Card>
                     </div>
 
+                    <div className="flex w-full md:w-auto gap-3 items-center">
+                    <Button onClick={() => setAddOpen(true)} className="gap-2 shrink-0">
+                        <UserPlus className="w-4 h-4" /> Add Tenant
+                    </Button>
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
@@ -108,6 +139,7 @@ export default function AdminTenantsPage() {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                    </div>
                     </div>
                 </div>
 
@@ -164,6 +196,46 @@ export default function AdminTenantsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Add Tenant Dialog */}
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogContent>
+                    <form onSubmit={handleAddTenant} className="space-y-4">
+                        <DialogHeader>
+                            <DialogTitle>Add Tenant</DialogTitle>
+                            <DialogDescription>
+                                Creates an active tenant account and emails them an invitation to set up their login.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                            <Label htmlFor="tenant-company">Company name</Label>
+                            <Input id="tenant-company" required value={newTenant.company_name}
+                                onChange={(e) => setNewTenant({ ...newTenant, company_name: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tenant-email">Email</Label>
+                            <Input id="tenant-email" type="email" required value={newTenant.email}
+                                onChange={(e) => setNewTenant({ ...newTenant, email: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tenant-contact">Contact name (optional)</Label>
+                            <Input id="tenant-contact" value={newTenant.contact_name}
+                                onChange={(e) => setNewTenant({ ...newTenant, contact_name: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tenant-phone">Phone (optional)</Label>
+                            <Input id="tenant-phone" type="tel" value={newTenant.phone}
+                                onChange={(e) => setNewTenant({ ...newTenant, phone: e.target.value })} />
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+                            <Button type="submit" disabled={adding}>
+                                {adding ? "Sending..." : "Add & Send Invitation"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             {/* Deactivation Confirmation Dialog */}
             <AlertDialog open={!!tenantToDeactivate} onOpenChange={(open) => !open && setTenantToDeactivate(null)}>
